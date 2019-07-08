@@ -1,3 +1,7 @@
+**2.0 RC-4**
+Bug Fixes:
+- Fix multiple import edge-case bug with ROI Contours.
+
 **2.0 RC-3**
 Bug Fixes:
 - Fixed scrolling of XNAT Nav bar introduced when moving from a React-in-Blaze to a React component.

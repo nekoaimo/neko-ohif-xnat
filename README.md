@@ -1,4 +1,4 @@
-# XNAT-OHIF Viewer Plugin 2.0-RC3
+# XNAT-OHIF Viewer Plugin 2.0-RC4
 
 <p align="center">
   <img src="assets/Logo.png" width="256" title="OHIF-XNAT-logo">
@@ -9,16 +9,9 @@ Up to date viewer jars are available in the dist directory.
 
 **PLEASE DO NOT ATTEMPT TO USE IN PRODUCTION AT THIS STAGE.**
 
-**2.0 RC-3**
+**2.0 RC-4**
 Bug Fixes:
-- Fixed scrolling of XNAT Nav bar introduced when moving from a React-in-Blaze to a React component.
-- Opening a Contours or Segments side panel before ann enabled element has data does fails gracefully and displays an $
-- Fixed imagePlane metadata extraction for multi-frame images where IOP/IPP is stored per frame.
-
-UI/UX:
-- Changed the 'View Images' button to 'View Legacy XImgView' to avoid confusion with OHIF. Once XNAT is running on OHI$
-- Middle/Right clicking 'View Session'/'View Subject' will open the viewer in a new tab/window depending on browser co$
-- Whilst XNAT is performing the View Session checks, a spinner will display.
+- Fix multiple import edge-case bug with ROI Contours.
 
 A full list of changes are available in the `CHANGELOG`.
 
