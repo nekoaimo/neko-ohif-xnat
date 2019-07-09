@@ -12,6 +12,7 @@ Up to date viewer jars are available in the dist directory.
 **2.0 RC-4**
 Bug Fixes:
 - Fix multiple import edge-case bug with ROI Contours.
+- Updated to new dcmjs version which fixes segmentation IO for images with frames of length not divisible by 8.
 
 A full list of changes are available in the `CHANGELOG`.
 
