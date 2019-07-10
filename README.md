@@ -9,6 +9,10 @@ Up to date viewer jars are available in the dist directory.
 
 **PLEASE DO NOT ATTEMPT TO USE IN PRODUCTION AT THIS STAGE.**
 
+**DEV**
+UX:
+- The default ROICollection name on export is equal to the segment/contour name if there is only one, and blank otherwise, so some human readable label is enforced to some degree.
+
 **2.0 RC-4**
 Bug Fixes:
 - Fix multiple import edge-case bug with ROI Contours.
