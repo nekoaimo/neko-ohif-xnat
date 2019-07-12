@@ -15,24 +15,11 @@ UX:
 
 A full list of changes are available in the `CHANGELOG`.
 
-Please check the issues page. Label new issues with the "XNAT-ROI Beta" tag as well as relevant tags (e.g. enhancement, bug, etc).
-Please check that the issue does not already have an existing thread.
-
-**This plugin is in the testing phase and not yet meant to be used in production**
-
 # A) Deploying the Pre-built plugin
 
-**New since 1.0.0: single plugin deployment.**
+1. Copy both plugins in the `dist` directory to the **plugins** directory of your XNAT installation. The location of the **plugins** folder varies based on how and where you have installed your XNAT. If using [`xnat-docker-compose`](https://github.com/NrgXnat/xnat-docker-compose), the plugins folder is located at `xnat-data/home/plugins` relative to the root directory.
 
-1. Stop your tomcat with "sudo service tomcat7 stop"
-
-2. Copy both plugins in the `dist` directory to the **plugins** directory of your XNAT installation. The location of the
-   **plugins** folder varies based on how and where you have installed your XNAT. If you are running
-   a virtual machine created through the [XNAT Vagrant project](https://bitbucket/xnatdev/xnat-vagrant.git),
-   you can copy the plugin to the appropriate configuration folder and then copy it within the VM from
-   **/vagrant** to **/data/xnat/home/plugins**.
-
-3. `sudo service tomcat7 start`
+2. Restart your Tomcat server with `sudo service tomcat7 restart`, or `docker-compose restart xnat-web` if using `xnat-docker-compose`.
 
 # B) (Optional) Initialising the viewer in a populated database
 
