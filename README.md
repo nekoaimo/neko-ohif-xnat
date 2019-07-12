@@ -11,6 +11,7 @@ Up to date viewer jars are available in the dist directory.
 
 **2.0 RC-5**
 UX:
+
 - The default ROICollection name on export is equal to the segment/contour name if there is only one, and blank otherwise, so some human readable label is enforced to some degree.
 
 A full list of changes are available in the `CHANGELOG`.
@@ -38,30 +39,6 @@ Please check that the issue does not already have an existing thread.
 
 In the likely event you are installing this plugin on an XNAT with an already populated database, an admin may call the REST command \*\*POST XNAT_ROOT_URL/xapi/viewer/generate-all-metadata\*\* in order to initiate a process that will scour the database.
 
-# Upgrading from 0.X.X
+# Development
 
-As of 1.0.0, the automatic JSON generation on session creation/modification is now handled by server side event handlers, and hosting the old VIEWER.war as a seperate application is no longer required.
-
-If you are upgrading the plugin from 0.X.X:
-
-1. Deactivate any related automation scripts in the Administration/Automation interface.
-2. Remove the old VIEWER.war, the VIEWER is now included within the plugin jar.
-3. replace the old plugin jar with the new one.
-
-# Building (Note this is for developers and is not required to use the plugin)
-
-To build the XNAT OHIF viewer plugin
-
-1. If you haven't already, clone [this repository](https://bitbucket.org/xnatx/ohif-viewer-plugin.git) and cd to the newly cloned folder.
-
-2. Build the plugin:
-
-   `./gradlew clean fatjar`
-
-   On Windows, you can use the batch file:
-
-   `gradlew.bat clean fatjar`
-
-   This should build the plugin in the file **build/libs/ohif-viewer-plugin-X.X.X-SNAPSHOT.jar**
-   Note: the fatjar command is currently required as EtherJ.jar is not currently hosted in a place gradle can find it, this will change in the future.
-   The viewer application itself (src/main/resources/META-INF/resources/VIEWER) is a custom build of a modified OHIF viewer (https://github.com/JamesAPetts/OHIF-Viewer-XNAT/tree/xnat-prod).
+Development instructions for OHIF-Viewer-XNAT and this XNAT plugin are avaiable [here](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat/).
