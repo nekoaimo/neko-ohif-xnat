@@ -2,12 +2,13 @@
 
 ![OHIF-XNAT-logo](assets/Logo.png)
 
-This beta plugin integrates the OHIF viewer into XNAT. It differs from the publicly released OHIF Viewer plugin in that it has functionality to create ROIs and save/load these to/from XNAT.
+This plugin integrates the OHIF viewer into XNAT, 2.0 comes with a suite of annotation tools, and allows users to import/export ROI Contours and Segmentations to ROICollection Assessors on XNAT.
 Up to date viewer jars are available in the dist directory.
 
 **PLEASE DO NOT ATTEMPT TO USE IN PRODUCTION AT THIS STAGE.**
 
 **2.0 RC-5**
+
 UX:
 
 - The default ROICollection name on export is equal to the segment/contour name if there is only one, and blank otherwise, so some human readable label is enforced to some degree.
@@ -39,4 +40,4 @@ In the likely event you are installing this plugin on an XNAT with an already po
 
 # Development
 
-Development instructions for OHIF-Viewer-XNAT and this XNAT plugin are avaiable [here](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat/).
+Development instructions for OHIF-Viewer-XNAT and this XNAT plugin [are avaiable here](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat/).
