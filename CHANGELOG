@@ -1,3 +1,8 @@
+**2.0 RC-5**
+UX:
+- The default ROICollection name on export is equal to the segment/contour name if there is only one, and blank otherwise, so some human readable label is enf$
+
+
 **2.0 RC-4**
 Bug Fixes:
 - Fix multiple import edge-case bug with ROI Contours.

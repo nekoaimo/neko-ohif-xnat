@@ -1,4 +1,4 @@
-# XNAT-OHIF Viewer Plugin 2.0-RC4
+# XNAT-OHIF Viewer Plugin 2.0-RC5
 
 <p align="center">
   <img src="assets/Logo.png" width="256" title="OHIF-XNAT-logo">
@@ -9,14 +9,9 @@ Up to date viewer jars are available in the dist directory.
 
 **PLEASE DO NOT ATTEMPT TO USE IN PRODUCTION AT THIS STAGE.**
 
-**DEV**
+**2.0 RC-5**
 UX:
 - The default ROICollection name on export is equal to the segment/contour name if there is only one, and blank otherwise, so some human readable label is enforced to some degree.
-
-**2.0 RC-4**
-Bug Fixes:
-- Fix multiple import edge-case bug with ROI Contours.
-- Updated to new dcmjs version which fixes segmentation IO for images with frames of length not divisible by 8.
 
 A full list of changes are available in the `CHANGELOG`.
 
