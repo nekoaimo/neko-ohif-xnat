@@ -23,7 +23,7 @@ A full list of changes are available in the `CHANGELOG`.
 
 # B) (Optional) Initialising the viewer in a populated database
 
-In the likely event you are installing this plugin on an XNAT with an already populated database, an admin may call the REST command \*\*POST XNAT_ROOT_URL/xapi/viewer/generate-all-metadata\*\* in order to initiate a process that will scour the database.
+In the likely event you are installing this plugin on an XNAT with an already populated database, an admin may call the REST command **POST XNAT_ROOT_URL/xapi/viewer/generate-all-metadata** in order to initiate a process that will iterate through all the sessions in the XNAT and generate the required metadta, using as many threads as are available on the machine.
 
 # Development
 
