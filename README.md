@@ -1,4 +1,4 @@
-# XNAT-OHIF Viewer Plugin 2.0-RC5
+# XNAT-OHIF Viewer Plugin 2.0-RC6
 
 ![OHIF-XNAT-logo](assets/Logo.png)
 
@@ -7,11 +7,11 @@ Up to date viewer jars are available in the dist directory.
 
 **PLEASE DO NOT ATTEMPT TO USE IN PRODUCTION AT THIS STAGE.**
 
-**2.0 RC-5**
+**2.0 RC-6**
+UI:
+- Help menus have been updated.
+- Correctly update the Contours side panel when a ROI Contour name is changed via the double-click-on-contour method.
 
-UX:
-
-- The default ROICollection name on export is equal to the segment/contour name if there is only one, and blank otherwise, so some human readable label is enforced to some degree.
 
 A full list of changes are available in the `CHANGELOG`.
 
