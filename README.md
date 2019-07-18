@@ -19,6 +19,8 @@ The main difference between 2.0 and and 1.0.X is the inclusion of a set of tools
 
 ### Annotation Tools
 
+If a scan contains segments or ROIContours, appropriate icons will be displayed under the thumbnail in the scan list.
+
 #### ROI Contour Tools
 
 The ROI Contour tools can be used to create and modify contour-based regions of interest. Sets of 2D contours make up named 3D contours which specify a region. One of more 3D contours make up an `ROICollection` which can be imported/exported from/to XNAT.

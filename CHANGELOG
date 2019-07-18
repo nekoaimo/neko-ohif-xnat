@@ -1,3 +1,7 @@
+**2.0 RC-7**
+UX:
+- Icons under a scan in the scan list to display whether there are any rois or segments on that scan. Really useful when you import one ROICollection onto a large Session.
+
 **2.0 RC-6**
 UI:
 - Help menus have been updated.
