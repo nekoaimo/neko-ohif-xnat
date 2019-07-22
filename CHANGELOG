@@ -1,3 +1,7 @@
+**2.0 RC-8**
+UX:
+- Multiframe images now fetch their snapshot from a cached XNAT resource, avoiding timeout issues with large multiframes.
+
 **2.0 RC-7**
 UX:
 - Icons under a scan in the scan list to display whether there are any rois or segments on that scan. Really useful when you import one ROICollection onto a large Session.
@@ -68,8 +72,8 @@ UX:
 - If you have unsaved annotations, get a confirmation from the user before switching scans.
 
 **1.15.2 Beta**
-Fixes:    
-- Updated DICOM SEG version to properly add ReferencedSOPClassUIDs to relevant lists. The individual segmentations now come up in the ROI list in the ROICollection view. 
+Fixes:
+- Updated DICOM SEG version to properly add ReferencedSOPClassUIDs to relevant lists. The individual segmentations now come up in the ROI list in the ROICollection view.
 
 **1.15.1 Beta**
 Features:
@@ -91,7 +95,7 @@ Features:
 Features:
 - DICOM SEG improvements:
   - We now have support for DICOM Segmentation objects in a variety of possible configurations.
-  - DICOM SEG export for both single frame and multiframe source data.                
+  - DICOM SEG export for both single frame and multiframe source data.
   - ROICollectionName baked into the generated DICOM SeriesDescription.
   - Only segmentation frames with at least one segment occupying them are now saved, reducing the filesize of small segmentations on large scans drastically.
 
@@ -103,7 +107,7 @@ Features:
 
 **1.13.0 Beta**
 Features:
-- Subject level view:   
+- Subject level view:
   - On a Subject page you can now access a subject level viewer by clicking on "View Subject".
   - In the scan list there will be a collapsable list of scans for each Session. You can view scans from multiple sessions simultaneously.
   - When you annotate ROIs and export them back to XNAT, they will be stored under the appropriate session.
@@ -134,14 +138,14 @@ Bug Fix:
 
 Bug Fix:
 
-- Account for the edge case where metadata has multiple studies. 
+- Account for the edge case where metadata has multiple studies.
 
 **1.11.1 Beta**
 UI:
 
 - Use XNAT styled dilogs for alert prompts.
 
-Bug Fix: 
+Bug Fix:
 
 - Fix broken manual post of view metadata introduced in 1.11.0.
 

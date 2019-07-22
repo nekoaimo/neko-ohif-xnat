@@ -126,6 +126,7 @@ A navigation bar can now be accessed by opening the left-hand `XNAT Nav` tab in 
 ### Improved Multiframe Support:
 
 - Full multi-frame support for both primary and secondary multi-frame DICOM, and import/export of DICOM `RTSTRUCT` and DICOM `SEG` objects.
+- Multiframe images now fetch their snapshot from a cached XNAT resource, avoiding timeout issues with large multiframes.
 
 ### Touch Support:
 
