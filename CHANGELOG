@@ -1,3 +1,10 @@
+**2.0 RC-9**
+Bug Fixes:
+- Export default names for ROI Collections properly.
+
+JSON Generation:
+- Re-added endpoint for POST.
+
 **2.0 RC-8**
 UX:
 - Multiframe images now fetch their snapshot from a cached XNAT resource, avoiding timeout issues with large multiframes.

@@ -117,10 +117,11 @@ A navigation bar can now be accessed by opening the left-hand `XNAT Nav` tab in 
 
 ### Simplified XAPI:
 
-- The `/viewer` XAPI now only has 3 end points:
+- The `/viewer` XAPI now only has these end points:
   - `GET /viewer/projects/{_projectId}/experiments/{_experimentId}/exists` - returns 200 if JSON metadata exists.
   - `GET /viewer/projects/{_projectId}/experiments/{_experimentId}` - Returns cached JSON metadata or generates it if it doesn't exist.
   - `POST /viewer/generate-all-metadata` - Admin only command to rebuild all JSON metadata on the XNAT.
+  - `POST /viewer/projects/{_projectId}/experiments/{_experimentId}` - Forced rewrite of JSON metadata. A backdoor if automation is down for any reason.
 - Missing JSON being generated and cached in the GET means a user with READ only permissions to a session can view a session without the need for admin/owner/member intervention.
 
 ### Improved Multiframe Support:
