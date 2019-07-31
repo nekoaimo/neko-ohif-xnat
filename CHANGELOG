@@ -1,3 +1,7 @@
+**2.0**
+UX:
+Update refresh to work on events such as click and touch. Can always log back into XNAT in another tab if it times out.
+
 **2.0 RC-9**
 Bug Fixes:
 - Export default names for ROI Collections properly.
