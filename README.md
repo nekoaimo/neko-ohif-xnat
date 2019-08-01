@@ -11,7 +11,7 @@ Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG).
 
 ### Overview
 
-This release is built around the XNAT 1.7.4.1 specification, but has also been tested to be working under 1.7.5.X. The ohif-viewer-plugin
+This release is built around the XNAT 1.7.6 specification.
 
 The main difference between 2.0 and and 1.0.X is the inclusion of a set of tools for annotating regions of interest within XNAT and storing these in the XNAT database for use in processing pipelines. Using the [ROI Upload Assistant](https://bitbucket.org/icrimaginginformatics/roiuploadassistant), one may also upload regions of interest stored in DICOM `RTSTRUCT`, DICOM `SEG` and `AIM` 4.0 Image Annotation Collection formats from external sources to XNAT. These will be automatically indexed and importable in the viewer.
 
