@@ -37,19 +37,19 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import icr.etherj.PathScan;
-import icr.etherj.dicom.DicomReceiver;
-import icr.etherj.dicom.DicomToolkit;
-import icr.etherj.dicom.Patient;
-import icr.etherj.dicom.PatientRoot;
-import icr.etherj.dicom.Series;
-import icr.etherj.dicom.SopInstance;
-import icr.etherj.dicom.Study;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import org.dcm4che2.data.DicomObject;
+import org.nrg.xnatx.ohifviewer.etherj.PathScan;
+import org.nrg.xnatx.ohifviewer.etherj.dicom.DicomReceiver;
+import org.nrg.xnatx.ohifviewer.etherj.dicom.DicomToolkit;
+import org.nrg.xnatx.ohifviewer.etherj.dicom.Patient;
+import org.nrg.xnatx.ohifviewer.etherj.dicom.PatientRoot;
+import org.nrg.xnatx.ohifviewer.etherj.dicom.Series;
+import org.nrg.xnatx.ohifviewer.etherj.dicom.SopInstance;
+import org.nrg.xnatx.ohifviewer.etherj.dicom.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,112 +58,112 @@ import org.slf4j.LoggerFactory;
  * @author simond
  * @author jpetts
  */
-public class CreateOhifViewerMetadata {
-  private static final Logger logger = LoggerFactory.getLogger(CreateOhifViewerMetadata.class);
-  private static final DicomToolkit dcmTk = DicomToolkit.getToolkit();
+public class CreateOhifViewerMetadata
+{
+	private static final Logger logger = LoggerFactory.getLogger(
+		CreateOhifViewerMetadata.class);
+	private static final DicomToolkit dcmTk = DicomToolkit.getToolkit();
 
-  private final String xnatScanPath;
-  private final String xnatExperimentScanUrl;
-  private final HashMap<String,String> seriesUidToScanIdMap;
+	private final String xnatScanPath;
+	private final String xnatExperimentScanUrl;
+	private final HashMap<String,String> seriesUidToScanIdMap;
 
-  public CreateOhifViewerMetadata(final String xnatScanPath, final String xnatExperimentScanUrl, final HashMap<String,String> seriesUidToScanIdMap)
-  {
-    this.xnatScanPath = xnatScanPath;
-    this.xnatExperimentScanUrl = xnatExperimentScanUrl;
-    this.seriesUidToScanIdMap = seriesUidToScanIdMap;
-  }
+	public CreateOhifViewerMetadata(final String xnatScanPath,
+		final String xnatExperimentScanUrl,
+		final HashMap<String,String> seriesUidToScanIdMap)
+	{
+		this.xnatScanPath = xnatScanPath;
+		this.xnatExperimentScanUrl = xnatExperimentScanUrl;
+		this.seriesUidToScanIdMap = seriesUidToScanIdMap;
+	}
 
-  public String jsonify(final String transactionId)
-  {
-    String serialisedOvi = "";
+	public String jsonify(final String transactionId)
+	{
+		// Use Etherj to do the heavy lifting of sifting through all the scan data.
+		PatientRoot root = scanPath(xnatScanPath);
+		// Transform the Etherj output into a java object with the structure needed
+		// by the OHIF viewer.
+		OhifViewerInput ovi = createInput(transactionId, root);
 
-    // Use Etherj to do the heavy lifting of sifting through all the scan data.
-    PatientRoot root = scanPath(xnatScanPath);
-    // Transform the Etherj output into a java object with the structure needed
-    // by the OHIF viewer.
-    OhifViewerInput ovi = createInput(transactionId, root);
+		// Convert the Java object to a JSON string
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		String serialisedOvi = gson.toJson(ovi);
 
-    // Convert the Java object to a JSON string
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    serialisedOvi = gson.toJson(ovi);
+		return serialisedOvi;
+	}
 
-    return serialisedOvi;
-  }
+	private PatientRoot scanPath(String path)
+	{
+		logger.error("DICOM search: " + path);
 
+		DicomReceiver dcmRec = new DicomReceiver();
+		PathScan<DicomObject> pathScan = dcmTk.createPathScan();
 
-  private PatientRoot scanPath(String path)
-  {
-    logger.error("DICOM search: " + path);
+		pathScan.addContext(dcmRec);
+		PatientRoot root = null;
+		try
+		{
+			pathScan.scan(path, true);
+			root = dcmRec.getPatientRoot();
+		}
+		catch (IOException ex)
+		{
+			logger.error(ex.getMessage(), ex);
+		}
+		return root;
+	}
 
-    DicomReceiver dcmRec  = new DicomReceiver();
-    PathScan<DicomObject> pathScan = dcmTk.createPathScan();
+	private OhifViewerInput createInput(String transactionId, PatientRoot root)
+	{
+		OhifViewerInput ovi = new OhifViewerInput();
+		List<OhifViewerInputStudy> oviStudyList = new ArrayList<>();
 
-    pathScan.addContext(dcmRec);
-    PatientRoot root = null;
-    try
-    {
-      pathScan.scan(path, true);
-      root = dcmRec.getPatientRoot();
-    }
-    catch (IOException ex)
-    {
-      logger.error(ex.getMessage(), ex);
-    }
-    return root;
-  }
+		ovi.setTransactionId(transactionId);
+		ovi.setStudies(oviStudyList);
 
+		logger.error(root.toString());
 
-  private OhifViewerInput createInput(String transactionId, PatientRoot root)
-  {
-    OhifViewerInput ovi = new OhifViewerInput();
-    List<OhifViewerInputStudy> oviStudyList = new ArrayList<>();
+		List<Patient> patList = root.getPatientList();
 
-    ovi.setTransactionId(transactionId);
-    ovi.setStudies(oviStudyList);
-    
-    logger.error(root.toString());
+		logger.error(Integer.toString(patList.size()));
+		for (Patient pat : patList)
+		{
+			logger.error(" ");
+			logger.error("patient:");
+			logger.error(pat.getId());
+			List<Study> studyList = pat.getStudyList();
+			for (Study std : studyList)
+			{
+				logger.error("_study:");
+				logger.error(std.getId());
+				OhifViewerInputStudy oviStd = new OhifViewerInputStudy(std, pat);
+				oviStudyList.add(oviStd);
 
-    List<Patient> patList = root.getPatientList();
-    
-    logger.error(Integer.toString(patList.size()));
-    for (Patient pat : patList)
-    {
-      logger.error(" ");
-      logger.error("patient:");
-      logger.error(pat.getId());
-      List<Study> studyList = pat.getStudyList();
-      for (Study std : studyList)
-      {
-        logger.error("_study:");
-        logger.error(std.getId());
-        OhifViewerInputStudy oviStd = new OhifViewerInputStudy(std, pat);
-        oviStudyList.add(oviStd);
+				List<Series> seriesList = std.getSeriesList();
+				for (Series ser : seriesList)
+				{
+					logger.error("__series:");
+					logger.error(ser.getUid());
 
-        List<Series> seriesList = std.getSeriesList();
-        for (Series ser : seriesList)
-        {
-          logger.error("__series:");
-          logger.error(ser.getUid());
-        
-          OhifViewerInputSeries oviSer = new OhifViewerInputSeries(ser);
-          oviStd.addSeries(oviSer);
+					OhifViewerInputSeries oviSer = new OhifViewerInputSeries(ser);
+					oviStd.addSeries(oviSer);
 
-          String scanId = seriesUidToScanIdMap.get(ser.getUid());
+					String scanId = seriesUidToScanIdMap.get(ser.getUid());
 
-          List<SopInstance> sopList = ser.getSopInstanceList();
-          for (SopInstance sop : sopList)
-          {
-            if (SopClassLists.DISPLAYABLE_SOP_CLASS_UIDS.contains(sop.getSopClassUid()))
-            {
-              OhifViewerInputInstance oviInst = new OhifViewerInputInstance(sop, ser, this.xnatExperimentScanUrl, scanId);
-              oviSer.addInstances(oviInst);
-            }
-          }
-        }
-      }
-    }
-
-    return ovi;
-  }
+					List<SopInstance> sopList = ser.getSopInstanceList();
+					for (SopInstance sop : sopList)
+					{
+						if (SopClassLists.DISPLAYABLE_SOP_CLASS_UIDS.contains(sop.getSopClassUid()))
+						{
+							OhifViewerInputInstance oviInst = new OhifViewerInputInstance(sop,
+								ser, this.xnatExperimentScanUrl, scanId);
+							oviSer.addInstances(oviInst);
+						}
+					}
+				}
+			}
+		}
+		return ovi;
+	}
 
 }

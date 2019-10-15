@@ -5,7 +5,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 @XnatPlugin(value = "ohifViewerPlugin",
             name = "XNAT OHIF Viewer Plugin",
-            version = "2.0.0-v1.7.6",
+            version = "2.0.1-v1.7.6-SNAPSHOT",
             description = "Integrates the OHIF Cornerstone Viewer into XNAT.",
             openUrls = {"/viewer.html", "/*.js", "/*.stats.json", "/*.css", "/packages/**/*", "/sockjs/**/*"})
 @ComponentScan({
