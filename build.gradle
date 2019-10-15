@@ -26,7 +26,7 @@ buildscript {
 }
 
 group 'org.nrg.xnatx'
-version '2.0.0'
+version '2.0.1-SNAPSHOT'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
@@ -40,9 +40,16 @@ idea {
     }
 }
 
+// Use this configuration to put dependencies into the fat jar
+configurations {
+    compile.extendsFrom(compileAndInclude)
+}
+
+
 task fatJar(type: Jar) {
+    zip64 true
     baseName = project.name
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    from { configurations.compileAndInclude.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
 
@@ -56,6 +63,10 @@ repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
+    maven {
+        url 'http://dcm4che.org/maven2'
+        name 'dcm4che Maven Repository'
+    }
     maven {
         url 'https://nrgxnat.jfrog.io/nrgxnat/libs-release'
         name 'XNAT Release Repository'
@@ -71,10 +82,10 @@ repositories {
     maven {
         url 'https://jitpack.io'
     }
-    
-    flatDir {
-       dirs 'lib'
-   }
+
+//    flatDir {
+//       dirs 'lib'
+//   }
 }
 
 sourceCompatibility = 1.7
@@ -100,16 +111,14 @@ dependencies {
     implementation("org.nrg:dicom-xnat-sop") {
         transitive = false
     }
-    implementation("org.nrg:framework") {
-        transitive = false
-    }
+    implementation("org.nrg:framework")
     implementation("org.nrg:prefs") {
         transitive = false
     }
      implementation ('stratum:stratum:1.0') {
         transitive = false
     }
-    
+
 
     implementation "org.springframework:spring-web"
     implementation "org.springframework:spring-webmvc"
@@ -120,18 +129,15 @@ dependencies {
     implementation "commons-io:commons-io"
     implementation "commons-codec:commons-codec"
     implementation "org.apache.commons:commons-lang3"
-    compile group: 'io.projectreactor', name: 'reactor-core', version: '2.0.2.RELEASE'
-    compile group: 'io.projectreactor', name: 'reactor-bus', version: '2.0.2.RELEASE'
-    compile 'javax.inject:javax.inject:1'
-    
-   
-    compile name: 'log4j-1.2.16'
-    compile name: 'dcm4che-core-2.0.29'
-    compile name: 'EtherJ-Core'
-    compile name: 'EtherJ-XNAT'
-    compile name: 'ICR_XNAT'
+    implementation("io.projectreactor:reactor-core:2.0.2.RELEASE") { transitive = false }
+    implementation("io.projectreactor:reactor-bus:2.0.2.RELEASE") { transitive = false }
 
-    compile "com.google.code.gson:gson:2.8.2"
+    implementation("org.slf4j:slf4j-api") { transitive = false }
+    implementation("org.slf4j:slf4j-log4j12") { transitive = false }
+    implementation("log4j:log4j") { transitive = false }
+    implementation("dcm4che:dcm4che-core") { transitive = false }
+    implementation("com.google.code.gson:gson") { transitive = false }
+
     testCompile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.21'
 
 

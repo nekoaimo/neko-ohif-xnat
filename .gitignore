@@ -7,4 +7,4 @@
 /target
 dep*.txt
 /.nb-gradle/
-/build/*
+/build
