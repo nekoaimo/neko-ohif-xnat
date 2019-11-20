@@ -43,12 +43,14 @@
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
+import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class OhifViewerInput
 {
 	private String transactionId;
-	private List<OhifViewerInputStudy> studies;
+	private List<OhifViewerInputStudy> studies = new ArrayList<>();
 	
 	
 	public String getTransactionId()
@@ -63,11 +65,12 @@ public class OhifViewerInput
 
 	public List<OhifViewerInputStudy> getStudies()
 	{
-		return studies;
+		return ImmutableList.copyOf(studies);
 	}
 
 	public void setStudies(List<OhifViewerInputStudy> studies)
 	{
-		this.studies = studies;
+		this.studies.clear();
+		this.studies.addAll(studies);
 	}
 }

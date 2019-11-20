@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<configuration>
+    <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="ohifviewer">
+        <append>false</append>
+        <file>${xnat.home}/logs/ohifviewer.log</file>
+        <encoder>
+            <pattern>%d [%t] %-5p %c - %m%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${xnat.home}/logs/ohifviewer.log.%d{yyyy-MM-dd}</fileNamePattern>
+        </rollingPolicy>
+    </appender>
+    <logger additivity="false" level="DEBUG" name="org.nrg.xnatx.ohifviewer">
+        <appender-ref ref="ohifviewer"/>
+    </logger>
+    <logger additivity="false" level="INFO" name="org.nrg.xnatx.ohifviewer.etherj">
+        <appender-ref ref="ohifviewer"/>
+    </logger>
+</configuration>

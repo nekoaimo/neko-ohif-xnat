@@ -1,38 +1,37 @@
 /********************************************************************
-* Copyright (c) 2018, Institute of Cancer Research
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions
-* are met:
-*
-* (1) Redistributions of source code must retain the above copyright
-*     notice, this list of conditions and the following disclaimer.
-*
-* (2) Redistributions in binary form must reproduce the above
-*     copyright notice, this list of conditions and the following
-*     disclaimer in the documentation and/or other materials provided
-*     with the distribution.
-*
-* (3) Neither the name of the Institute of Cancer Research nor the
-*     names of its contributors may be used to endorse or promote
-*     products derived from this software without specific prior
-*     written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-* FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-* COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-* OF THE POSSIBILITY OF SUCH DAMAGE.
-*********************************************************************/
-
+ * Copyright (c) 2018, Institute of Cancer Research
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * (1) Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ * (2) Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *
+ * (3) Neither the name of the Institute of Cancer Research nor the
+ *     names of its contributors may be used to endorse or promote
+ *     products derived from this software without specific prior
+ *     written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *********************************************************************/
 package org.nrg.xnatx.ohifviewer.xapi;
 
 import io.swagger.annotations.ApiOperation;
@@ -58,6 +57,7 @@ import java.util.HashMap;
 import org.nrg.xft.security.UserI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -80,248 +80,266 @@ import org.springframework.web.bind.annotation.ResponseBody;
  *
  * @author jpetts
  */
-
 @Api("Get and set viewer metadata.")
 @XapiRestController
 @RequestMapping(value = "/viewer")
-public class OhifViewerApi extends AbstractXapiRestController {
-    private static final Logger logger = LoggerFactory.getLogger(OhifViewerApi.class);
-    private static final String SEP = File.separator;
-    private static Boolean generateAllJsonLocked = false;
+public class OhifViewerApi extends AbstractXapiRestController
+{
+	private static final Logger logger = LoggerFactory.getLogger(OhifViewerApi.class);
+	private static final String SEP = File.separator;
+	private static Boolean generateAllJsonLocked = false;
 
-    @Autowired
-    public OhifViewerApi(final UserManagementServiceI userManagementService, final RoleHolder roleHolder) {
-   		super(userManagementService, roleHolder);
-    }
+	@Autowired
+	public OhifViewerApi(final UserManagementServiceI userManagementService, final RoleHolder roleHolder)
+	{
+		super(userManagementService, roleHolder);
+	}
 
-    /*=================================
-    // Study level GET/POST
-    =================================*/
+	/*=================================
+	// Study level GET/POST
+	=================================*/
+	@ApiOperation(value = "Checks if Session level JSON exists")
+	@ApiResponses(
+	{
+		@ApiResponse(code = 200, message = "OK, the session JSON exists."),
+		@ApiResponse(code = 403, message = "The user does not have permission to view the indicated experiment."),
+		@ApiResponse(code = 404, message = "The specified JSON does not exist."),
+		@ApiResponse(code = 500, message = "An unexpected error occurred."),
+	})
+	@XapiRequestMapping(
+		value = "projects/{_projectId}/experiments/{_experimentId}/exists",
+		produces = MediaType.APPLICATION_JSON_VALUE,
+		method = RequestMethod.GET,
+		restrictTo = AccessLevel.Read)
+	public ResponseEntity<String> doesStudyJsonExist(
+		final @PathVariable @Project String _projectId,
+		final @PathVariable @Experiment String _experimentId)
+		throws IOException, FileNotFoundException
+	{
+		String xnatArchivePath = XDAT.getSiteConfigPreferences().getArchivePath();
 
-    @ApiOperation(value = "Checks if Session level JSON exists")
-    @ApiResponses({
-      @ApiResponse(code = 200, message = "OK, the session JSON exists."),
-      @ApiResponse(code = 403, message = "The user does not have permission to view the indicated experiment."),
-      @ApiResponse(code = 404, message = "The specified JSON does not exist."),
-      @ApiResponse(code = 500, message = "An unexpected error occurred."),
-    })
-    @XapiRequestMapping(
-            value = "projects/{_projectId}/experiments/{_experimentId}/exists",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            method = RequestMethod.GET,
-            restrictTo = AccessLevel.Read)
-    public ResponseEntity<String> doesStudyJsonExist(
-      final @PathVariable @Project String _projectId,
-      final @PathVariable @Experiment String _experimentId)
-      throws IOException, FileNotFoundException
-    {
-      String xnatArchivePath = XDAT.getSiteConfigPreferences().getArchivePath();
+		// Get directory info from _experimentId
+		Map<String,String> experimentData;
+		String proj;
+		String expLabel;
+		try
+		{
+			experimentData = getDirectoryInfo(_experimentId);
+			proj = experimentData.get("proj");
+			expLabel = experimentData.get("expLabel");
+		}
+		catch (Exception ex)
+		{
+			logger.error(ex.getMessage());
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
 
-      // Get directory info from _experimentId
-      HashMap<String,String> experimentData;
-      String proj = null;
-      String expLabel = null;
-      try {
-        experimentData = getDirectoryInfo(_experimentId);
-        proj     = experimentData.get("proj");
-        expLabel = experimentData.get("expLabel");
-      } catch (Exception ex) {
-        logger.error(ex.getMessage());
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
+		final Boolean isSessionSharedIntoProject = sessionSharedIntoProject(_experimentId, _projectId);
 
-      final Boolean isSessionSharedIntoProject = sessionSharedIntoProject(_experimentId, _projectId);
+		if (!isSessionSharedIntoProject)
+		{
+			logger.info("project ids not equal");
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
 
-      if (!isSessionSharedIntoProject) {
-        logger.info("project ids not equal");
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
+		String readFilePath = getStudyPath(xnatArchivePath, proj, expLabel, _experimentId);
+		File file = new File(readFilePath);
 
-      String readFilePath = getStudyPath(xnatArchivePath, proj, expLabel, _experimentId);
-      File file = new File(readFilePath);
+		if (file.exists())
+		{
+			return new ResponseEntity<>(HttpStatus.OK);
+		}
+		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
 
-      if (file.exists())
-      {
-        return new ResponseEntity<>(HttpStatus.OK);
-      }
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
+	@ApiOperation(value = "Returns the session JSON for the specified experiment ID.")
+	@ApiResponses(
+	{
+		@ApiResponse(code = 200, message = "The session was located and properly rendered to JSON."),
+		@ApiResponse(code = 403, message = "The user does not have permission to view the indicated experiment."),
+		@ApiResponse(code = 500, message = "An unexpected error occurred.")
+	})
+	@XapiRequestMapping(
+		value = "projects/{_projectId}/experiments/{_experimentId}",
+		produces = MediaType.APPLICATION_JSON_VALUE,
+		method = RequestMethod.GET,
+		restrictTo = AccessLevel.Read
+	)
+	@ResponseBody
+	public ResponseEntity<StreamingResponseBody> getExperimentJson(
+		final @PathVariable @Project String _projectId,
+		final @PathVariable @Experiment String _experimentId)
+		throws FileNotFoundException
+	{
+		String xnatArchivePath = XDAT.getSiteConfigPreferences().getArchivePath();
 
+		// Get directory info from _experimentId
+		Map<String, String> experimentData;
+		String proj;
+		String expLabel;
+		try
+		{
+			experimentData = getDirectoryInfo(_experimentId);
+			expLabel = experimentData.get("expLabel");
+			proj = experimentData.get("proj");
+		}
+		catch (FileNotFoundException ex)
+		{
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
 
-    @ApiOperation(value = "Returns the session JSON for the specified experiment ID.")
-    @ApiResponses({
-      @ApiResponse(code = 200, message = "The session was located and properly rendered to JSON."),
-      @ApiResponse(code = 403, message = "The user does not have permission to view the indicated experiment."),
-      @ApiResponse(code = 500, message = "An unexpected error occurred.")
-    })
-    @XapiRequestMapping(
-      value = "projects/{_projectId}/experiments/{_experimentId}",
-      produces = MediaType.APPLICATION_JSON_VALUE,
-      method = RequestMethod.GET,
-      restrictTo = AccessLevel.Read
-    )
-    @ResponseBody
-    public ResponseEntity<StreamingResponseBody> getExperimentJson(
-      final @PathVariable @Project String _projectId,
-      final @PathVariable @Experiment String _experimentId)
-      throws FileNotFoundException
-    {
-      String xnatArchivePath = XDAT.getSiteConfigPreferences().getArchivePath();
+		final Boolean isSessionSharedIntoProject = sessionSharedIntoProject(_experimentId, _projectId);
 
-      // Get directory info from _experimentId
-      HashMap<String,String> experimentData;
-      String proj;
-      String expLabel;
-      try {
-        experimentData = getDirectoryInfo(_experimentId);
-        expLabel = experimentData.get("expLabel");
-        proj = experimentData.get("proj");
-      } catch (FileNotFoundException ex) {
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
+		if (!isSessionSharedIntoProject)
+		{
+			logger.info("project ids not equal");
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
 
-      final Boolean isSessionSharedIntoProject = sessionSharedIntoProject(_experimentId, _projectId);
+		String readFilePath = getStudyPath(xnatArchivePath, proj, expLabel, _experimentId);
+		File file = new File(readFilePath);
 
-      if (!isSessionSharedIntoProject) {
-        logger.info("project ids not equal");
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
+		if (file.exists())
+		{
+			final Reader reader = new FileReader(readFilePath);
+			StreamingResponseBody srb = new StreamingResponseBody()
+			{
+				@Override
+				public void writeTo(final OutputStream output) throws IOException
+				{
+					IOUtils.copy(reader, output);
+				}
+			};
 
-      String readFilePath = getStudyPath(xnatArchivePath, proj, expLabel, _experimentId);
-      File file = new File(readFilePath);
+			return new ResponseEntity<>(srb, HttpStatus.OK);
+		}
 
-      if (file.exists()) {
-        final Reader reader = new FileReader(readFilePath);
-        StreamingResponseBody srb = new StreamingResponseBody() {
-          @Override
-          public void writeTo(final OutputStream output) throws IOException {
-            IOUtils.copy(reader, output);
-          }
-        };
+		// JSON doesn't exist, so generate and cache it.
+		CreateExperimentMetadata.createMetadata(_experimentId);
 
-        return new ResponseEntity<>(srb, HttpStatus.OK);
-      }
+		final Reader reader = new FileReader(readFilePath);
+		StreamingResponseBody srb = new StreamingResponseBody()
+		{
+			@Override
+			public void writeTo(final OutputStream output) throws IOException
+			{
+				IOUtils.copy(reader, output);
+			}
+		};
 
-      // JSON doesn't exist, so generate and cache it.
+		return new ResponseEntity<>(srb, HttpStatus.OK);
+	}
 
-      CreateExperimentMetadata.createMetadata(_experimentId);
+	@ApiOperation(value = "Generates the session JSON for the specified experiment ID.")
+	@ApiResponses(
+	{
+		@ApiResponse(code = 201, message = "The session JSON has been created."),
+		@ApiResponse(code = 403, message = "The user does not have permission to post to the indicated experient."),
+		@ApiResponse(code = 500, message = "An unexpected error occurred.")
+	})
+	@XapiRequestMapping(
+		value = "projects/{_projectId}/experiments/{_experimentId}",
+		method = RequestMethod.POST,
+		restrictTo = AccessLevel.Edit
+	)
+	public ResponseEntity<String> postExperimentJson(
+		final @PathVariable @Project String _projectId,
+		final @PathVariable @Experiment String _experimentId)
+		throws IOException
+	{
+		// Get directory info from _experimentId
+		Map<String,String> experimentData;
+		String proj;
+		try
+		{
+			experimentData = getDirectoryInfo(_experimentId);
+			proj = experimentData.get("proj");
+		}
+		catch (Exception ex)
+		{
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
 
-      final Reader reader = new FileReader(readFilePath);
-      StreamingResponseBody srb = new StreamingResponseBody() {
-        @Override
-        public void writeTo(final OutputStream output) throws IOException {
-          IOUtils.copy(reader, output);
-        }
-      };
+		final Boolean isSessionSharedIntoProject = sessionSharedIntoProject(_experimentId, _projectId);
 
-      return new ResponseEntity<>(srb, HttpStatus.OK);
-    }
-    
-    @ApiOperation(value = "Generates the session JSON for the specified experiment ID.")
-    @ApiResponses({
-      @ApiResponse(code = 201, message = "The session JSON has been created."),
-      @ApiResponse(code = 403, message = "The user does not have permission to post to the indicated experient."),
-      @ApiResponse(code = 500, message = "An unexpected error occurred.")
-    })
-    @XapiRequestMapping(
-      value = "projects/{_projectId}/experiments/{_experimentId}",
-      method = RequestMethod.POST,
-      restrictTo = AccessLevel.Edit
-    )
-    public ResponseEntity<String> postExperimentJson(
-      final @PathVariable @Project String _projectId,
-      final @PathVariable @Experiment String _experimentId)
-      throws IOException
-    {      
-      // Get directory info from _experimentId
-      HashMap<String,String> experimentData;
-      String proj;
-      try {
-        experimentData = getDirectoryInfo(_experimentId);
-        proj     = experimentData.get("proj");
-      } catch (Exception ex) {
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
-      
-      final Boolean isSessionSharedIntoProject = sessionSharedIntoProject(_experimentId, _projectId);
-      
-      if (!isSessionSharedIntoProject) {
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
-      
-      logger.error("creating experiment metadata for " + _experimentId);
-      
-      HttpStatus returnHttpStatus = CreateExperimentMetadata.createMetadata(_experimentId);
-      
-      return new ResponseEntity<String>(returnHttpStatus);
-    }
+		if (!isSessionSharedIntoProject)
+		{
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
 
-    @ApiOperation(value = "Generates the session JSON for every session in the database.")
-    @ApiResponses({
-      @ApiResponse(code = 201, message = "The JSON metadata has been created for every session in the database."),
-      @ApiResponse(code = 403, message = "The user does not have permission to perform this action."),
-      @ApiResponse(code = 423, message = "This process is already underway and is locked."),
-      @ApiResponse(code = 500, message = "An unexpected error occurred.")
-    })
-    @XapiRequestMapping(
-      value = "generate-all-metadata",
-      method = RequestMethod.POST,
-      restrictTo = AccessLevel.Admin
-    )
-    public ResponseEntity<String> setAllJson()
-      throws IOException
-    {
-      // Don't allow more generate all processes to be started if one is already running
-      if (generateAllJsonLocked == true)
-      {
-        return new ResponseEntity<String>(HttpStatus.LOCKED);
-      }
-      else
-      {
-        generateAllJsonLocked = true;
-      }
+		logger.error("creating experiment metadata for " + _experimentId);
 
-      ArrayList<String> experimentIds = getAllExperimentIds();
+		HttpStatus returnHttpStatus = CreateExperimentMetadata.createMetadata(_experimentId);
 
-      // Executes experiment JSON creation in a multithreaded fashion if avialable
-      Integer numThreads = Runtime.getRuntime().availableProcessors();
-      logger.info("numThreads for parallel JSON creation: " + numThreads);
-      ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
-      // Create a CountDownLatch in order to check when all processes are finished
-      CountDownLatch doneSignal =  new CountDownLatch(experimentIds.size());
+		return new ResponseEntity<String>(returnHttpStatus);
+	}
 
-      for (int i = 0; i< experimentIds.size(); i++)
-      {
-        final String experimentId = experimentIds.get(i);
+	@ApiOperation(value = "Generates the session JSON for every session in the database.")
+	@ApiResponses(
+	{
+		@ApiResponse(code = 201, message = "The JSON metadata has been created for every session in the database."),
+		@ApiResponse(code = 403, message = "The user does not have permission to perform this action."),
+		@ApiResponse(code = 423, message = "This process is already underway and is locked."),
+		@ApiResponse(code = 500, message = "An unexpected error occurred.")
+	})
+	@XapiRequestMapping(
+		value = "generate-all-metadata",
+		method = RequestMethod.POST,
+		restrictTo = AccessLevel.Admin
+	)
+	public ResponseEntity<String> setAllJson() throws IOException
+	{
+		// Don't allow more generate all processes to be started if one is already running
+		if (generateAllJsonLocked == true)
+		{
+			return new ResponseEntity<String>(HttpStatus.LOCKED);
+		}
+		else
+		{
+			generateAllJsonLocked = true;
+		}
 
-        logger.info("experimentId " + experimentId);
-        RunnableCreateExperimentMetadata createExperimentMetadata =
-                new RunnableCreateExperimentMetadata(doneSignal, experimentId);
-        executorService.submit(createExperimentMetadata);
-      }
+		ArrayList<String> experimentIds = getAllExperimentIds();
 
-      HttpStatus returnHttpStatus;
-      try
-      {
-        doneSignal.await();
-        returnHttpStatus = HttpStatus.CREATED;
-      }
-      catch (InterruptedException ex)
-      {
-        logger.error(ex.getMessage());
-        returnHttpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-      }
+		// Executes experiment JSON creation in a multithreaded fashion if avialable
+		Integer numThreads = Runtime.getRuntime().availableProcessors();
+		logger.info("numThreads for parallel JSON creation: " + numThreads);
+		ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+		// Create a CountDownLatch in order to check when all processes are finished
+		CountDownLatch doneSignal = new CountDownLatch(experimentIds.size());
 
-      generateAllJsonLocked = false;
-      return new ResponseEntity<String>(returnHttpStatus);
-    }
+		for (int i = 0; i < experimentIds.size(); i++)
+		{
+			final String experimentId = experimentIds.get(i);
+
+			logger.info("experimentId " + experimentId);
+			RunnableCreateExperimentMetadata createExperimentMetadata
+				= new RunnableCreateExperimentMetadata(doneSignal, experimentId);
+			executorService.submit(createExperimentMetadata);
+		}
+
+		HttpStatus returnHttpStatus;
+		try
+		{
+			doneSignal.await();
+			returnHttpStatus = HttpStatus.CREATED;
+		}
+		catch (InterruptedException ex)
+		{
+			logger.error(ex.getMessage());
+			returnHttpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		generateAllJsonLocked = false;
+		return new ResponseEntity<String>(returnHttpStatus);
+	}
 
 
-    /*=================================
-    // Series level GET/POST- WIP
-    =================================*/
+	/*=================================
+	// Series level GET/POST- WIP
+	=================================*/
 
-    /*
+ /*
 
     @ApiOperation(value = "Returns 200 if series level JSON exists")
     @ApiResponses({
@@ -437,114 +455,117 @@ public class OhifViewerApi extends AbstractXapiRestController {
       return new ResponseEntity<String>(returnHttpStatus);
     }
 
-    */
+	 */
+	private ArrayList<String> getAllExperimentIds()
+	{
+		ArrayList<String> experimentIds = new ArrayList<>();
 
-    private ArrayList<String> getAllExperimentIds()
-    {
-      ArrayList<String> experimentIds = new ArrayList<>();
+		UserI user = getSessionUser();
+		ArrayList<XnatExperimentdata> experiments = XnatExperimentdata.getAllXnatExperimentdatas(user, true);
 
-      UserI user = getSessionUser();
-      ArrayList<XnatExperimentdata> experiments = XnatExperimentdata.getAllXnatExperimentdatas(user, true);
+		for (int i = 0; i < experiments.size(); i++)
+		{
+			final XnatExperimentdata experimentI = experiments.get(i);
+			if (experimentI instanceof XnatImagesessiondata)
+			{
+				experimentIds.add(experimentI.getId());
+			}
+		}
 
-      for (int i = 0; i< experiments.size(); i++)
-      {
-        final XnatExperimentdata experimentI = experiments.get(i);
-        if ( experimentI instanceof XnatImagesessiondata )
-        {
-          experimentIds.add(experimentI.getId());
-        }
-      }
+		return experimentIds;
+	}
 
-      return experimentIds;
-    }
+	private Map<String,String> getDirectoryInfo(String _experimentId)
+		throws FileNotFoundException
+	{
+		// Get Experiment data and Project data from the experimentId
 
+		XnatExperimentdata expData = null;
+		XnatProjectdata projData = null;
+		XnatImagesessiondata session = null;
 
-    private HashMap<String, String> getDirectoryInfo(String _experimentId)
-      throws FileNotFoundException
-    {
-      // Get Experiment data and Project data from the experimentId
+		try
+		{
+			expData = XnatExperimentdata.getXnatExperimentdatasById(_experimentId, null, false);
+			projData = expData.getProjectData();
+			session = (XnatImagesessiondata) expData;
+		}
+		catch (Exception ex)
+		{
+			throw new FileNotFoundException("Experiment not found in project");
+		}
 
-      XnatExperimentdata expData = null;
-      XnatProjectdata projData = null;
-      XnatImagesessiondata session = null;
+		// Get the subject data
+		XnatSubjectdata subjData = XnatSubjectdata.getXnatSubjectdatasById(session.getSubjectId(), null, false);
 
-      try {
-        expData = XnatExperimentdata.getXnatExperimentdatasById(_experimentId, null, false);
-        projData = expData.getProjectData();
-        session=(XnatImagesessiondata)expData;
-      } catch (Exception ex) {
-        throw new FileNotFoundException("Experiment not found in project");
-      }
+		// Get the required info
+		String expLabel = expData.getArchiveDirectoryName();
+		String proj = projData.getId();
+		String subj = subjData.getLabel();
 
-      // Get the subject data
-      XnatSubjectdata subjData = XnatSubjectdata.getXnatSubjectdatasById(session.getSubjectId(), null, false);
+		// Construct a HashMap to return data
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("expLabel", expLabel);
+		result.put("proj", proj);
+		result.put("subj", subj);
 
-      // Get the required info
-      String expLabel = expData.getArchiveDirectoryName();
-      String proj = projData.getId();
-      String subj = subjData.getLabel();
+		return result;
+	}
 
-      // Construct a HashMap to return data
-      HashMap<String, String> result = new HashMap<String, String>();
-      result.put("expLabel", expLabel);
-      result.put("proj", proj);
-      result.put("subj", subj);
+	private Boolean sessionSharedIntoProject(String experimentId, String projectId)
+		throws FileNotFoundException
+	{
 
-      return result;
-    }
+		logger.info("in sessionSharedIntoProject(" + experimentId + "," + projectId + ")");
 
-    private Boolean sessionSharedIntoProject(String experimentId, String projectId)
-      throws FileNotFoundException
-    {
+		XnatExperimentdata expData = null;
+		XnatImagesessiondata session = null;
 
-      logger.info("in sessionSharedIntoProject(" + experimentId + "," + projectId + ")");
+		try
+		{
+			expData = XnatExperimentdata.getXnatExperimentdatasById(experimentId, null, false);
+			session = (XnatImagesessiondata) expData;
+		}
+		catch (Exception ex)
+		{
+			throw new FileNotFoundException("Experiment not found.");
+		}
 
-      XnatExperimentdata expData = null;
-      XnatImagesessiondata session = null;
+		if (expData.getProject().equals(projectId))
+		{
+			logger.info("session belongs to this project");
+			return true;
+		}
 
-      try {
-        expData = XnatExperimentdata.getXnatExperimentdatasById(experimentId, null, false);
-        session=(XnatImagesessiondata)expData;
-      } catch (Exception ex) {
-        throw new FileNotFoundException("Experiment not found.");
-      }
+		List<XnatExperimentdataShare> xnatExperimentdataShareList = session.getSharing_share();
 
-      if (expData.getProject().equals(projectId)) {
-        logger.info("session belongs to this project");
-        return true;
-      }
+		for (int i = 0; i < xnatExperimentdataShareList.size(); i++)
+		{
+			final XnatExperimentdataShare xnatExperimentdataShareI = xnatExperimentdataShareList.get(i);
 
-      List<XnatExperimentdataShare> xnatExperimentdataShareList = session.getSharing_share();
+			logger.info(xnatExperimentdataShareI.getProject());
 
-      for (int i = 0; i< xnatExperimentdataShareList.size(); i++)
-      {
-        final XnatExperimentdataShare xnatExperimentdataShareI = xnatExperimentdataShareList.get(i);
+			if (xnatExperimentdataShareI.getProject().equals(projectId))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
-        logger.info(xnatExperimentdataShareI.getProject());
+	private String getStudyPath(String xnatArchivePath, String proj, String expLabel, String _experimentId)
+	{
+		String filePath = xnatArchivePath + SEP + proj + SEP + "arc001"
+			+ SEP + expLabel + SEP + "RESOURCES/metadata/" + _experimentId + ".json";
+		return filePath;
+	}
 
-
-        if (xnatExperimentdataShareI.getProject().equals(projectId)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-
-    private String getStudyPath(String xnatArchivePath, String proj, String expLabel, String _experimentId)
-    {
-      String filePath = xnatArchivePath + SEP + proj + SEP + "arc001"
-      + SEP + expLabel + SEP + "RESOURCES/metadata/" + _experimentId +".json";
-      return filePath;
-    }
-
-    /*
+	/*
     private String getSeriesPath(String xnatArchivePath, String proj, String expLabel, String _scanId)
     {
       String filePath = xnatArchivePath + SEP + proj + SEP + "arc001"
       + SEP + expLabel + SEP + "RESOURCES/metadata/" + _scanId +".json";
       return filePath;
     }
-    */
-
+	 */
 }
