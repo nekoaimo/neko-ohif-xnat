@@ -42,6 +42,7 @@ import org.nrg.xdat.om.XnatExperimentdata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xdat.om.XnatSubjectdata;
+import org.nrg.xft.security.UserI;
 
 /**
  *
@@ -129,6 +130,26 @@ public class PluginUtils
 		result.put("subj", subj);
 
 		return result;
+	}
+
+	/**
+	 *
+	 * @param id
+	 * @param user
+	 * @return
+	 * @throws PluginException
+	 */
+	public static XnatImagesessiondata getImageSessionData(String id, UserI user)
+		throws PluginException
+	{
+		XnatImagesessiondata sessionData = 
+			XnatImagesessiondata.getXnatImagesessiondatasById(id, user, false);
+		if (sessionData == null)
+		{
+			throw new PluginException("No session found for ID: "+id,
+				PluginCode.HttpUnprocessableEntity);
+		}
+		return sessionData;
 	}
 
 	public static boolean isDisplayableSopClass(String uid)

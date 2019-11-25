@@ -74,6 +74,10 @@ import org.nrg.xapi.rest.Project;
 import org.nrg.xapi.rest.Experiment;
 import org.nrg.xdat.om.XnatExperimentdataShare;
 import org.nrg.xdat.security.helpers.AccessLevel;
+import org.nrg.xnatx.ohifviewer.PluginCode;
+import org.nrg.xnatx.ohifviewer.PluginException;
+import org.nrg.xnatx.ohifviewer.PluginUtils;
+import org.nrg.xnatx.ohifviewer.Security;
 import org.nrg.xnatx.ohifviewer.inputcreator.CreateExperimentMetadata;
 import org.nrg.xnatx.ohifviewer.inputcreator.RunnableCreateExperimentMetadata;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -117,9 +121,17 @@ public class OhifViewerApi extends AbstractXapiRestController
 	public ResponseEntity<String> doesStudyJsonExist(
 		final @ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
 		final @ApiParam(value="Experiment ID") @PathVariable("experimentId") @Experiment String experimentId)
-		throws IOException, FileNotFoundException
+		throws PluginException
 	{
-		final boolean isSessionSharedIntoProject = sessionSharedIntoProject(
+		UserI user = getSessionUser();
+		Security.checkProject(user, projectId);
+		Security.checkSession(user, experimentId);
+		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
+			experimentId, user);
+		Security.checkPermissions(user, sessionData.getXSIType()+"/project", projectId,
+			Security.Read);
+
+		boolean isSessionSharedIntoProject = sessionSharedIntoProject(
 			experimentId, projectId);
 		if (!isSessionSharedIntoProject)
 		{
@@ -129,20 +141,9 @@ public class OhifViewerApi extends AbstractXapiRestController
 
 		String xnatArchivePath = XDAT.getSiteConfigPreferences().getArchivePath();
 		// Get directory info from _experimentId
-		Map<String,String> experimentData;
-		String proj;
-		String expLabel;
-		try
-		{
-			experimentData = getDirectoryInfo(experimentId);
-			proj = experimentData.get("proj");
-			expLabel = experimentData.get("expLabel");
-		}
-		catch (Exception ex)
-		{
-			logger.error(ex.getMessage());
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
+		Map<String,String> experimentData = getDirectoryInfo(experimentId);
+		String proj = experimentData.get("proj");
+		String expLabel = experimentData.get("expLabel");
 		String readFilePath = getStudyPath(xnatArchivePath, proj, expLabel,
 			experimentId);
 		File file = new File(readFilePath);
@@ -170,27 +171,23 @@ public class OhifViewerApi extends AbstractXapiRestController
 	public ResponseEntity<StreamingResponseBody> getExperimentJson(
 		final @ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
 		final @ApiParam(value="Experiment ID") @PathVariable("experimentId") @Experiment String experimentId)
-		throws IOException
+		throws PluginException
 	{
+		UserI user = getSessionUser();
+		Security.checkProject(user, projectId);
+		Security.checkSession(user, experimentId);
+		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
+			experimentId, user);
+		Security.checkPermissions(user, sessionData.getXSIType()+"/project", projectId,
+			Security.Read);
+
 		String xnatArchivePath = XDAT.getSiteConfigPreferences().getArchivePath();
-
 		// Get directory info from _experimentId
-		Map<String, String> experimentData;
-		String proj;
-		String expLabel;
-		try
-		{
-			experimentData = getDirectoryInfo(experimentId);
-			expLabel = experimentData.get("expLabel");
-			proj = experimentData.get("proj");
-		}
-		catch (FileNotFoundException ex)
-		{
-			logger.error("Error retrieving directory info", ex);
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
+		Map<String, String> experimentData = getDirectoryInfo(experimentId);
+		String expLabel = experimentData.get("expLabel");
+		String proj = experimentData.get("proj");
 
-		final boolean isSessionSharedIntoProject = sessionSharedIntoProject(
+		boolean isSessionSharedIntoProject = sessionSharedIntoProject(
 			experimentId, projectId);
 		if (!isSessionSharedIntoProject)
 		{
@@ -225,9 +222,17 @@ public class OhifViewerApi extends AbstractXapiRestController
 	public ResponseEntity<String> postExperimentJson(
 		final @ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
 		final @ApiParam(value="Experiment ID") @PathVariable("experimentId") @Experiment String experimentId)
-		throws IOException
+		throws PluginException
 	{
-		final boolean isSessionSharedIntoProject = sessionSharedIntoProject(
+		UserI user = getSessionUser();
+		Security.checkProject(user, projectId);
+		Security.checkSession(user, experimentId);
+		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
+			experimentId, user);
+		Security.checkPermissions(user, sessionData.getXSIType()+"/project", projectId,
+			Security.Edit, Security.Read);
+
+		boolean isSessionSharedIntoProject = sessionSharedIntoProject(
 			experimentId, projectId);
 		if (!isSessionSharedIntoProject)
 		{
@@ -238,7 +243,7 @@ public class OhifViewerApi extends AbstractXapiRestController
 		HttpStatus returnHttpStatus = CreateExperimentMetadata.createMetadata(
 			experimentId);
 
-		return new ResponseEntity<String>(returnHttpStatus);
+		return new ResponseEntity<>(returnHttpStatus);
 	}
 
 	@ApiOperation(value = "Generates the session JSON for every session in the database.")
@@ -254,18 +259,56 @@ public class OhifViewerApi extends AbstractXapiRestController
 		method = RequestMethod.POST,
 		restrictTo = AccessLevel.Admin
 	)
-	public ResponseEntity<String> setAllJson() throws IOException
+	public ResponseEntity<String> setAllJson() throws PluginException
 	{
 		// Don't allow more generate all processes to be started if one is already running
 		if (generateAllJsonLocked == true)
 		{
-			return new ResponseEntity<String>(HttpStatus.LOCKED);
+			return new ResponseEntity<>(HttpStatus.LOCKED);
 		}
 		else
 		{
 			generateAllJsonLocked = true;
 		}
+		HttpStatus status;
+		// Ensure lock boolean is reset on an exception
+		try
+		{
+			status = generateAllMetadata();
+		}
+		finally
+		{
+			generateAllJsonLocked = false;
+		}
+		return new ResponseEntity<>(status);
+	}
 
+	private StreamingResponseBody createResponseBody(File file)
+		throws PluginException
+	{
+		StreamingResponseBody srb = null;
+		try
+		{
+			final InputStream is = Files.newInputStream(file.toPath());
+			srb = new StreamingResponseBody()
+			{
+				@Override
+				public void writeTo(final OutputStream output) throws IOException
+				{
+					IOUtils.copy(is, output);
+				}
+			};
+		}
+		catch (IOException ex)
+		{
+			throw new PluginException("IO error for "+file.getPath(),
+				PluginCode.IO, ex);
+		}
+		return srb;
+	}
+
+	private HttpStatus generateAllMetadata() throws PluginException
+	{
 		List<String> experimentIds = getAllExperimentIds();
 
 		// Executes experiment JSON creation in a multithreaded fashion if avialable
@@ -283,34 +326,20 @@ public class OhifViewerApi extends AbstractXapiRestController
 			executorService.submit(createExperimentMetadata);
 		}
 
-		HttpStatus returnHttpStatus;
+		HttpStatus status;
 		try
 		{
 			doneSignal.await();
-			returnHttpStatus = HttpStatus.CREATED;
+			status = HttpStatus.CREATED;
 		}
 		catch (InterruptedException ex)
 		{
-			logger.error("JSON creation thread interrupted: "+ex.getMessage(), ex);
-			returnHttpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			throw new PluginException(
+				"JSON creation thread interrupted: "+ex.getMessage(),
+				PluginCode.HttpInternalError, ex);
 		}
 
-		generateAllJsonLocked = false;
-		return new ResponseEntity<String>(returnHttpStatus);
-	}
-
-	private StreamingResponseBody createResponseBody(File file) throws IOException
-	{
-		final InputStream is = Files.newInputStream(file.toPath());
-		StreamingResponseBody srb = new StreamingResponseBody()
-		{
-			@Override
-			public void writeTo(final OutputStream output) throws IOException
-			{
-				IOUtils.copy(is, output);
-			}
-		};
-		return srb;
+		return status;
 	}
 
 	/*=================================
@@ -452,7 +481,7 @@ public class OhifViewerApi extends AbstractXapiRestController
 	}
 
 	private Map<String,String> getDirectoryInfo(String experimentId)
-		throws FileNotFoundException
+		throws PluginException
 	{
 		// Get Experiment data and Project data from the experimentId
 
@@ -469,8 +498,9 @@ public class OhifViewerApi extends AbstractXapiRestController
 		}
 		catch (Exception ex)
 		{
-			logger.error("Experiment "+experimentId+" not found in project", ex);
-			throw new FileNotFoundException("Experiment not found in project");
+			throw new PluginException(
+				"Experiment "+experimentId+" not found in project",
+				PluginCode.HttpNotFound);
 		}
 
 		// Get the subject data
@@ -500,7 +530,7 @@ public class OhifViewerApi extends AbstractXapiRestController
 	}
 
 	private boolean sessionSharedIntoProject(String experimentId, String projectId)
-		throws FileNotFoundException
+		throws PluginException
 	{
 		logger.info("OhifViewerApi::sessionSharedIntoProject("+experimentId+", "+
 			projectId+")");
@@ -515,7 +545,8 @@ public class OhifViewerApi extends AbstractXapiRestController
 		catch (Exception ex)
 		{
 			logger.error("Experiment not found: "+experimentId, ex);
-			throw new FileNotFoundException("Experiment not found.");
+			throw new PluginException("Experiment not found: "+experimentId,
+				PluginCode.HttpUnprocessableEntity);
 		}
 
 		if (expData.getProject().equals(projectId))
