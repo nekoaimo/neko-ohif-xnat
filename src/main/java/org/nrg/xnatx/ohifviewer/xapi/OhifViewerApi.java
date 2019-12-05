@@ -86,7 +86,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  *
  * @author jpetts
  */
-@Api("Get and set viewer metadata.")
+@Api(description="OHIF Viewer API")
 @XapiRestController
 @RequestMapping(value = "/viewer")
 public class OhifViewerApi extends AbstractXapiRestController
