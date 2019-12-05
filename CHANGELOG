@@ -1,3 +1,11 @@
+**2.1 RC-1**
+Jar File:
+- Greatly reduced size of plugin jar.
+
+Internals:
+- Dedicated server-side log file and improved logging.
+- ControllerAdvice prevents exceptions escaping the plugin.
+
 **2.0**
 UX:
 Update refresh to work on events such as click and touch. Can always log back into XNAT in another tab if it times out.
