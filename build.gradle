@@ -26,12 +26,13 @@ buildscript {
 }
 
 group 'org.nrg.xnatx'
-version '2.0.1-SNAPSHOT'
+version '2.2.0-SNAPSHOT'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
+apply plugin: 'xnat-data-builder'
 
 idea {
     module {
@@ -45,19 +46,12 @@ configurations {
     compile.extendsFrom(compileAndInclude)
 }
 
-
 task fatJar(type: Jar) {
     zip64 true
     baseName = project.name
     from { configurations.compileAndInclude.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
-
-
-
-
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
 
 repositories {
     mavenLocal()
@@ -83,42 +77,27 @@ repositories {
         url 'https://jitpack.io'
     }
 
-//    flatDir {
-//       dirs 'lib'
-//   }
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 dependencyManagement.imports {
     mavenBom "org.nrg:parent:${vXnat}"
 }
 
 dependencies {
-    implementation("org.nrg.xnat:web") {
-        transitive = false
-    }
-    implementation("org.nrg.xnat:xnat-data-models") {
-        transitive = false
-    }
-    implementation("org.nrg:automation") {
-        transitive = false
-    }
-    implementation("org.nrg.xdat:core") {
-        transitive = false
-    }
-    implementation("org.nrg:dicom-xnat-sop") {
-        transitive = false
-    }
+    implementation("org.nrg.xnat:web") { transitive = false }
+    implementation("org.nrg.xnat:xnat-data-models") { transitive = false }
+    implementation("org.nrg.xdat:core") { transitive = false }
+    implementation("org.nrg:automation") { transitive = false }
+    implementation("org.nrg:dicom-xnat-sop") { transitive = false }
     implementation("org.nrg:framework")
-    implementation("org.nrg:prefs") {
-        transitive = false
-    }
-     implementation ('stratum:stratum:1.0') {
-        transitive = false
-    }
+    implementation("org.nrg:prefs") { transitive = false }
 
+    implementation("turbine:turbine") { transitive = false }
+    implementation("org.apache.velocity:velocity") { transitive = false }
+    implementation ('stratum:stratum') { transitive = false }
 
     implementation "org.springframework:spring-web"
     implementation "org.springframework:spring-webmvc"
@@ -138,8 +117,38 @@ dependencies {
     implementation("dcm4che:dcm4che-core") { transitive = false }
     implementation("com.google.code.gson:gson") { transitive = false }
 
-    testCompile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.21'
+    // Guava
+    implementation("com.google.guava:guava:20.0") { transitive = false }
+    // Jackson
+    def vJackson = '2.9.2'
+    implementation("com.fasterxml.jackson.core:jackson-annotations") { transitive = false }
+    implementation("com.fasterxml.jackson.core:jackson-core") { transitive = false }
+    implementation("com.fasterxml.jackson.core:jackson-databind") { transitive = false }
+    // Logback
+    implementation("ch.qos.logback:logback-classic") { transitive = false }
+    implementation("ch.qos.logback:logback-core") { transitive = false }
+     // EtherJ
+    def vEtherJ = '1.0.2'
+    compileAndInclude("icr.etherj:etherj-core:${vEtherJ}") { transitive = false }
+
+   testCompile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.21'
 
 
     testImplementation "junit:junit"
+}
+
+// This tells the compiler where to find source code. This isn't required in a
+// standard build, but the XNAT data builder generates code from XNAT data-type
+// schemas that the compiler needs to know about.
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+            srcDir 'build/xnat-generated/src/main/java'
+        }
+        resources {
+            srcDir 'src/main/resources'
+            srcDir 'build/xnat-generated/src/main/resources'
+        }
+    }
 }

@@ -34,12 +34,12 @@
 *********************************************************************/
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
-import org.nrg.dcm.SOPModel;
+import icr.etherj.dicom.Series;
+import icr.etherj.dicom.SopInstance;
 import java.io.File;
+import org.nrg.dcm.SOPModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.Series;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.SopInstance;
 
 /**
  *

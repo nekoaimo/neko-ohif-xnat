@@ -37,6 +37,14 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import icr.etherj.PathScan;
+import icr.etherj.dicom.DicomReceiver;
+import icr.etherj.dicom.DicomToolkit;
+import icr.etherj.dicom.Patient;
+import icr.etherj.dicom.PatientRoot;
+import icr.etherj.dicom.Series;
+import icr.etherj.dicom.SopInstance;
+import icr.etherj.dicom.Study;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -44,15 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.dcm4che2.data.DicomObject;
-import org.nrg.xnatx.ohifviewer.PluginUtils;
-import org.nrg.xnatx.ohifviewer.etherj.PathScan;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.DicomReceiver;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.DicomToolkit;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.Patient;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.PatientRoot;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.Series;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.SopInstance;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.Study;
+import org.nrg.xnatx.ohifviewer.ViewerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,7 +144,7 @@ public class CreateOhifViewerMetadata
 
 					for (SopInstance sop : series.getSopInstanceList())
 					{
-						if (PluginUtils.isDisplayableSopClass(sop.getSopClassUid()))
+						if (ViewerUtils.isDisplayableSopClass(sop.getSopClassUid()))
 						{
 							OhifViewerInputInstance oviInst = new OhifViewerInputInstance(sop,
 								series, this.xnatExperimentScanUrl, scanId);

@@ -1,0 +1,32 @@
+<tr>
+	#formLabel("ID:")
+	<td>$!om.getId()</td>
+</tr>
+<tr>
+	#formLabel("Name:")
+	<td>$!om.getName()</td>
+</tr>
+<tr>
+	#formLabel("Type:")
+	<td>$!om.getCollectiontype()</td>
+</tr>
+<tr>
+	#formLabel("Date Added:")
+	<td>
+		#if($om.getInsertDate())
+			$turbineUtils.formatDateTime($!om.InsertDate) ($!om.InsertUser.Login)
+		#end
+	</td>
+</tr>
+#if($!item.getProperty("date"))
+	<tr>
+		<th align="left">Date: </th>
+		<td>$turbineUtils.formatDate($!item.getProperty("date"))</td>
+	</tr>
+#end
+#if($!item.getProperty("time"))
+	<tr>
+		<th align="left">Time: </th>
+		<td>$!item.getProperty("time")</td>
+	</tr>
+#end

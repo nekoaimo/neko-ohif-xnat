@@ -45,9 +45,9 @@
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
+import icr.etherj.dicom.Series;
 import java.util.ArrayList;
 import java.util.List;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.Series;
 
 public class OhifViewerInputSeries extends OhifViewerInputItem
 {	
@@ -103,9 +103,4 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 		this.seriesNumber = seriesNumber;
 	}
 
-	private void setInstances(List<OhifViewerInputInstance> instances)
-	{
-		this.instances = instances;
-	}
-  
 }

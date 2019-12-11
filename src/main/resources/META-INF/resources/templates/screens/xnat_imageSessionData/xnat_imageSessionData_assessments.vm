@@ -1,0 +1,62 @@
+					<!-- BEGIN XNAT ROI plugin - xnat_imageSessionData_assessments.vm -->
+#set ( $assessorsVisible = false )
+#foreach ($assessor in $om.getMinimalLoadAssessors())
+	#if($assessor.canRead($user))
+		#set($assessorsVisible = true)
+		#break
+	#end
+#end
+#if($assessorsVisible == true)
+					<br><br>
+					<div class="edit_header1" style="margin-bottom:16px">Assessments</div>
+					<table cellspacing="3" cellpadding="3" border="0" class="highlight sortable">
+						<thead>
+							<tr>							
+								<th align="left" class="underscore sort">Experiment</th>
+								<th align="left" class="underscore sort">Name</th>
+								<th align="left" class="underscore sort">Label</th>
+								<th align="left" class="underscore sort">Date</th>
+								<th align="left" class="underscore sort">$displayManager.getSingularDisplayNameForProject()</th>
+							</tr>
+						</thead>
+						<tbody>
+	#foreach ($assessor in $om.getMinimalLoadAssessors())
+		#if($assessor.canRead($user))
+			#if($assessor.getProject() == $project)
+							<tr>
+			#else
+				#if($assessor.hasProject($project))
+							<tr bgcolor="ffcc99">
+				#else
+							<tr>
+				#end
+			#end
+								<td nowrap>
+			#set ( $assessorID = $!assessor.getProperty("ID"))
+			#set ( $assessorField = "${assessor.getXSIType()}.ID")
+
+			#set ( $url = "$link.setAction('DisplayItemAction').addPathInfo('search_element',$!assessor.getXSIType()).addPathInfo('search_field',$assessorField).addPathInfo('search_value',$assessorID).addPathInfo('popup',$popup).addPathInfo('project',$!project)" )
+			#if($assessor.getHeader())
+									<a href="$url" title="$assessor.getIdentifier($project)">$!assessor.getHeader()</a>
+			#else
+									<a href="$url" title="$assessor.getIdentifier($project)">$displayManager.getSingularDisplayNameForElement($assessor.getXSIType())</a>
+			#end
+								</td>
+			#if($assessor.getItem().instanceOf("icr:roiCollectionData"))
+				#set($fullAssessor = $om.getAssessorById($assessor.getId()))
+								<td nowrap>$!fullAssessor.getName()</td>
+								<td nowrap>$!fullAssessor.getLabel()</td>
+			#else
+								<td nowrap />
+								<td nowrap />
+			#end
+								<td nowrap>$!assessor.getProperty("date")</td>
+								<td nowrap>$!assessor.getProjectDisplayID()</td>
+							</tr> 
+		#end
+	#end
+						</tbody>
+					</table>
+#end
+					<!-- END XNAT ROI plugin - xnat_imageSessionData_assessments.vm -->
+

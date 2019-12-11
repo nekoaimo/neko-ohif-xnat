@@ -39,54 +39,57 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
-import org.apache.commons.io.IOUtils;
-import org.nrg.framework.annotations.XapiRestController;
-import org.nrg.xapi.rest.XapiRequestMapping;
-import org.nrg.xdat.XDAT;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.HashMap;
-import org.nrg.xft.security.UserI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.apache.commons.io.IOUtils;
+import org.nrg.framework.annotations.XapiRestController;
+import org.nrg.xapi.rest.AbstractXapiRestController;
+import org.nrg.xapi.rest.Project;
+import org.nrg.xapi.rest.Experiment;
+import org.nrg.xapi.rest.XapiRequestMapping;
+import org.nrg.xdat.XDAT;
 import org.nrg.xdat.om.XnatExperimentdata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xdat.om.XnatSubjectdata;
 import org.nrg.xdat.security.services.RoleHolder;
 import org.nrg.xdat.security.services.UserManagementServiceI;
-import org.nrg.xapi.rest.AbstractXapiRestController;
-import org.nrg.xapi.rest.Project;
-import org.nrg.xapi.rest.Experiment;
 import org.nrg.xdat.om.XnatExperimentdataShare;
 import org.nrg.xdat.security.helpers.AccessLevel;
-import org.nrg.xnatx.ohifviewer.PluginCode;
-import org.nrg.xnatx.ohifviewer.PluginException;
-import org.nrg.xnatx.ohifviewer.PluginUtils;
-import org.nrg.xnatx.ohifviewer.Security;
+import org.nrg.xft.security.UserI;
 import org.nrg.xnatx.ohifviewer.inputcreator.CreateExperimentMetadata;
 import org.nrg.xnatx.ohifviewer.inputcreator.RunnableCreateExperimentMetadata;
+import org.nrg.xnatx.plugin.PluginCode;
+import org.nrg.xnatx.plugin.PluginException;
+import org.nrg.xnatx.plugin.PluginUtils;
+import org.nrg.xnatx.plugin.Security;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 /**
  *
  * @author jpetts
  */
-@Api("Get and set viewer metadata.")
+@Api(description="OHIF Viewer Metadata API")
 @XapiRestController
 @RequestMapping(value = "/viewer")
 public class OhifViewerApi extends AbstractXapiRestController
@@ -128,8 +131,8 @@ public class OhifViewerApi extends AbstractXapiRestController
 		Security.checkSession(user, experimentId);
 		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
 			experimentId, user);
-		Security.checkPermissions(user, sessionData.getXSIType()+"/project", projectId,
-			Security.Read);
+		Security.checkPermissions(user, sessionData.getXSIType()+"/project",
+			projectId, Security.Read);
 
 		boolean isSessionSharedIntoProject = sessionSharedIntoProject(
 			experimentId, projectId);

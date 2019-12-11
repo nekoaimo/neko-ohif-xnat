@@ -50,7 +50,7 @@ import org.nrg.xdat.om.XnatExperimentdata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xdat.om.XnatSubjectdata;
-import org.nrg.xnatx.ohifviewer.PluginUtils;
+import org.nrg.xnatx.ohifviewer.ViewerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -71,7 +71,7 @@ public class CreateExperimentMetadata
 
 	public static HttpStatus createMetadata(String experimentId)
 	{
-		Map<String,String> experimentData = PluginUtils.getDirectoryInfo(
+		Map<String,String> experimentData = ViewerUtils.getDirectoryInfo(
 			experimentId);
 		String proj = experimentData.get("proj");
 		String expLabel = experimentData.get("expLabel");

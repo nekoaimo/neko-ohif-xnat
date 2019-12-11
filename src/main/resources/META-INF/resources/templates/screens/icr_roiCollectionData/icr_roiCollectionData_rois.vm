@@ -1,0 +1,54 @@
+<h3>ROIs</h3>
+<table id="roiTable" cellspacing="3" cellpadding="3" border="0" class="highlight sortable">
+	<thead>
+		<tr>							
+			<th align="left" class="underscore sort">Name</th>
+			<th class="underscore sort">Geometric Type</th>
+		</tr>
+	</thead>
+	<tbody>
+	</tbody>
+</table>
+<script type="text/javascript">
+	function populateRoiTable(projectId, collectId)
+	{
+		var rootUrlWithPort = XNAT.url.getProtocol()+"//"+XNAT.url.getDomain()+
+			":"+XNAT.url.getPort()+XNAT.url.rootUrl("").replace(/\/+$/, "");
+		var roiUrl = rootUrlWithPort+"/xapi/roi/projects/"+projectId+"/rois/"+collectId;
+
+		var req = new XMLHttpRequest();
+		req.open("GET", roiUrl, true);
+		req.setRequestHeader("Accept", "application/json");
+		req.onload = function()
+		{
+			if (this.status !== 200)
+			{
+				console.log("ROI list fetch error. Status: "+
+					this.status+" - "+this.statusText);
+			} 
+
+			var rois = (typeof this.response === "string")
+				? JSON.parse(this.response) : this.response;
+			var roiBody = document.getElementById("roiTable").getElementsByTagName("tbody")[0];
+			var roiIdx = 1;
+			rois.forEach(function(roi)
+			{
+				var row = roiBody.insertRow(-1);
+				row.setAttribute("data-index", ("00000"+roiIdx).slice(-6));
+				roiIdx++;
+				var nameCell = row.insertCell(-1);
+				var geomCell = row.insertCell(-1);
+				nameCell.innerHTML = roi.name;
+				nameCell.noWrap = true;
+				nameCell.align = "left";
+				geomCell.innerHTML = roi.geometricType;
+				geomCell.noWrap = true;
+				geomCell.align = "right";
+			});
+		}
+		req.send();
+	}
+
+	populateRoiTable("$project", "$om.getId()");
+</script>
+

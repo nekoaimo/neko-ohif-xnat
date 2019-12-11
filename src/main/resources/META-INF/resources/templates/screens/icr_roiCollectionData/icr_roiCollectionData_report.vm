@@ -1,0 +1,63 @@
+<!-- BEGIN XNAT ROI plugin - icr_roiCollectionData_report.vm -->
+<style>
+	.report-section { margin: 1em 0; }
+</style>
+
+<script type="text/javascript">
+    document.title = "$om.getSchemaElement().getSingularDescription(): $!item.getProperty('label')";
+</script>
+#parse($turbineUtils.getTemplateName("_title", $om.getXSIType(), $project))
+
+<div name="details" class="report-section">
+	#parse($turbineUtils.getTemplateName("_details", $om.getXSIType(), $project))
+</div>
+
+<div name="roi_list" class="report-section">
+	#parse($turbineUtils.getTemplateName("_rois", $om.getXSIType(), $project))
+</div>
+
+<div name="resource_list" class="report-section">
+	#parse($turbineUtils.getTemplateName("_resources", $om.getXSIType(), $project))
+</div>
+
+##<div name="autogen" class="report-section">
+##	#parse($turbineUtils.getTemplateName("_autogen", $om.getXSIType(), $project))
+##</div>
+
+## Javascript to make Manage Files action work. Partly lifted from 
+## https://issues.xnat.org/browse/XNAT-5851
+<script type="text/javascript" src="$content.getURI("scripts/FileViewer.js")"></script>
+<script type="text/javascript">
+	var obj={};
+	obj.uri=serverRoot + "/REST/experiments/$!om.getImagesessionId()/assessors/$!om.getId()";
+	obj.refresh = serverRoot + "/data/services/refresh/catalog?options=" + encodeURIComponent("populateStats,append,delete,checksum") + "&XNAT_CSRF=" + csrfToken + "&resource=/archive/experiments/$!om.getId()";
+	obj.objectId = "$!om.getId()";
+	obj.objectType = "assessor";
+	obj.categories={};
+	obj.categories.ids=[];
+
+	#if($item.isActive() || $item.isQuarantine())
+		#if ($turbineUtils.canEdit($user, $item))
+			obj.canEdit=true;
+		#else
+			obj.canEdit=false;
+		#end
+		#if ($turbineUtils.canDelete($user, $item))
+			obj.canDelete=true;
+		#else
+			obj.canDelete=false;
+		#end
+	#else
+		obj.canEdit=false;
+		obj.canDelete=false;
+	#end
+
+	obj.isImageSession=false;
+	window.viewer=new FileViewer(obj);
+
+	function showFiles()
+	{
+		window.viewer.render();
+	}
+</script>
+<!-- END XNAT ROI plugin - icr_roiCollectionData_report.vm -->

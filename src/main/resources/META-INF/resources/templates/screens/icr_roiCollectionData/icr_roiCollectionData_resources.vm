@@ -1,0 +1,25 @@
+<h3>Resources</h3>
+<table cellspacing="3" cellpadding="3" border="0">
+	<tr>							
+		<th class="underscore">Label</th>
+		<th class="underscore">Description</th>
+		<th class="underscore"">Count</th>
+		<th class="underscore">Size</th>
+		<th class="underscore">Format</th>
+		<th class="underscore">Content</th>
+	</tr>
+	#set($maxIdx = $item.getChildItems("icr:roiCollectionData/out/file").size() - 1)
+	#if($maxIdx >= 0)
+		#foreach ($idx in [0..$maxIdx])
+			<tr>
+				<td align="left">$!om.getStringProperty("icr:roiCollectionData/out/file[$idx]/label")</td>
+				<td align="left">$!om.getStringProperty("icr:roiCollectionData/out/file[$idx]/description")</td>
+				<td align="right">$!om.getIntegerProperty("icr:roiCollectionData/out/file[$idx]/file_count")</td>
+				<td align="right">$!om.getIntegerProperty("icr:roiCollectionData/out/file[$idx]/file_size")</td>
+				<td align="right">$!om.getStringProperty("icr:roiCollectionData/out/file[$idx]/format")</td>
+				<td align="right">$!om.getStringProperty("icr:roiCollectionData/out/file[$idx]/content")</td>
+			</tr>
+		#end
+	#end
+</table>
+
