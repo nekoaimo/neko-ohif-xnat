@@ -1,11 +1,11 @@
-# XNAT-OHIF Viewer Plugin 2.0
+# XNAT-OHIF Viewer Plugin 2.1
 
 ![OHIF-XNAT-logo](assets/Logo.png)
 
-This plugin integrates the OHIF viewer into XNAT, 2.0 comes with a suite of annotation tools, and allows users to import/export ROI Contours and Segmentations to ROICollection Assessors on XNAT.
-Up to date viewer jars are available in the dist directory.
+This plugin integrates the OHIF viewer into XNAT, 2.1 comes with a suite of annotation tools, and allows users to import/export ROI Contours and Segmentations to ROICollection Assessors on XNAT.
+Up to date viewer bundles are available in the [downloads](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin/downloads/) area.
 
-## 2.0 Patch Notes:
+## 2.1 Patch Notes:
 
 Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG).
 
@@ -13,7 +13,7 @@ Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG).
 
 This release is built around the XNAT 1.7.6 specification.
 
-The main difference between 2.0 and and 1.0.X is the inclusion of a set of tools for annotating regions of interest within XNAT and storing these in the XNAT database for use in processing pipelines. Using the [ROI Upload Assistant](https://bitbucket.org/icrimaginginformatics/roiuploadassistant), one may also upload regions of interest stored in DICOM `RTSTRUCT`, DICOM `SEG` and `AIM` 4.0 Image Annotation Collection formats from external sources to XNAT. These will be automatically indexed and importable in the viewer.
+Using the [ROI Upload Assistant](https://bitbucket.org/icrimaginginformatics/roiuploadassistant), one may also upload regions of interest stored in DICOM `RTSTRUCT`, DICOM `SEG` and `AIM` 4.0 Image Annotation Collection formats from external sources to XNAT. These will be automatically indexed and importable in the viewer.
 
 ### Annotation Tools
 
