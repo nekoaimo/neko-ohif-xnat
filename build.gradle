@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        vXnat = '1.7.6-SNAPSHOT'
+        vXnat = '1.7.6'
     }
     repositories {
         mavenLocal()
@@ -26,7 +26,7 @@ buildscript {
 }
 
 group 'org.nrg.xnatx'
-version '2.1.0-RC1'
+version '2.1.0'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
