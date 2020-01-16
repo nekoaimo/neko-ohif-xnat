@@ -44,22 +44,37 @@
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
-import icr.etherj.dicom.Patient;
-import icr.etherj.dicom.Study;
 import java.util.ArrayList;
 import java.util.List;
+import org.nrg.xnatx.ohifviewer.etherj.dicom.Patient;
+import org.nrg.xnatx.ohifviewer.etherj.dicom.Study;
 
 public class OhifViewerInputStudy extends OhifViewerInputItem
 {
-	private String  studyInstanceUid;
-	private String  patientName;
+	private String studyInstanceUid;
+	private String patientName;
 	private List<OhifViewerInputSeries> seriesList = new ArrayList<>();
   
-  public OhifViewerInputStudy(Study std, Patient pat)
-  {
-    setStudyInstanceUid(std.getUid());
-    setPatientName(pat.getName());
-  }
+	public OhifViewerInputStudy(Study std, Patient pat)
+	{
+		setStudyInstanceUid(std.getUid());
+		setPatientName(pat.getName());
+	}
+
+	public void addSeries(OhifViewerInputSeries series)
+	{
+		this.seriesList.add(series);
+	}
+		
+	public String getPatientName()
+	{
+		return patientName;
+	}
+
+	public List<OhifViewerInputSeries> getSeriesList()
+	{
+		return seriesList;
+	}
 
 	public String getStudyInstanceUid()
 	{
@@ -71,19 +86,9 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 		this.studyInstanceUid = studyInstanceUid;
 	}
 
-	public String getPatientName()
-	{
-		return patientName;
-	}
-
 	private void setPatientName(String patientName)
 	{
 		this.patientName = patientName;
-	}
-
-	public List<OhifViewerInputSeries> getSeriesList()
-	{
-		return seriesList;
 	}
 
 	private void setSeriesList(List<OhifViewerInputSeries> seriesList)
@@ -91,9 +96,4 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 		this.seriesList = seriesList;
 	}
   
-  public void addSeries(OhifViewerInputSeries series)
-  {
-    this.seriesList.add(series);
-  }
-		
 }

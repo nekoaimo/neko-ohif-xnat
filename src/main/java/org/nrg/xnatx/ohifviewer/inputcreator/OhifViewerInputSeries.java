@@ -45,32 +45,32 @@
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
-import icr.etherj.dicom.Series;
 import java.util.ArrayList;
 import java.util.List;
+import org.nrg.xnatx.ohifviewer.etherj.dicom.Series;
 
 public class OhifViewerInputSeries extends OhifViewerInputItem
 {	
-	private String  seriesInstanceUid;
-	private String  seriesDescription;
+	private String seriesInstanceUid;
+	private String seriesDescription;
 	private Integer seriesNumber;
 	private List<OhifViewerInputInstance> instances = new ArrayList<>();
   
-  public OhifViewerInputSeries(Series ser)
-  {
-    setSeriesInstanceUid(ser.getUid());
-    setSeriesDescription(ser.getDescription());
-    setSeriesNumber(ser.getNumber());
-  }
-	
-	public String getSeriesInstanceUid()
+	public OhifViewerInputSeries(Series ser)
 	{
-		return seriesInstanceUid;
+		setSeriesInstanceUid(ser.getUid());
+		setSeriesDescription(ser.getDescription());
+		setSeriesNumber(ser.getNumber());
 	}
-
-	private void setSeriesInstanceUid(String seriesInstanceUid)
+	
+	public void addInstances(OhifViewerInputInstance instance)
 	{
-		this.seriesInstanceUid = seriesInstanceUid;
+		this.instances.add(instance);
+	}
+	
+	public List<OhifViewerInputInstance> getInstances()
+	{
+		return instances;
 	}
 
 	public String getSeriesDescription()
@@ -78,9 +78,9 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 		return seriesDescription;
 	}
 
-	private void setSeriesDescription(String seriesDescription)
+	public String getSeriesInstanceUid()
 	{
-		this.seriesDescription = seriesDescription;
+		return seriesInstanceUid;
 	}
 
 	public Integer getSeriesNumber()
@@ -88,14 +88,19 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 		return seriesNumber;
 	}
 
+	private void setSeriesInstanceUid(String seriesInstanceUid)
+	{
+		this.seriesInstanceUid = seriesInstanceUid;
+	}
+
+	private void setSeriesDescription(String seriesDescription)
+	{
+		this.seriesDescription = seriesDescription;
+	}
+
 	private void setSeriesNumber(Integer seriesNumber)
 	{
 		this.seriesNumber = seriesNumber;
-	}
-
-	public List<OhifViewerInputInstance> getInstances()
-	{
-		return instances;
 	}
 
 	private void setInstances(List<OhifViewerInputInstance> instances)
@@ -103,9 +108,4 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 		this.instances = instances;
 	}
   
-  public void addInstances(OhifViewerInputInstance instance)
-  {
-    this.instances.add(instance);
-  }
-	
 }
