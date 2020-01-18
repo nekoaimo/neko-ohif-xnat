@@ -7,7 +7,7 @@ Up to date viewer bundles are available in the [downloads](https://bitbucket.org
 
 ## 2.1 Patch Notes:
 
-Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG).
+Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG.md).
 
 ### Overview
 
@@ -157,4 +157,4 @@ In the likely event you are installing this plugin on an XNAT with an already po
 
 # Development
 
-Development instructions for OHIF-Viewer-XNAT and this XNAT plugin [are avaiable here](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat/).
+Development instructions for OHIF-Viewer-XNAT and this XNAT plugin [are available here](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat/).
