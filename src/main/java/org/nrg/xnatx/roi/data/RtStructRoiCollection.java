@@ -48,7 +48,6 @@ import icr.etherj.dicom.iod.module.RoiContourModule;
 import icr.etherj.dicom.iod.module.StructureSetModule;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
-import org.nrg.xnatx.roi.Constants;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.text.DateFormat;

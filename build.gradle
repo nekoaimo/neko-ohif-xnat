@@ -128,7 +128,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic") { transitive = false }
     implementation("ch.qos.logback:logback-core") { transitive = false }
      // EtherJ
-    def vEtherJ = '1.0.2'
+    def vEtherJ = '1.1.2-SNAPSHOT'
     compileAndInclude("icr.etherj:etherj-core:${vEtherJ}") { transitive = false }
 
    testCompile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.21'
