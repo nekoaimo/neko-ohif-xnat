@@ -1,0 +1,3 @@
+[submodule "ohifviewerxnat"]
+	path = ohifviewerxnat
+	url = https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat.git
