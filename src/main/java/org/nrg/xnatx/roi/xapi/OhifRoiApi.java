@@ -1049,7 +1049,8 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 				convertCollection(user, roiCollection, Constants.RtStruct);
 				break;
 			case Constants.RtStruct:
-				convertCollection(user, roiCollection, Constants.AIM);
+				logger.info("Collection type "+Constants.RtStruct+
+					" is no longer converted to AIM.");
 				break;
 			case Constants.Segmentation:
 			case Constants.Nifti:
