@@ -1,19 +1,25 @@
-# XNAT-OHIF Viewer Plugin 2.0
+# XNAT-OHIF Viewer Plugin 2.2
 
 ![OHIF-XNAT-logo](assets/Logo.png)
 
-This plugin integrates the OHIF viewer into XNAT, 2.0 comes with a suite of annotation tools, and allows users to import/export ROI Contours and Segmentations to ROICollection Assessors on XNAT.
-Up to date viewer jars are available in the dist directory.
+# Development Branch
 
-## 2.0 Patch Notes:
+***This is the dev branch of the repository that contains the latest developments and does not have pre-built jars. Use this branch at your own risk.***
 
-Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG).
+# Main Documentation
+
+This plugin integrates the OHIF viewer into XNAT, 2.2 comes with a suite of annotation tools, and allows users to import/export ROI Contours and Segmentations to ROICollection Assessors on XNAT.
+~~Up to date viewer bundles are available in the [downloads](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin/downloads/) area.~~
+
+## 2.2 Patch Notes:
+
+Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG.md).
 
 ### Overview
 
 This release is built around the XNAT 1.7.6 specification.
 
-The main difference between 2.0 and and 1.0.X is the inclusion of a set of tools for annotating regions of interest within XNAT and storing these in the XNAT database for use in processing pipelines. Using the [ROI Upload Assistant](https://bitbucket.org/icrimaginginformatics/roiuploadassistant), one may also upload regions of interest stored in DICOM `RTSTRUCT`, DICOM `SEG` and `AIM` 4.0 Image Annotation Collection formats from external sources to XNAT. These will be automatically indexed and importable in the viewer.
+The main difference between 2.x and and 1.0.x is the inclusion of a set of tools for annotating regions of interest within XNAT and storing these in the XNAT database for use in processing pipelines. Using the [ROI Upload Assistant](https://bitbucket.org/icrimaginginformatics/roiuploadassistant), one may also upload regions of interest stored in DICOM `RTSTRUCT`, DICOM `SEG` and `AIM` 4.0 Image Annotation Collection formats from external sources to XNAT. These will be automatically indexed and importable in the viewer.
 
 ### Annotation Tools
 
@@ -51,7 +57,7 @@ Segments may be managed and imported/exported to XNAT via the `Segments` sidebar
 
 ### ROI Collections Assessors
 
-The [xnat-roi-plugin](https://bitbucket.org/icrimaginginformatics/xnat-roi-plugin) (bundled with this plugin) adds a new assessor datatype, the `ROICollection`.
+The plugin adds a new assessor datatype, the `ROICollection`.
 
 - `ROICollection`s are containers for common contour-based and labelmap-based segmentation formats.
 
@@ -147,13 +153,36 @@ Since the rest of XNAT currently has poor support for mobile browsers, if deline
 
 # Deploying the Pre-built plugin
 
-1. Copy both plugins in the `dist` directory to the **plugins** directory of your XNAT installation. The location of the **plugins** folder varies based on how and where you have installed your XNAT. If using [`xnat-docker-compose`](https://github.com/NrgXnat/xnat-docker-compose), the plugins folder is located at `xnat-data/home/plugins` relative to the root directory.
+1. Copy the plugin jar, download [here](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin/downloads/), to the **plugins** directory of your XNAT installation. The location of the **plugins** folder varies based on how and where you have installed your XNAT. If using [`xnat-docker-compose`](https://github.com/NrgXnat/xnat-docker-compose), the plugins folder is located at `xnat-data/home/plugins` relative to the root directory.
 
 2. Restart your Tomcat server with `sudo service tomcat7 restart`, or `docker-compose restart xnat-web` if using `xnat-docker-compose`.
 
 # Initialising the viewer in a populated database
 
-In the likely event you are installing this plugin on an XNAT with an already populated database, an admin may call the REST command **POST XNAT_ROOT_URL/xapi/viewer/generate-all-metadata** in order to initiate a process that will iterate through all the sessions in the XNAT and generate the required metadta, using as many threads as are available on the machine.
+In the likely event you are installing this plugin on an XNAT with an already populated database, an admin may call the REST command `POST XNAT_ROOT_URL/xapi/viewer/generate-all-metadata` in order to initiate a process that will iterate through all the sessions in the XNAT and generate the required metadta, using as many threads as are available on the machine.
+
+# Building From Source
+
+The OHIF Viewer XNAT [repository](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat.git) is now used as the `ohifviewerxnat` submodule of this plugin repository.
+
+Checkout the repository:
+
+`$ git clone --recurse-submodules https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin.git`
+
+If you have a repository already checked out, update submodules:
+
+`$ git submodule update --init --recursive`
+
+The ohifviewerxnat submodule requires [yarn](https://classic.yarnpkg.com) to build. Assuming you have `yarn` installed on your machine, initialise it in the submodule. This may take a few minutes:
+
+`$ cd ohifviewerxnat; yarn install; cd -`
+
+Build the plugin in one step:
+
+`$ ./build_plugin.sh`
+
+The plugin jar will be in build/libs.
+
 
 # Development
 
