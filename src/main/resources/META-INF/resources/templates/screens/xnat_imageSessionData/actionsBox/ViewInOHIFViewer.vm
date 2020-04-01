@@ -191,6 +191,7 @@
 
     var projectId = dataContext.projectID;
     var experimentId = dataContext.ID;
+    var experimentLabel = dataContext.label || experimentId;
     var subjectId = dataContext.subjectID;
     var parentProjectId = dataContext.parentProjectID;
 
@@ -401,9 +402,8 @@
 
       $('body').pleaseWait('stop');
 
-      XNAT.dialog.message(
-        'Generating Missing Viewer Data',
-        "Generating missing viewer metadata for session " + experimentLabel + ". If the session is very large please wait a minute before attempting to open the viewer. This will only happen once."
+     XNAT.dialog.static.wait(
+        "Please wait... generating viewer metadata for session " + experimentLabel + ". This is a one-time operation that may take a few minutes if the session is very large. When complete, the viewer will open."
       );
     }
 
