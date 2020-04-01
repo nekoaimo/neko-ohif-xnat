@@ -183,7 +183,3 @@ Build the plugin in one step:
 
 The plugin jar will be in build/libs.
 
-
-# Development
-
-Development instructions for OHIF-Viewer-XNAT and this XNAT plugin [are avaiable here](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat/).
