@@ -2,6 +2,8 @@
 
 ![OHIF-XNAT-logo](assets/Logo.png)
 
+***This version of the plugin is based on [OHIF Viewer 2.0](https://github.com/OHIF/Viewers) and uses the [React](https://reactjs.org/) JavaScript library.***
+
 # Development Branch
 
 ***This is the dev branch of the repository that contains the latest developments and does not have pre-built jars. Use this branch at your own risk.***
