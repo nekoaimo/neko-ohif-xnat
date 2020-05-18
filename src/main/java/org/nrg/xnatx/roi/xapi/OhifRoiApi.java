@@ -349,7 +349,9 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		{
 			requestedType = collectType;
 		}
-		checkType(requestedType);
+		String modality = PluginUtils.getImageSessionModality(
+			collectData.getImageSessionData());
+		checkType(requestedType, modality);
 //		if (Constants.Nifti.equals(requestedType) &&
 //			 Constants.Segmentation.equals(collectType))
 //		{
@@ -559,7 +561,8 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		Security.checkPermissions(user, sessionData,
 			Security.Create, Security.Edit, Security.Read);
 
-		checkType(type);
+		String modality = PluginUtils.getImageSessionModality(sessionData);
+		checkType(type, modality);
 		// Null seriesUid until NIfTI re-enabled
 		String seriesUid = null;
 		String collectId = checkExisting(projectId, label, overwrite);
@@ -567,7 +570,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 			sessionId, collectId, label, is, type, seriesUid);
 		CollectionStorage storage = new DefaultCollectionStorage();
 		Result result = storage.store(user, roiCollection, roiService);
-		storeAlternateTypes(user, roiCollection);
+		storeAlternateTypes(user, roiCollection, modality);
 
 		return new ResponseEntity<>(result.getMessage(), result.getStatus());
 	}
@@ -730,13 +733,21 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		return collectData.getId();
 	}
 
-	private void checkType(String type) throws PluginException
+	private void checkType(String type, String modality) throws PluginException
 	{
 		switch (type)
 		{
 			case Constants.AIM:
+				return;
 			case Constants.RtStruct:
 			case Constants.Segmentation:
+				if (!is3D(modality))
+				{
+					throw new PluginException(
+						"Collection type "+type+" not supported for modality "+modality,
+						PluginCode.HttpUnprocessableEntity);
+				}
+				return;
 			case Constants.Nifti:
 				return;
 			default:
@@ -919,6 +930,22 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		return false;
 	}
 
+	private boolean is3D(String modality)
+	{
+		// Only certain modalities define the ImagePlane module and are located
+		// in 3D space
+		switch (modality)
+		{
+			case "MR":
+			case "CT":
+			case "PT":
+				return true;
+			default:
+				// CR, SC, etc
+				return false;
+		}
+	}
+
 	private void populateUids(NiftiRoiCollection roiCollection, String sessionId,
 		UserI user, String seriesUid) throws PluginException
 	{
@@ -1043,23 +1070,36 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 	private void storeAlternateTypes(UserI user, RoiCollection roiCollection)
 		throws PluginException
 	{
-		switch (roiCollection.getType())
+		storeAlternateTypes(user, roiCollection, null);
+	}
+
+	private void storeAlternateTypes(UserI user, RoiCollection roiCollection,
+		String modality) throws PluginException
+	{
+		String type = roiCollection.getType();
+		switch (type)
 		{
 			case Constants.AIM:
-				convertCollection(user, roiCollection, Constants.RtStruct);
+				if (is3D(modality))
+				{
+					convertCollection(user, roiCollection, Constants.RtStruct);
+				}
+				else
+				{
+					logger.info("Collection type "+type+
+						" does not have alternate types for modality "+modality);
+				}
 				break;
 			case Constants.RtStruct:
-				logger.info("Collection type "+Constants.RtStruct+
-					" is no longer converted to AIM.");
+				convertCollection(user, roiCollection, Constants.AIM);
 				break;
 			case Constants.Segmentation:
 			case Constants.Nifti:
-				logger.info("Collection type "+roiCollection.getType()+
-					" does not have alternate types");
+				logger.info("Collection type "+type+" does not have alternate types");
 				break;
 			default:
 				throw new PluginException(
-					"Unknown ROI collection type: "+roiCollection.getType(),
+					"Unknown ROI collection type: "+type,
 					PluginCode.HttpUnprocessableEntity);
 		}
 	}

@@ -36,7 +36,7 @@ package org.nrg.xnatx.roi.data;
 
 import icr.etherj.dicom.DicomUtils;
 import icr.etherj.dicom.iod.Contour;
-import icr.etherj.dicom.iod.ContourImage;
+import icr.etherj.dicom.iod.IodUtils;
 import icr.etherj.dicom.iod.Iods;
 import icr.etherj.dicom.iod.ReferencedFrameOfReference;
 import icr.etherj.dicom.iod.RoiContour;
@@ -50,10 +50,7 @@ import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import org.dcm4che2.data.DicomObject;
 import icr.xnat.plugin.roi.entity.Roi;
@@ -101,14 +98,7 @@ public class RtStructRoiCollection extends AbstractRoiCollection
 	@Override
 	public String getDate()
 	{
-		String studyDate = rtStruct.getStudyDate();
-		if (studyDate.isEmpty())
-		{
-			return studyDate;
-		}
-		Date dt = DicomUtils.parseDate(studyDate);
-		DateFormat format = new SimpleDateFormat("yyyyMMdd");
-		return format.format(dt);
+		return IodUtils.getDate(rtStruct, "yyyyMMdd");
 	}
 
 	@Override
@@ -139,14 +129,7 @@ public class RtStructRoiCollection extends AbstractRoiCollection
 	@Override
 	public String getTime()
 	{
-		String studyTime = rtStruct.getStudyTime();
-		if (studyTime.isEmpty())
-		{
-			return studyTime;
-		}
-		Date dt = DicomUtils.parseTime(studyTime);
-		DateFormat format = new SimpleDateFormat("HHmmss");
-		return format.format(dt);
+		return IodUtils.getTime(rtStruct, "HHmmss");
 	}
 
 	@Override
@@ -174,10 +157,8 @@ public class RtStructRoiCollection extends AbstractRoiCollection
 					refStudy.getRtReferencedSeriesList())
 				{
 					addSeriesUid(refSeries.getSeriesInstanceUid());
-					for (ContourImage ci : refSeries.getContourImageList())
-					{
-						addSopInstanceUid(ci.getReferencedSopInstanceUid());
-					}
+					refSeries.getContourImageList().forEach(
+						(ci) -> addSopInstanceUid(ci.getReferencedSopInstanceUid()));
 				}
 			}
 		}
@@ -188,10 +169,8 @@ public class RtStructRoiCollection extends AbstractRoiCollection
 		{
 			for (Contour contour : roi.getContourList())
 			{
-				for (ContourImage ci : contour.getContourImageList())
-				{
-					addSopInstanceUid(ci.getReferencedSopInstanceUid());
-				}
+				contour.getContourImageList().forEach(
+					(ci) -> addSopInstanceUid(ci.getReferencedSopInstanceUid()));
 			}
 		}
 	}

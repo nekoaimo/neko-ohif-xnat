@@ -227,6 +227,40 @@ public class PluginUtils
 
 	/**
 	 *
+	 * @param sessionData
+	 * @return
+	 */
+	public static String getImageSessionModality(XnatImagesessiondata sessionData)
+	{
+		String modality = sessionData.getModality();
+		if (!StringUtils.isNullOrEmpty(modality))
+		{
+			return modality;
+		}
+		// Hack to work around the session's modality not being filled in during
+		// session creation
+		String xsiType = sessionData.getXSIType();
+		logger.warn(
+			"Modality for session "+sessionData.getId()+" is null or empty."+
+				" Deriving from XSI type: "+xsiType);
+		switch (xsiType)
+		{
+			case "xnat:mrSessionData":
+				return "MR";
+			case "xnat:ctSessionData":
+				return "CT";
+			case "xnat:petSessionData":
+				return "PT";
+			case "xnat:crSessionData":
+				return "CR";
+			default:
+		}
+		modality = xsiType.substring(5, xsiType.indexOf("SessionData"));
+		return modality.toUpperCase();
+	}
+
+	/**
+	 *
 	 * @param user
 	 * @param sessionId
 	 * @param scanId

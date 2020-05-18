@@ -38,6 +38,7 @@ import java.io.PrintStream;
 import java.util.List;
 import org.nrg.xdat.bean.CatCatalogBean;
 import org.nrg.xdat.model.CatEntryI;
+import org.nrg.xdat.model.XnatExperimentdataShareI;
 import org.nrg.xdat.om.IcrRoicollectiondata;
 import org.nrg.xdat.om.IcrRoicollectiondataSeriesuid;
 import org.nrg.xdat.om.XnatImageassessordata;
@@ -85,10 +86,8 @@ public class DisplayUtils
 		List<IcrRoicollectiondataSeriesuid> seriesUidList =
 			collectData.getReferences_seriesuid();
 		out.println(indent+"* SeriesUIDs:");
-		for (IcrRoicollectiondataSeriesuid seriesUid : seriesUidList)
-		{
-			out.println(indent+"  "+seriesUid.getSeriesuid());
-		}
+		seriesUidList.forEach(
+			(seriesUid) -> out.println(indent+"  "+seriesUid.getSeriesuid()));
 		try
 		{
 			String rootPath = collectData.getArchiveRootPath();
@@ -101,10 +100,7 @@ public class DisplayUtils
 				List<ResourceFile> fileResources = collectData.getFileResources(
 					expPath, true);
 				out.println(indent+"* File Resources ("+fileResources.size()+")");
-				for (ResourceFile rf : fileResources)
-				{
-					display(rf, indent+"  ", out);
-				}
+				fileResources.forEach((rf) -> display(rf, indent+"  ", out));
 			}
 		}
 		catch (BaseXnatExperimentdata.UnknownPrimaryProjectException ex)
@@ -113,16 +109,10 @@ public class DisplayUtils
 		}
 		List<XnatResource> outFileList = collectData.getOut_file();
 		out.println(indent+"* Out Files ("+outFileList.size()+")");
-		for (XnatResource outFile : outFileList)
-		{
-			display(outFile, indent+"  ", out);
-		}
+		outFileList.forEach((outFile) -> display(outFile, indent+"  ", out));
 		List<XnatResource> resources = collectData.getResources_resource();
 		out.println(indent+"* Resources ("+resources.size()+")");
-		for (XnatResource resource : resources)
-		{
-			display(resource, indent+"  ", out);
-		}
+		resources.forEach((resource) -> display(resource, indent+"  ", out));
 	}
 
 	public static void display(ResourceFile rf)
@@ -147,6 +137,33 @@ public class DisplayUtils
 		out.println(indent+"* XdatPath: "+rf.getXdatPath());
 		out.println(indent+"* XPath: "+rf.getXpath());
 		out.println(indent+"* Size: "+rf.getSize());
+	}
+
+	public static void display(XnatExperimentdataShareI share)
+	{
+		display(share, "", System.out);
+	}
+
+	public static void display(XnatExperimentdataShareI share, String indent)
+	{
+		display(share, indent, System.out);
+	}
+
+	public static void display(XnatExperimentdataShareI share,
+		PrintStream out)
+	{
+		display(share, "", out);
+	}
+
+	public static void display(XnatExperimentdataShareI share, String indent,
+		PrintStream out)
+	{
+		out.println(indent+share.getClass().getName());
+		out.println(indent+"* Project: "+share.getProject());
+		out.println(indent+"* Label: "+share.getLabel());
+		out.println(indent+"* Share: "+share.getShare());
+		out.println(indent+"* XsiType: "+share.getXSIType());
+		out.println(indent+"* ShareId: "+share.getXnatExperimentdataShareId());
 	}
 
 	public static void display(XnatImageassessordata assessorData)
@@ -191,22 +208,57 @@ public class DisplayUtils
 			List<ResourceFile> fileResources = assessorData.getFileResources(
 				expPath, true);
 			out.println(indent+"* File Resources ("+fileResources.size()+")");
-			for (ResourceFile rf : fileResources)
-			{
-				display(rf, indent+"  ", out);
-			}
+			fileResources.forEach((rf) -> display(rf, indent+"  ", out));
 		}
 		List<XnatResource> outFileList = assessorData.getOut_file();
 		out.println(indent+"* Out Files ("+outFileList.size()+")");
-		for (XnatResource outFile : outFileList)
-		{
-			display(outFile, indent+"  ", out);
-		}
+		outFileList.forEach((outFile) -> display(outFile, indent+"  ", out));
 		List<XnatResource> resources = assessorData.getResources_resource();
 		out.println(indent+"* Resources ("+resources.size()+")");
-		for (XnatResource resource : resources)
+		resources.forEach((resource) -> display(resource, indent+"  ", out));
+	}
+
+	public static void display(XnatImagesessiondata sessionData)
+	{
+		display(sessionData, "", System.out);
+	}
+
+	public static void display(XnatImagesessiondata sessionData, String indent)
+	{
+		display(sessionData, indent, System.out);
+	}
+
+	public static void display(XnatImagesessiondata sessionData,
+		PrintStream out)
+	{
+		display(sessionData, "", out);
+	}
+
+	public static void display(XnatImagesessiondata sessionData, String indent,
+		PrintStream out)
+	{
+		out.println(indent+sessionData.getClass().getName());
+		out.println(indent+"* ProjectID: "+sessionData.getProject());
+		out.println(indent+"* ID: "+sessionData.getId());
+		out.println(indent+"* Label: "+sessionData.getLabel());
+		out.println(indent+"* Modality: "+sessionData.getModality());
+		out.println(indent+"* XsiType: "+sessionData.getXSIType());
+		try
 		{
-			display(resource, indent+"  ", out);
+			out.println(indent+"* ArchivePath: "+sessionData.getArchivePath());
+		}
+		catch (BaseXnatExperimentdata.UnknownPrimaryProjectException ex)
+		{
+			out.println("UnknownPrimaryProjectException: "+ex.getMessage());
+		}
+		List<XnatExperimentdataShareI> shares = sessionData.getSharing_share();
+		if (!shares.isEmpty())
+		{
+			out.println(indent+"* Shares:");
+			for (XnatExperimentdataShareI share : shares)
+			{
+				DisplayUtils.display(share, indent+"  ", out);
+			}
 		}
 	}
 
@@ -299,4 +351,5 @@ public class DisplayUtils
 
 	private DisplayUtils()
 	{}
+
 }

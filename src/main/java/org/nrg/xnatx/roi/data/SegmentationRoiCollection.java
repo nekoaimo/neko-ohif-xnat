@@ -37,8 +37,8 @@ package org.nrg.xnatx.roi.data;
 import icr.etherj.dicom.DicomUtils;
 import icr.etherj.dicom.iod.DerivationImage;
 import icr.etherj.dicom.iod.FunctionalGroupsFrame;
+import icr.etherj.dicom.iod.IodUtils;
 import icr.etherj.dicom.iod.Iods;
-import icr.etherj.dicom.iod.ReferencedInstance;
 import icr.etherj.dicom.iod.ReferencedSeries;
 import icr.etherj.dicom.iod.Segment;
 import icr.etherj.dicom.iod.Segmentation;
@@ -50,13 +50,9 @@ import icr.etherj.dicom.iod.module.MultiframeFunctionalGroupsModule;
 import icr.etherj.dicom.iod.module.SegmentationImageModule;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
-import org.nrg.xnatx.roi.Constants;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import org.dcm4che2.data.DicomObject;
 import icr.xnat.plugin.roi.entity.Roi;
@@ -103,14 +99,7 @@ public class SegmentationRoiCollection extends AbstractRoiCollection
 	@Override
 	public String getDate()
 	{
-		String studyDate = seg.getStudyDate();
-		if (studyDate.isEmpty())
-		{
-			return studyDate;
-		}
-		Date dt = DicomUtils.parseDate(studyDate);
-		DateFormat format = new SimpleDateFormat("yyyyMMdd");
-		return format.format(dt);
+		return IodUtils.getDate(seg, "yyyyMMdd");
 	}
 
 	@Override
@@ -142,14 +131,7 @@ public class SegmentationRoiCollection extends AbstractRoiCollection
 	@Override
 	public String getTime()
 	{
-		String studyTime = seg.getStudyTime();
-		if (studyTime.isEmpty())
-		{
-			return studyTime;
-		}
-		Date dt = DicomUtils.parseTime(studyTime);
-		DateFormat format = new SimpleDateFormat("HHmmss");
-		return format.format(dt);
+		return IodUtils.getTime(seg, "HHmmss");
 	}
 
 	@Override
@@ -171,11 +153,8 @@ public class SegmentationRoiCollection extends AbstractRoiCollection
 		for (ReferencedSeries refSeries : cirm.getReferencedSeriesList())
 		{
 			addSeriesUid(refSeries.getSeriesInstanceUid());
-			for (ReferencedInstance refInst :
-				refSeries.getReferencedInstanceList())
-			{
-				addSopInstanceUid(refInst.getReferencedSopInstanceUid());
-			}
+			refSeries.getReferencedInstanceList().forEach((refInst) ->
+				addSopInstanceUid(refInst.getReferencedSopInstanceUid()));
 		}
 
 		// Derivation image module

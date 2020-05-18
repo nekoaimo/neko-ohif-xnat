@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        vXnat = '1.7.6-SNAPSHOT'
+        vXnat = '1.7.6'
     }
     repositories {
         mavenLocal()
@@ -128,10 +128,10 @@ dependencies {
     implementation("ch.qos.logback:logback-classic") { transitive = false }
     implementation("ch.qos.logback:logback-core") { transitive = false }
      // EtherJ
-    def vEtherJ = '1.1.2-SNAPSHOT'
+    def vEtherJ = '1.1.3-SNAPSHOT'
     compileAndInclude("icr.etherj:etherj-core:${vEtherJ}") { transitive = false }
 
-   testCompile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.21'
+    testCompile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.21'
 
 
     testImplementation "junit:junit"
