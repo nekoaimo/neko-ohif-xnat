@@ -144,6 +144,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		super(userManagementService, roleHolder);
 		this.roiService = roiService;
 		this.spatialDataService = spatialDataService;
+		logger.info("OHIF ROI XAPI initialised");
 	}
 
 	@ApiOperation(value="Returns permissions on a schema element")

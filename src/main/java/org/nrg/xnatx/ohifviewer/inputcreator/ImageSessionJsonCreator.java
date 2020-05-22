@@ -40,17 +40,13 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.nrg.xdat.XDAT;
-import org.nrg.xdat.model.XnatImagescandataI;
-import org.nrg.xdat.om.XnatExperimentdata;
 import org.nrg.xdat.om.XnatImagesessiondata;
-import org.nrg.xdat.om.XnatProjectdata;
-import org.nrg.xdat.om.XnatSubjectdata;
 import org.nrg.xnatx.ohifviewer.ViewerUtils;
+import org.nrg.xnatx.plugin.PluginException;
+import org.nrg.xnatx.plugin.PluginUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -59,39 +55,52 @@ import org.springframework.http.HttpStatus;
  *
  * @author jpetts
  */
-public class CreateExperimentMetadata
+public class ImageSessionJsonCreator
 {
 	private static final Logger logger =
-		LoggerFactory.getLogger(CreateExperimentMetadata.class);
+		LoggerFactory.getLogger(ImageSessionJsonCreator.class);
 	private static final String SEP = File.separator;
 	private static final String xnatRootURL =
 		XDAT.getSiteConfigPreferences().getSiteUrl();
 	private static final String xnatArchivePath =
 		XDAT.getSiteConfigPreferences().getArchivePath();
 
-	public static HttpStatus createMetadata(String experimentId)
+	public HttpStatus create(String sessionId)
 	{
-		Map<String,String> experimentData = ViewerUtils.getDirectoryInfo(
-			experimentId);
-		String proj = experimentData.get("proj");
-		String expLabel = experimentData.get("expLabel");
-		String subj = experimentData.get("subj");
+		XnatImagesessiondata sessionData;
+		try
+		{
+			sessionData = PluginUtils.getImageSessionData(sessionId, null);
+		}
+		catch (PluginException ex)
+		{
+			logger.info(ex.getMessage());
+			return HttpStatus.UNPROCESSABLE_ENTITY;
+		}
+		Map<String,String> seriesUidToScanIdMap =
+			PluginUtils.getImageScanUidIdMap(sessionData);
 
-		Map<String,String> seriesUidToScanIdMap = getSeriesUidToScanIdMap(
-			experimentId);
+		Map<String,String> dirInfo = ViewerUtils.getDirectoryInfo(
+			sessionId);
+		String proj = dirInfo.get("proj");
+		String expLabel = dirInfo.get("expLabel");
+		String subj = dirInfo.get("subj");
 
+		logger.debug("Experiment path: "+PluginUtils.getExperimentPath(sessionData));
 		String xnatScanPath = xnatArchivePath + SEP + proj
 			+ SEP + "arc001" + SEP + expLabel + SEP + "SCANS";
 		logger.info("Creating JSON metadata for {}", xnatScanPath);
 		String xnatExperimentScanUrl = getXnatScanUrl(proj, subj, expLabel);
+		logger.info("xnatExperimentScanUrl: "+xnatExperimentScanUrl);
 
 		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 		try
 		{
 			CreateOhifViewerMetadata jsonCreator = new CreateOhifViewerMetadata(
 				xnatScanPath, xnatExperimentScanUrl, seriesUidToScanIdMap);
-			String jsonString = jsonCreator.jsonify(experimentId);
-			String writeFilePath = getStudyPath(xnatArchivePath, proj, expLabel, experimentId);
+			String jsonString = jsonCreator.jsonify(sessionId);
+			String writeFilePath = getStudyPath(xnatArchivePath, proj, expLabel,
+				sessionId);
 
 			// Create RESOURCES/metadata if it doesn't exist
 			createFileParent(writeFilePath);
@@ -106,14 +115,25 @@ public class CreateExperimentMetadata
 		return status;
 	}
 
-	private static String getStudyPath(String xnatArchivePath, String proj, String expLabel, String _experimentId)
+	private static void createFileParent(String filePath) throws IOException
 	{
-		String filePath = xnatArchivePath + SEP + proj + SEP + "arc001"
-			+ SEP + expLabel + SEP + "RESOURCES/metadata/" + _experimentId + ".json";
-		return filePath;
+		// Create parent directory if it doesn't exist
+		File file = new File(filePath);
+		if (!file.exists())
+		{
+			Files.createDirectories(Paths.get(file.getParent()));
+		}
 	}
 
-	private static String getXnatScanUrl(String project, String subject, String experimentId)
+	private static String getStudyPath(String xnatArchivePath, String proj,
+		String expLabel, String experimentId)
+	{
+		return xnatArchivePath+SEP+proj+SEP+"arc001"+SEP+expLabel+
+			SEP+"RESOURCES/metadata/"+experimentId+".json";
+	}
+
+	private static String getXnatScanUrl(String project, String subject,
+		String experimentId)
 	{
 		String xnatExperimentScanUrl = xnatRootURL
 			+ "/data/archive/projects/" + project
@@ -123,79 +143,7 @@ public class CreateExperimentMetadata
 		return xnatExperimentScanUrl;
 	}
 
-	private static Map<String,String> getDirectoryInfo(String _experimentId)
-	{
-		// Get Experiment data and Project data from the experimentId
-		XnatExperimentdata expData = XnatExperimentdata.getXnatExperimentdatasById(_experimentId, null, false);
-		XnatProjectdata projData = expData.getProjectData();
-
-		XnatImagesessiondata session = (XnatImagesessiondata) expData;
-
-		// Get the subject data
-		XnatSubjectdata subjData = XnatSubjectdata.getXnatSubjectdatasById(session.getSubjectId(), null, false);
-
-		// Get the required info
-		String expLabel = expData.getArchiveDirectoryName();
-		String proj = projData.getId();
-		String subj = subjData.getLabel();
-
-		// Construct a HashMap to return data
-		Map<String, String> result = new HashMap<String,String>();
-		result.put("expLabel", expLabel);
-		result.put("proj", proj);
-		result.put("subj", subj);
-
-		return result;
-	}
-
-	protected static Map<String,String> getSeriesUidToScanIdMap(String _experimentId)
-	{
-		Map<String,String> seriesUidToScanIdMap = new HashMap<>();
-		XnatExperimentdata expData = XnatExperimentdata.getXnatExperimentdatasById(
-			_experimentId, null, false);
-
-		XnatImagesessiondata session = null;
-		try
-		{
-			session = (XnatImagesessiondata) expData;
-		}
-		catch (Exception ex)
-		{
-			logger.error("Cannot cast to XnatImagesessiondata", ex);
-			return seriesUidToScanIdMap;
-		}
-
-		List<XnatImagescandataI> scans = session.getScans_scan();
-		if (scans.isEmpty())
-		{
-			logger.warn("Session "+_experimentId+" contains zero scans");
-		}
-		for (final XnatImagescandataI scan : scans)
-		{
-			String seriesUid = scan.getUid();
-			String scanId = scan.getId();
-			if ((scanId == null) || scanId.isEmpty())
-			{
-				logger.warn("Series UID {} has a null or empty scan ID", seriesUid);
-				continue;
-			}
-			seriesUidToScanIdMap.put(seriesUid, scanId);
-		}
-
-		return seriesUidToScanIdMap;
-	}
-
-	protected static void createFileParent(String filePath) throws IOException
-	{
-		// Create parent directory if it doesn't exist
-		File file = new File(filePath);
-		if (!file.exists())
-		{
-			Files.createDirectories(Paths.get(file.getParent().toString()));
-		}
-	}
-
-	protected static HttpStatus writeJSON(String jsonString, String writeFilePath)
+	private static HttpStatus writeJSON(String jsonString, String writeFilePath)
 	{
 		try
 		{

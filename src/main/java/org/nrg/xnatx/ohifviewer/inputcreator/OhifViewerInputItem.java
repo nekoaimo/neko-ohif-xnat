@@ -39,8 +39,8 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
  * @author jpetts
  */
 // Abstract class for which OhifViewerInputInstance/Series/Study inherit (I mean ... "extend")
-public abstract class OhifViewerInputItem {
-  
+public abstract class OhifViewerInputItem
+{  
   protected final String dbl2DcmString(double[] d)
   {
     StringBuilder sb = new StringBuilder();

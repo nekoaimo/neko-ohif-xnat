@@ -44,26 +44,49 @@
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
+import com.google.common.collect.ImmutableList;
 import icr.etherj.dicom.Patient;
 import icr.etherj.dicom.Study;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OhifViewerInputStudy extends OhifViewerInputItem
 {
+	private static final Logger logger = LoggerFactory.getLogger(
+		OhifViewerInputStudy.class);
+
 	private String studyInstanceUid;
 	private String patientName;
-	private List<OhifViewerInputSeries> seriesList = new ArrayList<>();
+	private final List<OhifViewerInputSeries> seriesList = new ArrayList<>();
   
 	public OhifViewerInputStudy(Study study, Patient patient)
 	{
-		setStudyInstanceUid(study.getUid());
-		setPatientName(patient.getName());
+		if (study == null)
+		{
+			logger.error("Study is null");
+		}
+		else
+		{
+			studyInstanceUid = study.getUid();
+		}
+		if (patient == null)
+		{
+			logger.error("Patient is null");
+		}
+		else
+		{
+			patientName = patient.getName();
+		}
 	}
 
 	public void addSeries(OhifViewerInputSeries series)
 	{
-		this.seriesList.add(series);
+		if (series != null)
+		{
+			seriesList.add(series);
+		}
 	}
 		
 	public String getPatientName()
@@ -73,22 +96,12 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 
 	public List<OhifViewerInputSeries> getSeriesList()
 	{
-		return seriesList;
+		return ImmutableList.copyOf(seriesList);
 	}
 
 	public String getStudyInstanceUid()
 	{
 		return studyInstanceUid;
-	}
-
-	private void setStudyInstanceUid(String studyInstanceUid)
-	{
-		this.studyInstanceUid = studyInstanceUid;
-	}
-
-	private void setPatientName(String patientName)
-	{
-		this.patientName = patientName;
 	}
 
 }

@@ -138,16 +138,17 @@ public class CreateOhifViewerMetadata
 					String scanId = seriesUidToScanIdMap.get(series.getUid());
 					if ((scanId == null) || scanId.isEmpty())
 					{
-						logger.warn("Series UID "+series.getUid()+" has a null or empty scan ID");
+						logger.warn("Series UID "+series.getUid()+
+							" has a null or empty scan ID");
 						continue;
 					}
-
 					for (SopInstance sop : series.getSopInstanceList())
 					{
 						if (ViewerUtils.isDisplayableSopClass(sop.getSopClassUid()))
 						{
-							OhifViewerInputInstance oviInst = new OhifViewerInputInstance(sop,
-								series, this.xnatExperimentScanUrl, scanId);
+							OhifViewerInputInstance oviInst =
+								new OhifViewerInputInstance(sop, xnatExperimentScanUrl,
+									scanId);
 							oviSer.addInstances(oviInst);
 						}
 					}
