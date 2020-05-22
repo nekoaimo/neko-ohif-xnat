@@ -53,6 +53,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.nrg.xdat.base.BaseElement;
 import org.nrg.xdat.model.XnatAbstractresourceI;
 import org.nrg.xdat.model.XnatImagescandataI;
+import org.nrg.xdat.om.XnatExperimentdata;
+import org.nrg.xdat.om.XnatExperimentdataShare;
 import org.nrg.xdat.om.XnatImagescandata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatResourcecatalog;
@@ -101,16 +103,29 @@ public class PluginUtils
 
 	/**
 	 *
-	 * @param sessionData
+	 * @param expData
 	 * @return
 	 */
-	public static String getExperimentPath(XnatImagesessiondata sessionData)
+	public static String getExperimentPath(XnatExperimentdata expData)
 	{
-		File sessionDir = sessionData.getSessionDir();
+		File sessionDir = expData.getSessionDir();
 		return (sessionDir != null)
-			? sessionData.getSessionDir().getPath()+File.separator
+			? expData.getSessionDir().getPath()+File.separator
 			: null;
 	}
+
+//	/**
+//	 *
+//	 * @param sessionData
+//	 * @return
+//	 */
+//	public static String getExperimentPath(XnatImagesessiondata sessionData)
+//	{
+//		File sessionDir = sessionData.getSessionDir();
+//		return (sessionDir != null)
+//			? sessionData.getSessionDir().getPath()+File.separator
+//			: null;
+//	}
 
 	/**
 	 *
@@ -172,18 +187,38 @@ public class PluginUtils
 	{
 		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
 			sessionId, user);
+		return getImageScanUidIdMap(sessionData);
+	}
+
+	/**
+	 *
+	 * @param sessionData
+	 * @return
+	 */
+	public static Map<String,String> getImageScanUidIdMap(
+		XnatImagesessiondata sessionData)
+	{
+		if (sessionData == null)
+		{
+			throw new IllegalArgumentException("SessionData must not be null");
+		}
 		Map<String,String> uidIdMap = new LinkedHashMap<>();
-		for (XnatImagescandataI scanData : sessionData.getScans_scan())
+		List<XnatImagescandataI> scans = sessionData.getScans_scan();
+		if (scans.isEmpty())
+		{
+			logger.info("Session "+sessionData.getId()+" contains zero scans");
+		}
+		for (XnatImagescandataI scanData : scans)
 		{
 			String uid = scanData.getUid();
 			if (!StringUtils.isNullOrEmpty(uid))
 			{
-				uidIdMap.put(scanData.getUid(), scanData.getId());
+				uidIdMap.put(uid, scanData.getId());
 			}
 			else
 			{
 				logger.warn("UID is null or empty for scan "+scanData.getId()+
-					" in session "+sessionId);
+					" in session "+sessionData.getId());
 			}
 		}
 		return uidIdMap;
@@ -345,18 +380,6 @@ public class PluginUtils
 	}
 
 	/**
-	 * Get path to scan data
-	 * @param sessionData 	the session object
-	 * @param scanData		the scan object
-	 * @return the path to the scan data
-	 */
-	public static String getScanPath(XnatImagesessiondata sessionData,
-		XnatImagescandata scanData)
-	{
-		return Paths.get(getScanCatalog(sessionData, scanData)).getParent().toString();
-	}
-
-	/**
 	 * Get paths to scan catalog xml files
 	 * @param sessionData 	the session object
 	 * @param scanData		the scan object
@@ -374,6 +397,60 @@ public class PluginUtils
 			}
 		}
 		return catPaths;
+	}
+
+	/**
+	 * Get path to scan data
+	 * @param sessionData 	the session object
+	 * @param scanData		the scan object
+	 * @return the path to the scan data
+	 */
+	public static String getScanPath(XnatImagesessiondata sessionData,
+		XnatImagescandata scanData)
+	{
+		return Paths.get(getScanCatalog(sessionData, scanData)).getParent().toString();
+	}
+
+	/**
+	 *
+	 * @param id
+	 * @param user
+	 * @return
+	 */
+	public static boolean isImageSessionData(String id, UserI user)
+	{
+		XnatImagesessiondata sessionData = 
+			XnatImagesessiondata.getXnatImagesessiondatasById(id, user, false);
+		return (sessionData != null);
+	}
+
+	/**
+	 *
+	 * @param expData
+	 * @param projectId
+	 * @return
+	 */
+	public static boolean isSharedIntoProject(XnatExperimentdata expData,
+		String projectId)
+	{
+		if (expData.getProject().equals(projectId))
+		{
+			logger.info("Experiment "+expData.getId()+" belongs to project "+
+				projectId);
+			return true;
+		}
+
+		List<XnatExperimentdataShare> xnatExperimentdataShareList =
+			expData.getSharing_share();
+		for (XnatExperimentdataShare share : xnatExperimentdataShareList)
+		{
+			logger.info("Share project ID: "+share.getProject());
+			if (share.getProject().equals(projectId))
+			{
+				return true;
+			}
+		}
+		return false;		
 	}
 
 	/**
