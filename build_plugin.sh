@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 PLUGIN_ROOT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 VIEWER_ROOT=${PLUGIN_ROOT}/ohifviewerxnat
 VIEWER_DIST=${VIEWER_ROOT}/platform/viewer/dist
@@ -9,6 +9,7 @@ echo "OHIF Viewer XNAT plugin build: ${PLUGIN_ROOT}"
 cd "${PLUGIN_ROOT}"
 echo "Cleaning: ${VIEWER_TARGET}"
 rm -rf "${VIEWER_TARGET}/"*
+mkdir -p "${VIEWER_TARGET}"
 
 cd "${VIEWER_ROOT}"
 echo "Building OHIF Viewer: "`pwd`
@@ -25,3 +26,4 @@ echo "Building plugin: "`pwd`
 if [ $? -eq 0 ]; then
 	echo "Build complete"
 fi
+

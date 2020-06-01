@@ -19,17 +19,18 @@ buildscript {
     }
     dependencies {
         classpath "org.nrg.xnat.build:xnat-data-builder:${vXnat}"
-        classpath "io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE"
+        classpath "io.spring.gradle:dependency-management-plugin:1.0.9.RELEASE"
         classpath "gradle.plugin.com.palantir.gradle.gitversion:gradle-git-version:0.8.0"
-        classpath "io.franzbecker:gradle-lombok:1.10"
+        classpath "io.franzbecker:gradle-lombok:4.0.0"
     }
 }
 
-group 'org.nrg.xnatx'
+group 'org.nrg.xnatx.plugins'
 version '2.2.0-SNAPSHOT'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
+apply plugin: 'maven-publish'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'xnat-data-builder'
@@ -43,13 +44,14 @@ idea {
 
 // Use this configuration to put dependencies into the fat jar
 configurations {
-    compile.extendsFrom(compileAndInclude)
+    implementation.extendsFrom(implementAndInclude)
 }
 
 task fatJar(type: Jar) {
     zip64 true
+    archiveClassifier.set "fat"
     baseName = project.name
-    from { configurations.compileAndInclude.collect { it.isDirectory() ? it : zipTree(it) } }
+    from { configurations.implementAndInclude.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
 
@@ -129,11 +131,9 @@ dependencies {
     implementation("ch.qos.logback:logback-core") { transitive = false }
      // EtherJ
     def vEtherJ = '1.1.3-SNAPSHOT'
-    compileAndInclude("icr.etherj:etherj-core:${vEtherJ}") { transitive = false }
+    implementAndInclude("icr.etherj:etherj-core:${vEtherJ}") { transitive = false }
 
-    testCompile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.21'
-
-
+    testImplementation "org.slf4j:slf4j-nop:1.7.25"
     testImplementation "junit:junit"
 }
 
@@ -151,4 +151,70 @@ sourceSets {
             srcDir 'build/xnat-generated/src/main/resources'
         }
     }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifacts {
+                artifact fatJar
+            }
+
+            pom.withXml {
+                def root = asNode()
+                root.appendNode("name", "XNAT DICOM Query-Retrieve Plugin")
+                root.appendNode("url", "https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin")
+                root.appendNode("inceptionYear", "2019")
+
+                root.appendNode("scm").with {
+                    appendNode("url", "https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin")
+                    appendNode("connection", "scm:https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin")
+                    appendNode("developerConnection", "scm:git@bitbucket.org:icrimaginginformatics/ohif-viewer-xnat-plugin.git")
+                }
+
+                root.appendNode("licenses").appendNode("license").with {
+                    appendNode("name", "Simplified BSD 2-Clause License")
+                    appendNode("url", "https://xnat.org/about/license.php")
+                    appendNode("distribution", "repo")
+                }
+
+                root.appendNode("developers").with {
+                    appendNode("developer").with {
+                        appendNode("id", "jamesd")
+                        appendNode("name", "James Darcy")
+                        appendNode("email", "jamesd@icr.ac.uk")
+                    }
+                    appendNode("developer").with {
+                        appendNode("id", "jpetts")
+                        appendNode("name", "James Petts")
+                        appendNode("email", "jpetts@icr.ac.uk")
+                    }
+                    appendNode("developer").with {
+                        appendNode("id", "rherrick")
+                        appendNode("name", "Rick Herrick")
+                        appendNode("email", "jrherrick@wustl.edu")
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                // These properties must be set in the ~/.gradle/gradle.properties file or passed on the Gradle command
+                // line in the form -PrepoUsername=foo -PrepoPassword=bar.
+                username propertyWithDefault("repoUsername", "username")
+                password propertyWithDefault("repoPassword", "password")
+            }
+            if (project.version.endsWith("-SNAPSHOT")) {
+                url "https://nrgxnat.jfrog.io/nrgxnat/libs-snapshot-local"
+            } else {
+                url "https://nrgxnat.jfrog.io/nrgxnat/libs-release-local"
+            }
+        }
+    }
+}
+
+def propertyWithDefault(String name, Object value) {
+    hasProperty(name) ? property(name) : value
 }
