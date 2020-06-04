@@ -1,6 +1,7 @@
 buildscript {
     ext {
         vXnat = '1.7.6'
+        pluginAppName = "ICR/XNAT OHIF Viewer Plugin"
     }
     repositories {
         mavenLocal()
@@ -20,7 +21,7 @@ buildscript {
     dependencies {
         classpath "org.nrg.xnat.build:xnat-data-builder:${vXnat}"
         classpath "io.spring.gradle:dependency-management-plugin:1.0.9.RELEASE"
-        classpath "gradle.plugin.com.palantir.gradle.gitversion:gradle-git-version:0.8.0"
+        classpath "com.palantir.gradle.gitversion:gradle-git-version:0.12.3"
         classpath "io.franzbecker:gradle-lombok:4.0.0"
     }
 }
@@ -33,6 +34,7 @@ apply plugin: 'java'
 apply plugin: 'maven-publish'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
+apply plugin: 'com.palantir.git-version'
 apply plugin: 'xnat-data-builder'
 
 idea {
@@ -47,11 +49,59 @@ configurations {
     implementation.extendsFrom(implementAndInclude)
 }
 
+// Pulls in the Jenkins BUILD_NUMBER environment variable if available.
+def buildDate = new Date()
+def buildNumber = System.getenv().BUILD_NUMBER?.toInteger() ?: "Manual"
+def isDirty, branchName, gitHash, gitHashFull, commitDistance, lastTag, isCleanTag
+
+try {
+    def gitDetails = versionDetails()
+    isDirty = gitVersion().endsWith ".dirty"
+    branchName = gitDetails.branchName ?: "Unknown"
+    gitHash = gitDetails.gitHash
+    gitHashFull = gitDetails.gitHashFull
+    commitDistance = gitDetails.commitDistance
+    lastTag = gitDetails.lastTag
+    isCleanTag = gitDetails.isCleanTag
+} catch (IllegalArgumentException e) {
+    logger.info "Got an error trying to read VCS metadata from git. It's possible this project is not under VCS control. Using placeholder values for manifest entries."
+    isDirty = true
+    branchName = "Unknown"
+    gitHash = "None"
+    gitHashFull = "None"
+    commitDistance = 0
+    lastTag = "None"
+    isCleanTag = false
+}
+
+ext.gitManifest = manifest {
+    attributes "Application-Name": pluginAppName,
+            "Build-Date": buildDate,
+            "Build-Number": buildNumber,
+            "Implementation-Version": project.version,
+            "Implementation-Sha": gitHash,
+            "Implementation-Sha-Full": gitHashFull,
+            "Implementation-Commit": commitDistance,
+            "Implementation-LastTag": lastTag,
+            "Implementation-Branch": branchName,
+            "Implementation-CleanTag": isCleanTag,
+            "Implementation-Dirty": isDirty
+}
+
+jar {
+    manifest {
+        from gitManifest
+    }
+}
+
 task fatJar(type: Jar) {
     zip64 true
     archiveClassifier.set "fat"
-    baseName = project.name
+    archiveBaseName.set project.name
     from { configurations.implementAndInclude.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        from gitManifest
+    }
     with jar
 }
 
@@ -110,8 +160,8 @@ dependencies {
     implementation "commons-io:commons-io"
     implementation "commons-codec:commons-codec"
     implementation "org.apache.commons:commons-lang3"
-    implementation("io.projectreactor:reactor-core:2.0.2.RELEASE") { transitive = false }
-    implementation("io.projectreactor:reactor-bus:2.0.2.RELEASE") { transitive = false }
+    implementation("io.projectreactor:reactor-core") { transitive = false }
+    implementation("io.projectreactor:reactor-bus") { transitive = false }
 
     implementation("org.slf4j:slf4j-api") { transitive = false }
     implementation("org.slf4j:slf4j-log4j12") { transitive = false }
@@ -120,9 +170,7 @@ dependencies {
     implementation("com.google.code.gson:gson") { transitive = false }
 
     // Guava
-    implementation("com.google.guava:guava:20.0") { transitive = false }
-    // Jackson
-    def vJackson = '2.9.2'
+    implementation("com.google.guava:guava") { transitive = false }
     implementation("com.fasterxml.jackson.core:jackson-annotations") { transitive = false }
     implementation("com.fasterxml.jackson.core:jackson-core") { transitive = false }
     implementation("com.fasterxml.jackson.core:jackson-databind") { transitive = false }
@@ -162,7 +210,7 @@ publishing {
 
             pom.withXml {
                 def root = asNode()
-                root.appendNode("name", "XNAT DICOM Query-Retrieve Plugin")
+                root.appendNode("name", pluginAppName)
                 root.appendNode("url", "https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin")
                 root.appendNode("inceptionYear", "2019")
 
@@ -173,8 +221,8 @@ publishing {
                 }
 
                 root.appendNode("licenses").appendNode("license").with {
-                    appendNode("name", "Simplified BSD 2-Clause License")
-                    appendNode("url", "https://xnat.org/about/license.php")
+                    appendNode("name", "3-Clause BSD License")
+                    appendNode("url", "https://opensource.org/licenses/BSD-3-Clause")
                     appendNode("distribution", "repo")
                 }
 
