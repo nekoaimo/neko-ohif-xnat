@@ -57,9 +57,13 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerInputStudy.class);
 
-	private String studyInstanceUid;
-	private String patientName;
-	private final List<OhifViewerInputSeries> seriesList = new ArrayList<>();
+	private String StudyInstanceUID;
+	private String StudyDescription;
+	private String StudyDate;
+	private String StudyTime;
+	private String PatientName;
+	private String PatientId;
+	private final List<OhifViewerInputSeries> series = new ArrayList<>();
   
 	public OhifViewerInputStudy(Study study, Patient patient)
 	{
@@ -69,7 +73,11 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 		}
 		else
 		{
-			studyInstanceUid = study.getUid();
+			StudyInstanceUID = study.getUid();
+			StudyDescription = study.getDescription();
+			StudyDate = study.getDate();
+			//ToDo: implement Study getTime()
+			StudyTime = "000000"; //study.getTime();
 		}
 		if (patient == null)
 		{
@@ -77,7 +85,8 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 		}
 		else
 		{
-			patientName = patient.getName();
+			PatientName = patient.getName();;
+			PatientId = patient.getId();
 		}
 	}
 
@@ -85,23 +94,22 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 	{
 		if (series != null)
 		{
-			seriesList.add(series);
+			this.series.add(series);
 		}
 	}
 		
 	public String getPatientName()
 	{
-		return patientName;
+		return PatientName;
 	}
 
 	public List<OhifViewerInputSeries> getSeriesList()
 	{
-		return ImmutableList.copyOf(seriesList);
+		return ImmutableList.copyOf(series);
 	}
 
 	public String getStudyInstanceUid()
 	{
-		return studyInstanceUid;
+		return StudyInstanceUID;
 	}
-
 }

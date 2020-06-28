@@ -47,6 +47,8 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import com.google.common.collect.ImmutableList;
 import icr.etherj.dicom.Series;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -57,9 +59,12 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerInputSeries.class);
 
-	private String seriesInstanceUid;
-	private String seriesDescription;
-	private int seriesNumber;
+	private String SeriesInstanceUID;
+	private String SeriesDescription;
+	private int SeriesNumber;
+	private String SeriesDate;
+	private String SeriesTime;
+	private String Modality;
 	private final List<OhifViewerInputInstance> instances = new ArrayList<>();
   
 	public OhifViewerInputSeries(Series ser)
@@ -69,9 +74,12 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 			logger.error("Series is null");
 			return;
 		}
-		seriesInstanceUid = ser.getUid();
-		seriesDescription = ser.getDescription();
-		seriesNumber = ser.getNumber();
+		SeriesInstanceUID = ser.getUid();
+		SeriesDescription = ser.getDescription();
+		SeriesNumber = ser.getNumber();
+		SeriesDate = ser.getDate();
+		SeriesTime = String.format("%6s", (int) ser.getTime()).replace(' ', '0');
+		Modality = ser.getModality();
 	}
 	
 	public void addInstances(OhifViewerInputInstance instance)
@@ -86,17 +94,17 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 
 	public String getSeriesDescription()
 	{
-		return seriesDescription;
+		return SeriesDescription;
 	}
 
 	public String getSeriesInstanceUid()
 	{
-		return seriesInstanceUid;
+		return SeriesInstanceUID;
 	}
 
 	public int getSeriesNumber()
 	{
-		return seriesNumber;
+		return SeriesNumber;
 	}
 
 }
