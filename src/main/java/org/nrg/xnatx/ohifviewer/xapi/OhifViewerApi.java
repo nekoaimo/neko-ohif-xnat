@@ -89,8 +89,8 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @RequestMapping(value = "/viewer")
 public class OhifViewerApi extends AbstractXapiRestController
 {
-	private static final Logger logger = LoggerFactory.getLogger(OhifViewerApi.class);
-	private static final String SEP = File.separator;
+	private static final Logger logger = LoggerFactory.getLogger(
+		OhifViewerApi.class);
 
 	private final Lock genAllJsonLock = new ReentrantLock();
 

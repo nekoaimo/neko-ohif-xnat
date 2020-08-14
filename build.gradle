@@ -70,8 +70,12 @@ repositories {
         name 'XNAT Snapshot Repository'
     }
     maven {
-        url 'https://nrgxnat.jfrog.io/nrgxnat/ext-release'
-        name 'XNAT External Release Repository'
+        url 'https://nrgxnat.jfrog.io/nrgxnat/ext-release-local'
+        name 'XNAT External Release (Local) Repository'
+    }
+    maven {
+        url 'https://nrgxnat.jfrog.io/nrgxnat/ext-snapshot-local'
+        name 'XNAT External Snapshot (Local) Repository'
     }
     maven {
         url 'https://jitpack.io'
