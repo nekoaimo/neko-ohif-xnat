@@ -36,6 +36,8 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import icr.etherj.dicom.SopInstance;
 import java.io.File;
+
+import org.dcm4che2.data.DicomObject;
 import org.nrg.dcm.SOPModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,8 +68,8 @@ public class OhifViewerInputInstance extends OhifViewerInputItem
 		metadata = new OhifViewerInputInstanceMetadata(sop);
 
 		String file = new File(sop.getPath()).getName();
-		String sopClassUid = sop.getSopClassUid();
-		String resource = getResourceType(sopClassUid);
+		String SOPClassUID = sop.getSopClassUid();
+		String resource = getResourceType(SOPClassUID);
 		xnatScanUrl = selectCorrectProtocol(xnatScanUrl);
 		url = xnatScanUrl+scanId+RESOURCES+resource+FILES+file;
 	}

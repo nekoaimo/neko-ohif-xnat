@@ -78,7 +78,7 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 		SeriesDescription = ser.getDescription();
 		SeriesNumber = ser.getNumber();
 		SeriesDate = ser.getDate();
-		SeriesTime = String.format("%6s", (int) ser.getTime()).replace(' ', '0');
+		SeriesTime = String.format("%013.6f", ser.getTime());;
 		Modality = ser.getModality();
 	}
 	

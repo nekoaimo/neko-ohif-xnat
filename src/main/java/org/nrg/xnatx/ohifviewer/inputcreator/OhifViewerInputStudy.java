@@ -46,6 +46,8 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import com.google.common.collect.ImmutableList;
 import icr.etherj.dicom.Patient;
+import icr.etherj.dicom.Series;
+import icr.etherj.dicom.SopInstance;
 import icr.etherj.dicom.Study;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,9 +64,24 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 	private String StudyDate;
 	private String StudyTime;
 	private String PatientName;
-	private String PatientId;
+	private String PatientID;
 	private final List<OhifViewerInputSeries> series = new ArrayList<>();
-  
+
+	private void allocateStudyTime(Study study)
+	{
+		//ToDo: implement Study getTime()
+		StudyTime = "000000";
+		List<Series> series = study.getSeriesList();
+		if (series.size() > 0)
+		{
+			List<SopInstance> sopInstances = series.get(0).getSopInstanceList();
+			if (sopInstances.size() > 0)
+			{
+				StudyTime = sopInstances.get(0).getStudyTime();
+			}
+		}
+	}
+
 	public OhifViewerInputStudy(Study study, Patient patient)
 	{
 		if (study == null)
@@ -76,8 +93,7 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 			StudyInstanceUID = study.getUid();
 			StudyDescription = study.getDescription();
 			StudyDate = study.getDate();
-			//ToDo: implement Study getTime()
-			StudyTime = "000000"; //study.getTime();
+			allocateStudyTime(study);
 		}
 		if (patient == null)
 		{
@@ -86,7 +102,7 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 		else
 		{
 			PatientName = patient.getName();;
-			PatientId = patient.getId();
+			PatientID = patient.getId();
 		}
 	}
 
