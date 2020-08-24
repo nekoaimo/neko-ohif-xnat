@@ -9,79 +9,61 @@ import org.nrg.xnatx.ohifviewer.ViewerUtils;
 import java.util.Arrays;
 
 
-class DataUtils
-{
-    public static double[] getDSArray(DicomObject dcm, int tag, double defaultValue)
-    {
-        double[] dsArray;
-        String[] strarray = dcm.getStrings(tag);
-
-        if (strarray.length > 0)
-        {
-            dsArray = Arrays.stream(strarray).mapToDouble(Double::parseDouble).toArray();
-        }
-        else
-        {
-            dsArray = new double[]{defaultValue};
-        }
-
-        return dsArray;
-    }
-}
-
 /**
  *
  * @author malsad
  */
 public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
 {
-    private int Columns;
-    private int Rows;
-    private int InstanceNumber;
-    private double[] PixelSpacing;
-    private double[] ImageOrientationPatient;
-    private double[] ImagePositionPatient;
-    private String FrameOfReferenceUID;
-    private String Modality;
-    private String SOPInstanceUID;
-    private String SeriesInstanceUID;
-    private String StudyInstanceUID;
-    private int NumberOfFrames;
-
     private int AcquisitionNumber;
-    private String PhotometricInterpretation;
     private int BitsAllocated;
     private int BitsStored;
-    private int PixelRepresentation;
-    private int SamplesPerPixel;
+    private int Columns;
+    private String FrameOfReferenceUID;
     private int HighBit;
+    private double[] ImageOrientationPatient;
+    private double[] ImagePositionPatient;
     private String[] ImageType;
-    private double[] WindowWidth;
-    private double[] WindowCenter;
-    private String SOPClassUID;
+    private int InstanceNumber;
+    private String Modality;
+    private int NumberOfFrames;
+    private String PhotometricInterpretation;
+    private int PixelRepresentation;
+    private double[] PixelSpacing;
+    private double RescaleIntercept;
+    private double RescaleSlope;
+    private String RescaleType;
+    private int Rows;
+    private int SamplesPerPixel;
     private String SeriesDate;
+    private String SeriesInstanceUID;
     private String SeriesTime;
+    private String SOPClassUID;
+    private String SOPInstanceUID;
+    private String StudyInstanceUID;
     private String StudyDate;
     private String StudyTime;
+    private double[] WindowWidth;
+    private double[] WindowCenter;
 
     public OhifViewerInputInstanceMetadata(SopInstance sop)
     {
         Columns = sop.getColumnCount();
-        Rows = sop.getRowCount();
-        InstanceNumber = sop.getInstanceNumber();
-        PixelSpacing = sop.getPixelSpacing();
+        FrameOfReferenceUID = sop.getFrameOfReferenceUid();
         ImageOrientationPatient = sop.getImageOrientationPatient();
         ImagePositionPatient = sop.getImagePositionPatient();
-        FrameOfReferenceUID = sop.getFrameOfReferenceUid();
+        InstanceNumber = sop.getInstanceNumber();
         Modality = sop.getModality();
-        SOPInstanceUID = sop.getUid();
-        SeriesInstanceUID = sop.getSeriesUid();
-        StudyInstanceUID = sop.getStudyUid();
         NumberOfFrames = sop.getNumberOfFrames();
-        SOPClassUID = sop.getSopClassUid();
+        PixelSpacing = sop.getPixelSpacing();
+        Rows = sop.getRowCount();
         SeriesDate = sop.getSeriesDate();
+        SeriesInstanceUID = sop.getSeriesUid();
         SeriesTime = sop.getSeriesTime();
+        SOPClassUID = sop.getSopClassUid();
+        SOPInstanceUID = sop.getUid();
         StudyDate = sop.getStudyDate();
+        StudyInstanceUID = sop.getStudyUid();
         StudyTime = sop.getStudyTime();
 
         if (ViewerUtils.isDisplayableSopClass(sop.getSopClassUid())) {
@@ -97,6 +79,9 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
             ImageType = dcm.getStrings(Tag.ImageType, emptyStrArray);
             WindowWidth = DataUtils.getDSArray(dcm, Tag.WindowWidth, 400);
             WindowCenter = DataUtils.getDSArray(dcm, Tag.WindowCenter, 40);
+            RescaleIntercept = DataUtils.getDSValue(dcm, Tag.RescaleIntercept, 0.0);
+            RescaleSlope = DataUtils.getDSValue(dcm, Tag.RescaleSlope, 1.0);
+            RescaleType = dcm.getString(Tag.RescaleType, "");
         }
     }
 
@@ -186,5 +171,63 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
 
     public double[] getWindowCenter() {
         return WindowCenter;
+    }
+}
+
+
+/**
+ *
+ * @author malsad
+ */
+class DataUtils
+{
+    public static double[] getDSArray(DicomObject dcm, int tag, double defaultValue)
+    {
+        double[] dsArray;
+
+        try
+        {
+            String[] strarray = dcm.getStrings(tag);
+
+            if (strarray.length > 0)
+            {
+                dsArray = Arrays.stream(strarray).mapToDouble(Double::parseDouble).toArray();
+            }
+            else
+            {
+                throw new Exception("Empty value");
+            }
+        }
+        catch (Exception ex)
+        {
+            dsArray = new double[]{defaultValue};
+        }
+
+        return dsArray;
+    }
+
+    public static double getDSValue(DicomObject dcm, int tag, double defaultValue)
+    {
+        double dsValue;
+
+        try
+        {
+            String strValue = dcm.getString(tag);
+
+            if (strValue.length() > 0)
+            {
+                dsValue = Double.parseDouble(strValue);
+            }
+            else
+            {
+                throw new Exception("Empty value");
+            }
+        }
+        catch (Exception ex)
+        {
+            dsValue = defaultValue;
+        }
+
+        return dsValue;
     }
 }
