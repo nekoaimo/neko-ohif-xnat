@@ -45,12 +45,15 @@
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
+import org.nrg.xnatx.ohifviewer.ViewerUtils;
+
 import com.google.common.collect.ImmutableList;
 import icr.etherj.dicom.Series;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,8 +80,21 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 		SeriesInstanceUID = ser.getUid();
 		SeriesDescription = ser.getDescription();
 		SeriesNumber = ser.getNumber();
-		SeriesDate = ser.getDate();
-		SeriesTime = String.format("%013.6f", ser.getTime());;
+		SeriesDate = ViewerUtils.getValidatedDateString(ser.getDate());;
+		String seriesDate = ser.getDate();
+		if (seriesDate != null && !seriesDate.trim().isEmpty())
+			SeriesDate = seriesDate;
+		try
+		{
+			double seriesTime = ser.getTime();
+			if (Double.isNaN(seriesTime))
+				seriesTime = 0.0;
+			SeriesTime = String.format("%013.6f", ser.getTime());
+		}
+		catch (Exception e)
+		{
+			SeriesTime = "00000";
+		}
 		Modality = ser.getModality();
 	}
 	

@@ -51,20 +51,35 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
         Columns = sop.getColumnCount();
         FrameOfReferenceUID = sop.getFrameOfReferenceUid();
         ImageOrientationPatient = sop.getImageOrientationPatient();
+        for (int i = 0; i < ImageOrientationPatient.length; i++)
+        {
+            if (Double.isNaN(ImageOrientationPatient[i]))
+                ImageOrientationPatient[i] = 0.0;
+        }
         ImagePositionPatient = sop.getImagePositionPatient();
+        for (int i = 0; i < ImagePositionPatient.length; i++)
+        {
+            if (Double.isNaN(ImagePositionPatient[i]))
+                ImagePositionPatient[i] = 0.0;
+        }
         InstanceNumber = sop.getInstanceNumber();
         Modality = sop.getModality();
         NumberOfFrames = sop.getNumberOfFrames();
         PixelSpacing = sop.getPixelSpacing();
+        for (int i = 0; i < PixelSpacing.length; i++)
+        {
+            if (Double.isNaN(PixelSpacing[i]))
+                PixelSpacing[i] = 1.0;
+        }
         Rows = sop.getRowCount();
-        SeriesDate = sop.getSeriesDate();
+        SeriesDate = ViewerUtils.getValidatedDateString(sop.getSeriesDate());
         SeriesInstanceUID = sop.getSeriesUid();
-        SeriesTime = sop.getSeriesTime();
+        SeriesTime = ViewerUtils.getValidatedTimeString(sop.getSeriesTime());
         SOPClassUID = sop.getSopClassUid();
         SOPInstanceUID = sop.getUid();
-        StudyDate = sop.getStudyDate();
+        StudyDate = ViewerUtils.getValidatedDateString(sop.getStudyDate());
         StudyInstanceUID = sop.getStudyUid();
-        StudyTime = sop.getStudyTime();
+        StudyTime = ViewerUtils.getValidatedTimeString(sop.getStudyTime());
 
         if (ViewerUtils.isDisplayableSopClass(sop.getSopClassUid())) {
             DicomObject dcm = sop.getDicomObject();

@@ -44,6 +44,8 @@
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
+import org.nrg.xnatx.ohifviewer.ViewerUtils;
+
 import com.google.common.collect.ImmutableList;
 import icr.etherj.dicom.Patient;
 import icr.etherj.dicom.Series;
@@ -77,7 +79,7 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 			List<SopInstance> sopInstances = series.get(0).getSopInstanceList();
 			if (sopInstances.size() > 0)
 			{
-				StudyTime = sopInstances.get(0).getStudyTime();
+				StudyTime = ViewerUtils.getValidatedTimeString(sopInstances.get(0).getStudyTime());
 			}
 		}
 	}
@@ -92,7 +94,7 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 		{
 			StudyInstanceUID = study.getUid();
 			StudyDescription = study.getDescription();
-			StudyDate = study.getDate();
+			StudyDate = ViewerUtils.getValidatedDateString(study.getDate());
 			allocateStudyTime(study);
 		}
 		if (patient == null)
