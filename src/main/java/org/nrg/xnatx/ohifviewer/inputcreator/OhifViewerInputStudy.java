@@ -61,12 +61,13 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerInputStudy.class);
 
-	private String StudyInstanceUID;
-	private String StudyDescription;
-	private String StudyDate;
-	private String StudyTime;
-	private String PatientName;
 	private String PatientID;
+	private String PatientName;
+	private String StudyDate;
+	private String StudyDescription;
+	private String StudyInstanceUID;
+	private String StudyTime;
+
 	private final List<OhifViewerInputSeries> series = new ArrayList<>();
 
 	private void allocateStudyTime(Study study)

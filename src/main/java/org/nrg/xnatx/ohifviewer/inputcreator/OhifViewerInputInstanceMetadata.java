@@ -100,60 +100,8 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
         }
     }
 
-    public int getColumns() {
-        return Columns;
-    }
-
-    public int getRows() {
-        return Rows;
-    }
-
-    public int getInstanceNumber() {
-        return InstanceNumber;
-    }
-
-    public double[] getPixelSpacing() {
-        return PixelSpacing;
-    }
-
-    public double[] getImageOrientationPatient() {
-        return ImageOrientationPatient;
-    }
-
-    public double[] getImagePositionPatient() {
-        return ImagePositionPatient;
-    }
-
-    public String getFrameOfReferenceUID() {
-        return FrameOfReferenceUID;
-    }
-
-    public String getModality() {
-        return Modality;
-    }
-
-    public String getSOPInstanceUID() {
-        return SOPInstanceUID;
-    }
-
-    public String getSeriesInstanceUID() {
-        return SeriesInstanceUID;
-    }
-
-    public String getStudyInstanceUID() {
-        return StudyInstanceUID;
-    }
-
-    public int getNumberOfFrames() {
-        return NumberOfFrames;
-    }
-
     public int getAcquisitionNumber() {
         return AcquisitionNumber;
-    }
-
-    public String getPhotometricInterpretation() {
-        return PhotometricInterpretation;
     }
 
     public int getBitsAllocated() {
@@ -164,20 +112,72 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
         return BitsStored;
     }
 
-    public int getPixelRepresentation() {
-        return PixelRepresentation;
+    public int getColumns() {
+        return Columns;
     }
 
-    public int getSamplesPerPixel() {
-        return SamplesPerPixel;
+    public String getFrameOfReferenceUID() {
+        return FrameOfReferenceUID;
     }
 
     public int getHighBit() {
         return HighBit;
     }
 
+    public double[] getImageOrientationPatient() {
+        return ImageOrientationPatient;
+    }
+
+    public double[] getImagePositionPatient() {
+        return ImagePositionPatient;
+    }
+
     public String[] getImageType() {
         return ImageType;
+    }
+
+    public int getInstanceNumber() {
+        return InstanceNumber;
+    }
+
+    public String getModality() {
+        return Modality;
+    }
+
+    public int getNumberOfFrames() {
+        return NumberOfFrames;
+    }
+
+    public String getPhotometricInterpretation() {
+        return PhotometricInterpretation;
+    }
+
+    public int getPixelRepresentation() {
+        return PixelRepresentation;
+    }
+
+    public double[] getPixelSpacing() {
+        return PixelSpacing;
+    }
+
+    public int getRows() {
+        return Rows;
+    }
+
+    public int getSamplesPerPixel() {
+        return SamplesPerPixel;
+    }
+
+    public String getSeriesInstanceUID() {
+        return SeriesInstanceUID;
+    }
+
+    public String getSOPInstanceUID() {
+        return SOPInstanceUID;
+    }
+
+    public String getStudyInstanceUID() {
+        return StudyInstanceUID;
     }
 
     public double[] getWindowWidth() {

@@ -62,12 +62,13 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerInputSeries.class);
 
-	private String SeriesInstanceUID;
-	private String SeriesDescription;
-	private int SeriesNumber;
-	private String SeriesDate;
-	private String SeriesTime;
 	private String Modality;
+	private String SeriesDate;
+	private String SeriesDescription;
+	private String SeriesInstanceUID;
+	private int SeriesNumber;
+	private String SeriesTime;
+
 	private final List<OhifViewerInputInstance> instances = new ArrayList<>();
   
 	public OhifViewerInputSeries(Series ser)
