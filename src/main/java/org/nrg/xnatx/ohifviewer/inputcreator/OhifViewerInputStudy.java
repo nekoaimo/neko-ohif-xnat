@@ -44,8 +44,12 @@
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
+import org.nrg.xnatx.ohifviewer.ViewerUtils;
+
 import com.google.common.collect.ImmutableList;
 import icr.etherj.dicom.Patient;
+import icr.etherj.dicom.Series;
+import icr.etherj.dicom.SopInstance;
 import icr.etherj.dicom.Study;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,10 +61,30 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerInputStudy.class);
 
-	private String studyInstanceUid;
-	private String patientName;
-	private final List<OhifViewerInputSeries> seriesList = new ArrayList<>();
-  
+	private String PatientID;
+	private String PatientName;
+	private String StudyDate;
+	private String StudyDescription;
+	private String StudyInstanceUID;
+	private String StudyTime;
+
+	private final List<OhifViewerInputSeries> series = new ArrayList<>();
+
+	private void allocateStudyTime(Study study)
+	{
+		//ToDo: implement Study getTime()
+		StudyTime = "000000";
+		List<Series> series = study.getSeriesList();
+		if (series.size() > 0)
+		{
+			List<SopInstance> sopInstances = series.get(0).getSopInstanceList();
+			if (sopInstances.size() > 0)
+			{
+				StudyTime = ViewerUtils.getValidatedTimeString(sopInstances.get(0).getStudyTime());
+			}
+		}
+	}
+
 	public OhifViewerInputStudy(Study study, Patient patient)
 	{
 		if (study == null)
@@ -69,7 +93,10 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 		}
 		else
 		{
-			studyInstanceUid = study.getUid();
+			StudyInstanceUID = study.getUid();
+			StudyDescription = study.getDescription();
+			StudyDate = ViewerUtils.getValidatedDateString(study.getDate());
+			allocateStudyTime(study);
 		}
 		if (patient == null)
 		{
@@ -77,7 +104,8 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 		}
 		else
 		{
-			patientName = patient.getName();
+			PatientName = patient.getName();;
+			PatientID = patient.getId();
 		}
 	}
 
@@ -85,23 +113,22 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 	{
 		if (series != null)
 		{
-			seriesList.add(series);
+			this.series.add(series);
 		}
 	}
 		
 	public String getPatientName()
 	{
-		return patientName;
+		return PatientName;
 	}
 
 	public List<OhifViewerInputSeries> getSeriesList()
 	{
-		return ImmutableList.copyOf(seriesList);
+		return ImmutableList.copyOf(series);
 	}
 
 	public String getStudyInstanceUid()
 	{
-		return studyInstanceUid;
+		return StudyInstanceUID;
 	}
-
 }

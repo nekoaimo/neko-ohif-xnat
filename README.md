@@ -175,9 +175,7 @@ If you have a repository already checked out, update submodules:
 
 `$ git submodule update --init --recursive`
 
-The ohifviewerxnat submodule requires [yarn](https://classic.yarnpkg.com) to build. Assuming you have `yarn` installed on your machine, initialise it in the submodule. This may take a few minutes:
-
-`$ cd ohifviewerxnat; yarn install; cd -`
+The ohifviewerxnat submodule requires [yarn](https://classic.yarnpkg.com) to build. Assuming you have `yarn` installed on your machine, initialise it in the submodule. `yarn install` is invoked from within build_plugin.sh. 
 
 Build the plugin in one step:
 

@@ -352,11 +352,11 @@
 
       for (var i = 0; i < studyList.studies.length; i++) {
 
-        if (!studyList.studies[i] || !studyList.studies[i].seriesList) {
+        if (!studyList.studies[i] || !studyList.studies[i].series) {
           continue;
         }
 
-        var series = studyList.studies[i].seriesList;
+        var series = studyList.studies[i].series;
 
         for (var j = 0; j < series.length; j++) {
           if (series[j].instances.length) {

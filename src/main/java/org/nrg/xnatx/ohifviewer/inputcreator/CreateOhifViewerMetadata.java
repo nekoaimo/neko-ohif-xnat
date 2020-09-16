@@ -89,7 +89,7 @@ public class CreateOhifViewerMetadata
 		OhifViewerInput ovi = createInput(transactionId, root);
 
 		// Convert the Java object to a JSON string
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 		String serialisedOvi = gson.toJson(ovi);
 
 		return serialisedOvi;

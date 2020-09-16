@@ -36,6 +36,8 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import icr.etherj.dicom.SopInstance;
 import java.io.File;
+
+import org.dcm4che2.data.DicomObject;
 import org.nrg.dcm.SOPModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,15 +53,7 @@ public class OhifViewerInputInstance extends OhifViewerInputItem
 	private static final Logger logger =
 		LoggerFactory.getLogger(OhifViewerInputInstance.class);
 
-	private int columns;
-	private String frameOfReferenceUID;
-	private String imagePositionPatient;
-	private String imageOrientationPatient;
-	private int instanceNumber;
-	private String numberOfFrames = "";
-	private String pixelSpacing;
-	private int rows;
-	private String sopInstanceUid = "";
+	private OhifViewerInputInstanceMetadata metadata;
 	private String url;
 
 	public OhifViewerInputInstance(SopInstance sop, String xnatScanUrl,
@@ -70,72 +64,59 @@ public class OhifViewerInputInstance extends OhifViewerInputItem
 			logger.error("SopInstance is null");
 			return;
 		}
-		sopInstanceUid = sop.getUid();
-		instanceNumber = sop.getInstanceNumber();
-		columns = sop.getColumnCount();
-		rows = sop.getRowCount();
-		frameOfReferenceUID = sop.getFrameOfReferenceUid();
-		imagePositionPatient = dbl2DcmString(sop.getImagePositionPatient());
-		imageOrientationPatient = dbl2DcmString(sop.getImageOrientationPatient());
-		pixelSpacing = dbl2DcmString(sop.getPixelSpacing());
 
-		// Set number of frames if multiframe image, set to empty string if not so
-		// the viewer ignores it.
-		int frameCount = sop.getNumberOfFrames();
-		numberOfFrames = (frameCount > 1)
-			? Integer.toString(sop.getNumberOfFrames())
-			: "";
+		metadata = new OhifViewerInputInstanceMetadata(sop);
 
 		String file = new File(sop.getPath()).getName();
-		String sopClassUid = sop.getSopClassUid();
-		String resource = getResourceType(sopClassUid);
+		String SOPClassUID = sop.getSopClassUid();
+		String resource = getResourceType(SOPClassUID);
 		xnatScanUrl = selectCorrectProtocol(xnatScanUrl);
 		url = xnatScanUrl+scanId+RESOURCES+resource+FILES+file;
 	}
 
 	public int getColumns()
 	{
-		return columns;
+		return metadata.getColumns();
 	}
 
 	public String getFrameOfReferenceUID()
 	{
-		return frameOfReferenceUID;
+		return metadata.getFrameOfReferenceUID();
 	}
 
 	public String getImageOrientationPatient()
 	{
-		return imageOrientationPatient;
+		return dbl2DcmString(metadata.getImageOrientationPatient());
 	}
 
 	public String getImagePositionPatient()
 	{
-		return imagePositionPatient;
+		return dbl2DcmString(metadata.getImagePositionPatient());
 	}
 
 	public int getInstanceNumber()
 	{
-		return instanceNumber;
+		return metadata.getInstanceNumber();
 	}
 
 	public String getNumberOfFrames()
 	{
-		return numberOfFrames;
+		return Integer.toString(metadata.getNumberOfFrames());
 	}
 
 	public String getPixelSpacing()
 	{
-		return pixelSpacing;
+		return dbl2DcmString(metadata.getPixelSpacing());
 	}
 
 	public int getRows()
 	{
-		return rows;
+		return metadata.getRows();
 	}
 
 	public String getSopInstanceUid()
 	{
-		return sopInstanceUid;
+		return metadata.getSOPInstanceUID();
 	}
 
 	private String getResourceType(String sopClassUid)
