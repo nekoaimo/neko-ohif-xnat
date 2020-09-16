@@ -136,6 +136,26 @@ public class ViewerUtils
 		return displayableSopClassUids.contains(uid);
 	}
 
+	public static String getValidatedDateString(String inStr)
+	{
+		String outStr = "19010101";
+
+		if (inStr != null && !inStr.trim().isEmpty())
+			outStr = inStr;
+
+		return outStr;
+	}
+
+	public static String getValidatedTimeString(String inStr)
+	{
+		String outStr = "000000";
+
+		if (inStr != null && !inStr.trim().isEmpty())
+			outStr = inStr;
+
+		return outStr;
+	}
+
 	private ViewerUtils()
 	{}
 }
