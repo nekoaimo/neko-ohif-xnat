@@ -278,7 +278,7 @@ public class DefaultCollectionConverter extends BaseCollectionProcessor
 					collectData.getXSIType(), roiCollection.getId(),
 					projectData.getId(), EventUtils.REMOVE_CATALOG);
 				eventMeta = workflow.buildEvent();
-				removeResource(resource, projectData.getArchiveRootPath(),
+				removeResource(resource, projectData.getId(), projectData.getArchiveRootPath(),
 					collectData.getItem(), eventMeta, "OutFile");
 				collectData.removeOut_file(idx);
 				ProcessUtils.complete(workflow, eventMeta);
@@ -315,7 +315,7 @@ public class DefaultCollectionConverter extends BaseCollectionProcessor
 					{
 						EventMetaI eventMeta = EventUtils.DEFAULT_EVENT(user,
 							"Remove Catalog");
-						removeResource(resource, rootPath, collectData.getItem(),
+						removeResource(resource, projectData.getId(), rootPath, collectData.getItem(),
 							eventMeta, "OutFile");
 						collectData.removeOut_file(i);
 						saveCollectionData();
