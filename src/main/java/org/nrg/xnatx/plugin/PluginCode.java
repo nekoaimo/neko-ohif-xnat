@@ -81,6 +81,10 @@ public final class PluginCode extends AbstractExceptionCode
 	// 05 - Other
 	public static final PluginCode Unsupported = new PluginCode("Unsupported",
 		"05001");
+	// 06 - XNAT
+	public static final PluginCode XNAT = new PluginCode("XNAT", "06001");
+	public static final PluginCode ConfigService = new PluginCode(
+		"ConfigService", "06002");
 
 	@Override
 	public String toString()

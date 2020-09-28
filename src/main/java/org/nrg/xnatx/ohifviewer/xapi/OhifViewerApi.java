@@ -34,6 +34,7 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.xapi;
 
+import icr.etherj.StringUtils;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -43,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +54,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.apache.commons.io.IOUtils;
+import org.nrg.config.entities.Configuration;
+import org.nrg.config.exceptions.ConfigServiceException;
+import org.nrg.config.services.ConfigService;
 import org.nrg.framework.annotations.XapiRestController;
+import org.nrg.framework.constants.Scope;
 import org.nrg.xapi.rest.AbstractXapiRestController;
 import org.nrg.xapi.rest.Project;
 import org.nrg.xapi.rest.Experiment;
@@ -63,7 +69,7 @@ import org.nrg.xdat.security.services.RoleHolder;
 import org.nrg.xdat.security.services.UserManagementServiceI;
 import org.nrg.xdat.security.helpers.AccessLevel;
 import org.nrg.xft.security.UserI;
-import org.nrg.xnatx.ohifviewer.inputcreator.ImageSessionJsonCreator;
+import org.nrg.xnatx.ohifviewer.inputcreator.ConfigServiceJsonCreator;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.plugin.PluginUtils;
@@ -92,18 +98,26 @@ public class OhifViewerApi extends AbstractXapiRestController
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerApi.class);
 
+	private static final String CreateReason = "Creating Session JSON";
+	private static final String OhifViewer = "ohif-viewer";
+	private static final String SessionJson = "session-json";
+
+	private final ConfigService configService;
+	private final Lock configServiceLock = new ReentrantLock();
 	private final Lock genAllJsonLock = new ReentrantLock();
 
 	@Autowired
-	public OhifViewerApi(final UserManagementServiceI userManagementService,
+	public OhifViewerApi(final ConfigService configService,
+		final UserManagementServiceI userManagementService,
 		final RoleHolder roleHolder)
 	{
 		super(userManagementService, roleHolder);
+		this.configService = configService;
 		logger.info("OHIF Viewer XAPI initialised");
 	}
 
 	/*=================================
-	// Study level GET/POST
+	// Session level GET/POST
 	=================================*/
 	@ApiOperation(value = "Checks if Session level JSON exists")
 	@ApiResponses(
@@ -138,10 +152,9 @@ public class OhifViewerApi extends AbstractXapiRestController
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 
-		String jsonPath = getJsonPath(sessionData);
-		logger.debug("JSON path: "+jsonPath);
-		File file = new File(jsonPath);
-		return (file.exists())
+		Configuration jsonConfig = configService.getConfig(OhifViewer,
+			SessionJson, Scope.Experiment, experimentId);
+		return (jsonConfig != null)
 			? new ResponseEntity<>(HttpStatus.OK)
 			: new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
@@ -180,16 +193,22 @@ public class OhifViewerApi extends AbstractXapiRestController
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 
-		String jsonPath = getJsonPath(sessionData);
-		logger.debug("JSON path: "+jsonPath);
-		File file = new File(jsonPath);
-		if (!file.exists())
+		Configuration jsonConfig = configService.getConfig(OhifViewer,
+			SessionJson, Scope.Experiment, experimentId);
+		String json;
+		if (jsonConfig == null)
 		{
-			// JSON doesn't exist, so generate and cache it.
-			ImageSessionJsonCreator creator = new ImageSessionJsonCreator();
-			creator.create(experimentId);
+			json = createAndStoreJsonConfig(user, experimentId);
 		}
-		StreamingResponseBody srb = createResponseBody(file);
+		else
+		{
+			json = jsonConfig.getContents();
+			if (StringUtils.isNullOrEmpty(json))
+			{
+				json = createAndStoreJsonConfig(user, experimentId);
+			}
+		}
+		StreamingResponseBody srb = createResponseBody(json);
 		return new ResponseEntity<>(srb, HttpStatus.OK);
 	}
 
@@ -226,10 +245,9 @@ public class OhifViewerApi extends AbstractXapiRestController
 		}
 
 		logger.info("Creating experiment metadata for "+experimentId);
-		ImageSessionJsonCreator creator = new ImageSessionJsonCreator();
-		HttpStatus returnHttpStatus = creator.create(experimentId);
+		createAndStoreJsonConfig(user, experimentId);
 
-		return new ResponseEntity<>(returnHttpStatus);
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 	@ApiOperation(value = "Generates the session JSON for every session in the database.")
@@ -265,25 +283,47 @@ public class OhifViewerApi extends AbstractXapiRestController
 		return new ResponseEntity<>(status);
 	}
 
-	private StreamingResponseBody createResponseBody(File file)
+	private String createAndStoreJsonConfig(UserI user, String experimentId)
+		throws PluginException
+	{
+		String json = null;
+		try
+		{
+			ConfigServiceJsonCreator creator = new ConfigServiceJsonCreator();
+			json = creator.create(experimentId);
+			try
+			{
+				// Method may be called in muliple threads, only access shared vars
+				// under lock.
+				configServiceLock.lock();
+				configService.replaceConfig(user.getUsername(), CreateReason, 
+					OhifViewer, SessionJson, true, json, Scope.Experiment,
+					experimentId);
+			}
+			finally
+			{
+				configServiceLock.unlock();
+			}
+		}
+		catch (ConfigServiceException ex)
+		{
+			throw new PluginException("Error retrieving JSON config",
+				PluginCode.ConfigService, ex);
+		}
+		return json;
+	}
+
+	private StreamingResponseBody createResponseBody(String input)
 		throws PluginException
 	{
 		StreamingResponseBody srb = null;
-		try
+		try (InputStream is = IOUtils.toInputStream(input, StandardCharsets.UTF_8))
 		{
-			final InputStream is = Files.newInputStream(file.toPath());
-			srb = new StreamingResponseBody()
-			{
-				@Override
-				public void writeTo(final OutputStream output) throws IOException
-				{
-					IOUtils.copy(is, output);
-				}
-			};
+			srb = (final OutputStream output) -> { IOUtils.copy(is, output); };
 		}
 		catch (IOException ex)
 		{
-			throw new PluginException("IO error for "+file.getPath(),
+			throw new PluginException("IO error streaming JSON: "+ex.getMessage(),
 				PluginCode.IO, ex);
 		}
 		return srb;
@@ -297,14 +337,14 @@ public class OhifViewerApi extends AbstractXapiRestController
 		logger.info("Thread count for parallel JSON creation: " + numThreads);
 		ExecutorService service = Executors.newFixedThreadPool(numThreads);
 
+		UserI user = getSessionUser();
 		List<Callable<Void>> tasks = new ArrayList<>();
 		for (String id : getAllImageSessionIds())
 		{
 			logger.info("ImageSession ID: "+id);
-			ImageSessionJsonCreator creator = new ImageSessionJsonCreator();
 			tasks.add((Callable<Void>) () ->
 			{
-				creator.create(id);
+				createAndStoreJsonConfig(user, id);
 				return null;
 			});
 		}
@@ -340,12 +380,6 @@ public class OhifViewerApi extends AbstractXapiRestController
 		}
 
 		return experimentIds;
-	}
-
-	private String getJsonPath(XnatImagesessiondata sessionData)
-	{
-		return PluginUtils.getExperimentPath(sessionData)+
-			"RESOURCES/metadata/"+sessionData.getId()+".json";
 	}
 
 }

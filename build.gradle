@@ -147,6 +147,7 @@ dependencies {
     implementation("org.nrg.xnat:xnat-data-models") { transitive = false }
     implementation("org.nrg.xdat:core") { transitive = false }
     implementation("org.nrg:automation") { transitive = false }
+    implementation("org.nrg:config") { transitive = false }
     implementation("org.nrg:dicom-xnat-sop") { transitive = false }
     implementation("org.nrg:framework")
     implementation("org.nrg:prefs") { transitive = false }
