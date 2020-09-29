@@ -40,12 +40,10 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -63,8 +61,11 @@ import org.nrg.xapi.rest.AbstractXapiRestController;
 import org.nrg.xapi.rest.Project;
 import org.nrg.xapi.rest.Experiment;
 import org.nrg.xapi.rest.XapiRequestMapping;
+import org.nrg.xdat.model.XnatSubjectassessordataI;
 import org.nrg.xdat.om.XnatExperimentdata;
 import org.nrg.xdat.om.XnatImagesessiondata;
+import org.nrg.xdat.om.XnatProjectdata;
+import org.nrg.xdat.om.XnatSubjectdata;
 import org.nrg.xdat.security.services.RoleHolder;
 import org.nrg.xdat.security.services.UserManagementServiceI;
 import org.nrg.xdat.security.helpers.AccessLevel;
@@ -246,8 +247,82 @@ public class OhifViewerApi extends AbstractXapiRestController
 
 		logger.info("Creating experiment metadata for "+experimentId);
 		createAndStoreJsonConfig(user, experimentId);
+		logger.info("Session "+experimentId+" metadata creation complete");
 
 		return new ResponseEntity<>(HttpStatus.OK);
+	}
+
+	@ApiOperation(value = "Generates the session JSON for every session in the project.")
+	@ApiResponses(
+	{
+		@ApiResponse(code = 201, message = "The JSON metadata has been created for every session in the project."),
+		@ApiResponse(code = 403, message = "The user does not have permission to perform this action."),
+		@ApiResponse(code = 423, message = "This process is already underway and is locked."),
+		@ApiResponse(code = 500, message = "An unexpected error occurred.")
+	})
+	@XapiRequestMapping(
+		value = "projects/{projectId}",
+		method = RequestMethod.POST,
+		restrictTo = AccessLevel.Admin
+	)
+	public ResponseEntity<String> postGenerateProjectJson(
+		final @ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId)
+		throws PluginException
+	{
+		// Don't allow more generate all processes to be started if one is already
+		// running
+		if (!genAllJsonLock.tryLock())
+		{
+			return new ResponseEntity<>(HttpStatus.LOCKED);
+		}
+		HttpStatus status;
+		try
+		{
+			status = generateProjectMetadata(projectId);
+			logger.info("Project "+projectId+" metadata creation complete");
+		}
+		finally
+		{
+			genAllJsonLock.unlock();
+		}
+		return new ResponseEntity<>(status);
+	}
+
+	@ApiOperation(value = "Generates the session JSON for every session in the subject.")
+	@ApiResponses(
+	{
+		@ApiResponse(code = 201, message = "The JSON metadata has been created for every session in the subject."),
+		@ApiResponse(code = 403, message = "The user does not have permission to perform this action."),
+		@ApiResponse(code = 423, message = "This process is already underway and is locked."),
+		@ApiResponse(code = 500, message = "An unexpected error occurred.")
+	})
+	@XapiRequestMapping(
+		value = "projects/{projectId}/subjects/{subjectId}",
+		method = RequestMethod.POST,
+		restrictTo = AccessLevel.Admin
+	)
+	public ResponseEntity<String> postGenerateSubjectJson(
+		final @ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
+		final @ApiParam(value="Subject ID") @PathVariable("subjectId") @Project String subjectId)
+		throws PluginException
+	{
+		// Don't allow more generate all processes to be started if one is already
+		// running
+		if (!genAllJsonLock.tryLock())
+		{
+			return new ResponseEntity<>(HttpStatus.LOCKED);
+		}
+		HttpStatus status;
+		try
+		{
+			status = generateSubjectMetadata(projectId, subjectId);
+			logger.info("Subject "+subjectId+" metadata creation complete");
+		}
+		finally
+		{
+			genAllJsonLock.unlock();
+		}
+		return new ResponseEntity<>(status);
 	}
 
 	@ApiOperation(value = "Generates the session JSON for every session in the database.")
@@ -331,6 +406,16 @@ public class OhifViewerApi extends AbstractXapiRestController
 
 	private HttpStatus generateAllMetadata() throws PluginException
 	{
+		UserI user = getSessionUser();
+		List<XnatExperimentdata> experiments =
+			XnatExperimentdata.getAllXnatExperimentdatas(user, true);
+		List<String> exptIds = getImageSessionIds(experiments);
+		return generateMetadata(exptIds);
+	}
+
+	private HttpStatus generateMetadata(List<String> exptIds)
+		throws PluginException
+	{
 		// Create image session JSON in a multithreaded fashion if available
 		int numThreads = Runtime.getRuntime().availableProcessors();
 		numThreads = (numThreads > 4) ? 4 : numThreads;
@@ -339,7 +424,7 @@ public class OhifViewerApi extends AbstractXapiRestController
 
 		UserI user = getSessionUser();
 		List<Callable<Void>> tasks = new ArrayList<>();
-		for (String id : getAllImageSessionIds())
+		for (String id : exptIds)
 		{
 			logger.info("ImageSession ID: "+id);
 			tasks.add((Callable<Void>) () ->
@@ -365,21 +450,52 @@ public class OhifViewerApi extends AbstractXapiRestController
 		return HttpStatus.CREATED;
 	}
 
-	private List<String> getAllImageSessionIds()
+	private HttpStatus generateProjectMetadata(String projectId)
+		throws PluginException
 	{
-		List<String> experimentIds = new ArrayList<>();
 		UserI user = getSessionUser();
-		List<XnatExperimentdata> experiments =
-			XnatExperimentdata.getAllXnatExperimentdatas(user, true);
-		for (XnatExperimentdata experimentI : experiments)
+		XnatProjectdata projectData = XnatProjectdata.getProjectByIDorAlias(
+			projectId, user, false);
+		List<String> exptIds = getImageSessionIds(projectData.getExperiments());
+		return generateMetadata(exptIds);
+	}
+
+	private HttpStatus generateSubjectMetadata(String projectId,
+		String subjectId) throws PluginException
+	{
+		UserI user = getSessionUser();
+		XnatSubjectdata subjectData = XnatSubjectdata.getXnatSubjectdatasById(
+			subjectId, user, true);
+		if (!subjectData.getProject().equals(projectId))
 		{
-			if (experimentI instanceof XnatImagesessiondata)
+			throw new PluginException(
+				"Subject "+subjectId+" not found in project "+projectId,
+				PluginCode.HttpUnprocessableEntity);
+		}
+		List<String> exptIds = new ArrayList<>();
+		for (XnatSubjectassessordataI assessorData :
+			subjectData.getExperiments_experiment())
+		{
+			if (assessorData instanceof XnatImagesessiondata)
 			{
-				experimentIds.add(experimentI.getId());
+				exptIds.add(assessorData.getId());
 			}
 		}
+		return generateMetadata(exptIds);
+		
+	}
 
-		return experimentIds;
+	private List<String> getImageSessionIds(List<XnatExperimentdata> experiments)
+	{
+		List<String> exptIds = new ArrayList<>();
+		for (XnatExperimentdata experimentData : experiments)
+		{
+			if (experimentData instanceof XnatImagesessiondata)
+			{
+				exptIds.add(experimentData.getId());
+			}
+		}
+		return exptIds;
 	}
 
 }
