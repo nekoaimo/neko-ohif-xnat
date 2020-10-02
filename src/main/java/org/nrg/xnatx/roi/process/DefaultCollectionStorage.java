@@ -126,6 +126,12 @@ public class DefaultCollectionStorage extends BaseCollectionProcessor
 	{
 		logger.debug("Checking dependencies present");
 		Set<String> studyUids = roiCollection.getStudyUids();
+		if (studyUids.isEmpty())
+		{
+			throw new PluginException(
+				"ROI collection does not contain a referenced study UID",
+				PluginCode.HttpUnprocessableEntity);
+		}
 		String studyUid = sessionData.getUid();
 		logger.debug("Checking study UID: "+studyUid);
 		if ((studyUids.size() != 1) || (!studyUids.contains(studyUid)))
@@ -137,6 +143,12 @@ public class DefaultCollectionStorage extends BaseCollectionProcessor
 		Map<String,String> uidIdMap = PluginUtils.getImageScanUidIdMap(sessionId, user);
 		Set<String> seriesUids = roiCollection.getSeriesUids();
 		Set<String> sopInstUids = new HashSet<>();
+		if (seriesUids.isEmpty())
+		{
+			throw new PluginException(
+				"ROI collection does not contain a referenced series UID",
+				PluginCode.HttpUnprocessableEntity);
+		}
 		for (String seriesUid : seriesUids)
 		{
 			logger.debug("Checking series UID: "+seriesUid);
@@ -200,7 +212,7 @@ public class DefaultCollectionStorage extends BaseCollectionProcessor
 					workflow = ProcessUtils.getOrCreateWorkflowData(user, xsiType,
 						collectId, projectId, EventUtils.REMOVE_CATALOG);
 					eventMeta = workflow.buildEvent();
-					removeResource(resource, rootPath, collectData.getItem(),
+					removeResource(resource, projectData.getId(), rootPath, collectData.getItem(),
 						eventMeta, "OutFile");
 					collectData.removeOut_file(i);
 					ProcessUtils.complete(workflow, eventMeta);
@@ -376,7 +388,7 @@ public class DefaultCollectionStorage extends BaseCollectionProcessor
 					{
 						EventMetaI eventMeta = EventUtils.DEFAULT_EVENT(user,
 							"Remove Catalog");
-						removeResource(resource, rootPath, collectData.getItem(),
+						removeResource(resource, projectData.getId(), rootPath, collectData.getItem(),
 							eventMeta, "OutFile");
 						collectData.removeOut_file(i);
 						saveCollectionData();

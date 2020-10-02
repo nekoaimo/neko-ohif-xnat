@@ -41,10 +41,8 @@ import org.nrg.xnatx.roi.Constants;
 import org.nrg.xnatx.roi.data.RoiCollection;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import org.nrg.xdat.XDAT;
 import org.nrg.xdat.base.BaseElement;
 import org.nrg.xdat.om.IcrRoicollectiondata;
@@ -92,41 +90,26 @@ public abstract class BaseCollectionProcessor
 	protected XnatResourceInfo buildResourceInfo(EventMetaI eventMeta,
 		String targetType)
 	{
-		String content = null;
-		String description = null;
-		String format = null;
-		String[] tags = null;
+		final XnatResourceInfo.XnatResourceInfoBuilder builder = XnatResourceInfo.builder();
 		switch (targetType)
 		{
 			case Constants.AIM:
-				content = "EXTERNAL";
-				description = "AIM instance file";
-				format = "XML";
+				builder.content("EXTERNAL").description("AIM instance file").format("XML");
 				break;
 			case Constants.RtStruct:
-				content = "EXTERNAL";
-				description = "RT Structure Set";
-				format = "DICOM";
+				builder.content("EXTERNAL").description("RT Structure Set").format("DICOM");
 				break;
 			case Constants.Segmentation:
-				content = "EXTERNAL";
-				description = "DICOM Segmentation";
-				format = "DICOM";
+				builder.content("EXTERNAL").description("DICOM Segmentation").format("DICOM");
 				break;
 			case Constants.Nifti:
-				content = "EXTERNAL";
-				description = "NIfTI File";
-				format = "NIFTI";
+				builder.content("EXTERNAL").description("NIfTI File").format("NIFTI");
 				break;
 			default:
 		}
-		Date date = EventUtils.getEventDate(eventMeta, false);
 
-		XnatResourceInfo info = XnatResourceInfo.buildResourceInfo(description,
-			format, content, tags, user, date, date,
-			EventUtils.getEventId(eventMeta));
-
-		return info;
+		final Date date = EventUtils.getEventDate(eventMeta, false);
+		return builder.username(user.getUsername()).created(date).lastModified(date).eventId(EventUtils.getEventId(eventMeta)).build();
 	}
 
 	protected ResourceModifierA buildResourceModifier(boolean overwrite,
@@ -269,12 +252,12 @@ public abstract class BaseCollectionProcessor
 		collectData = RoiUtils.getCollectionDataById(roiCollection.getId());
 	}
 
-	protected void removeResource(XnatResource resource, String rootPath,
+	protected void removeResource(XnatResource resource, String projectId, String rootPath,
 		ItemI item, EventMetaI eventMeta, String description) throws Exception
 	{
 		try
 		{
-			resource.deleteWithBackup(rootPath, user, eventMeta);
+			resource.deleteWithBackup(rootPath, projectId, user, eventMeta);
 			SaveItemHelper.authorizedRemoveChild(item,
 				"xnat:imageAssessorData/out/file", resource.getItem(), user,
 				eventMeta);

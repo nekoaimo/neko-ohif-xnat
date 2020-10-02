@@ -170,9 +170,7 @@ public class SegmentationRoiCollection extends AbstractRoiCollection
 			{
 				for (SourceImage image : derivImage.getSourceImageList())
 				{
-					// Disabled for now as dcmjs is broken, it creates an internal
-					// multiframe image whose UID appears here
-//					addSopInstanceUid(image.getReferencedSopInstanceUid());
+					addSopInstanceUid(image.getReferencedSopInstanceUid());
 				}
 			}
 		}
