@@ -35,13 +35,8 @@
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
-import org.apache.commons.io.IOUtils;
 import org.nrg.xdat.XDAT;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xnatx.ohifviewer.ViewerUtils;
@@ -50,7 +45,6 @@ import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.plugin.PluginUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 
 /**
  *
@@ -61,8 +55,6 @@ public class ConfigServiceJsonCreator
 	private static final Logger logger =
 		LoggerFactory.getLogger(ImageSessionJsonCreator.class);
 	private static final String SEP = File.separator;
-	private static final String xnatRootURL =
-		XDAT.getSiteConfigPreferences().getSiteUrl();
 	private static final String xnatArchivePath =
 		XDAT.getSiteConfigPreferences().getArchivePath();
 
@@ -88,10 +80,9 @@ public class ConfigServiceJsonCreator
 		String expLabel = dirInfo.get("expLabel");
 		String subj = dirInfo.get("subj");
 
-		logger.debug("Experiment path: {}"+
+		logger.debug("Experiment path: {}",
 			PluginUtils.getExperimentPath(sessionData));
-		String xnatScanPath = xnatArchivePath + SEP + proj
-			+ SEP + "arc001" + SEP + expLabel + SEP + "SCANS";
+		String xnatScanPath = PluginUtils.getExperimentPath(sessionData)+"SCANS";
 		logger.info("Creating JSON metadata for {}", xnatScanPath);
 		String xnatExperimentScanUrl = getXnatScanUrl(proj, subj, expLabel);
 		logger.info("xnatExperimentScanUrl: {}", xnatExperimentScanUrl);
@@ -135,16 +126,6 @@ public class ConfigServiceJsonCreator
 		}
 	}
 
-	private void createFileParent(String filePath) throws IOException
-	{
-		// Create parent directory if it doesn't exist
-		File file = new File(filePath);
-		if (!file.exists())
-		{
-			Files.createDirectories(Paths.get(file.getParent()));
-		}
-	}
-
 	private String getStudyPath(String xnatArchivePath, String proj,
 		String expLabel, String experimentId)
 	{
@@ -155,31 +136,8 @@ public class ConfigServiceJsonCreator
 	private String getXnatScanUrl(String project, String subject,
 		String experimentId)
 	{
-		String xnatExperimentScanUrl = xnatRootURL
-			+ "/data/archive/projects/" + project
-			+ "/subjects/" + subject
-			+ "/experiments/" + experimentId
-			+ "/scans/";
-		return xnatExperimentScanUrl;
-	}
-
-	private HttpStatus writeJSON(String jsonString, String writeFilePath)
-	{
-		try
-		{
-			createFileParent(writeFilePath);
-			// Write to file
-			final Writer writer = new FileWriter(writeFilePath);
-			IOUtils.write(jsonString, writer);
-			writer.close();
-			logger.debug("JSON written to: " + writeFilePath);
-			return HttpStatus.CREATED;
-		}
-		catch (IOException ioEx)
-		{
-			logger.error(ioEx.getMessage());
-			return HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+		return "/data/archive/projects/"+project+"/subjects/"+subject
+			+"/experiments/"+experimentId+"/scans/";
 	}
 
 }
