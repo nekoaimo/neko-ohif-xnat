@@ -3,7 +3,7 @@
 <!-- allowGuest: true -->
 <!-- Sequence: 6 -->
 <li class="yuimenuitem">
-    <a id="ohifViewer" href="#"><div class="ic">&nbsp;</div><div class="ic_spacer">&nbsp;</div>View Subject</a>
+    <a id="ohifViewer" href="#"><div class="ic">&nbsp;</div><div class="ic_spacer">&nbsp;</div>View Images</a>
 </li>
 
 <script>
