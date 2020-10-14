@@ -247,6 +247,11 @@ publishing {
                         appendNode("name", "Rick Herrick")
                         appendNode("email", "jrherrick@wustl.edu")
                     }
+                    appendNode("developer").with {
+                        appendNode("id", "malsad")
+                        appendNode("name", "Mo Alsad")
+                        appendNode("email", "mo.alsad@gmail.com")
+                    }
                 }
             }
         }
