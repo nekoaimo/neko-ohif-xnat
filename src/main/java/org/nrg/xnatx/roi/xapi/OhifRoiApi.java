@@ -566,7 +566,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		checkType(type, modality);
 		// Null seriesUid until NIfTI re-enabled
 		String seriesUid = null;
-		String collectId = checkExisting(projectId, label, overwrite);
+		String collectId = checkExisting(projectId, sessionId, label, overwrite);
 		RoiCollection roiCollection = createRoiCollection(user, projectId,
 			sessionId, collectId, label, is, type, seriesUid);
 		CollectionStorage storage = new DefaultCollectionStorage();
@@ -717,14 +717,20 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		return value;
 	}
 
-	private String checkExisting(String projectId, String label, boolean overwrite)
-		throws PluginException
+	private String checkExisting(String projectId, String sessionId,
+		String label, boolean overwrite) throws PluginException
 	{
 		IcrRoicollectiondata collectData = RoiUtils.getCollectionDataByLabel(
 			projectId, label);
 		if (collectData == null)
 		{
 			return null;
+		}
+		if (!sessionId.equals(collectData.getImagesessionId()))
+		{
+			throw new PluginException(
+				"ROI collection exists in a different session",
+				PluginCode.HttpConflict);
 		}
 		if (!overwrite)
 		{

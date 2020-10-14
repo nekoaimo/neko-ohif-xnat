@@ -117,6 +117,10 @@ public class OhifRoiControllerAdvice
 		{
 			return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
 		}
+		else if (code.equals(PluginCode.HttpConflict))
+		{
+			return new ResponseEntity<>(message, HttpStatus.CONFLICT);
+		}
 		else if (code.equals(PluginCode.HttpInternalError))
 		{
 			return new ResponseEntity<>(message, HttpStatus.INTERNAL_SERVER_ERROR);
