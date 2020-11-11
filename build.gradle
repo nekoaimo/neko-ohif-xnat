@@ -144,7 +144,7 @@ dependencyManagement.imports {
 
 dependencies {
     implementation("org.nrg.xnat:web") { transitive = false }
-    implementation("org.nrg.xnat:xnat-data-models") { transitive = false }
+    implementation("org.nrg.xnat:xnat-data-models:1.8.0-SNAPSHOT") { transitive = false }
     implementation("org.nrg.xdat:core") { transitive = false }
     implementation("org.nrg:automation") { transitive = false }
     implementation("org.nrg:config") { transitive = false }

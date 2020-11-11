@@ -99,7 +99,7 @@ public class CreateOhifViewerMetadata
 	{
 		logger.info("DICOM search: {}", path);
 
-		DicomReceiver dcmRec = new DicomReceiver();
+		DicomReceiver dcmRec = new DicomReceiver(true);
 		PathScan<DicomObject> pathScan = dcmTk.createPathScan();
 		pathScan.addContext(dcmRec);
 		pathScan.scan(path, true);

@@ -35,8 +35,6 @@
 package org.nrg.xnatx.ohifviewer.event.listeners;
 
 import org.nrg.xdat.om.WrkWorkflowdata;
-import org.nrg.xdat.om.XnatExperimentdata;
-import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xft.event.entities.WorkflowStatusEvent;
 import org.nrg.xft.event.persist.PersistentWorkflowUtils;
 import org.nrg.xnatx.ohifviewer.inputcreator.ImageSessionJsonCreator;
@@ -89,10 +87,9 @@ public class OhifViewerEventListener
 		String pipelineName = workflow.getPipelineName();
 		String experimentId = workflow.getId();
 
-		logger.debug("Handling event in OhifViewerEventListener, pipelineName: "+
-			pipelineName);
-		logger.debug(workflow.getDataType());
-		logger.debug(experimentId);
+		logger.debug("Handling event in OhifViewerEventListener. PipelineName: "+
+			pipelineName+", datatype: "+workflow.getDataType()+", ID: "+
+			experimentId);
 
 		if (PluginUtils.isImageSessionData(experimentId, null))
 		{
