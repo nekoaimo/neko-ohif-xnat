@@ -34,19 +34,21 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.event.listeners;
 
+import javax.inject.Inject;
+import org.nrg.config.services.ConfigService;
 import org.nrg.xdat.om.WrkWorkflowdata;
+import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xft.event.entities.WorkflowStatusEvent;
 import org.nrg.xft.event.persist.PersistentWorkflowUtils;
-import org.nrg.xnatx.ohifviewer.inputcreator.ImageSessionJsonCreator;
+import org.nrg.xft.security.UserI;
+import org.nrg.xnatx.ohifviewer.inputcreator.JsonMetadataHandler;
+import org.nrg.xnatx.plugin.PluginException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.fn.Consumer;
-
-import javax.inject.Inject;
-import org.nrg.xnatx.plugin.PluginUtils;
 
 import static reactor.bus.selector.Selectors.R;
 
@@ -58,17 +60,20 @@ import static reactor.bus.selector.Selectors.R;
 public class OhifViewerEventListener
 	implements Consumer<Event<WorkflowStatusEvent>>
 {
-
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerEventListener.class);
 
+	private final JsonMetadataHandler jsonHandler;
+
 	@Inject
-	public OhifViewerEventListener(EventBus eventBus)
+	public OhifViewerEventListener(EventBus eventBus, ConfigService configService)
 	{
 		eventBus.on(
 			R(WorkflowStatusEvent.class.getName()+
 				"[.]?("+PersistentWorkflowUtils.COMPLETE+")"),
 			this);
+		jsonHandler = new JsonMetadataHandler(configService);
+		logger.info("OHIF Viewer event listener initialised");
 	}
 
 	@Override
@@ -87,18 +92,12 @@ public class OhifViewerEventListener
 		String pipelineName = workflow.getPipelineName();
 		String experimentId = workflow.getId();
 
-		logger.debug("Handling event in OhifViewerEventListener. PipelineName: "+
-			pipelineName+", datatype: "+workflow.getDataType()+", ID: "+
-			experimentId);
-
-		if (PluginUtils.isImageSessionData(experimentId, null))
+		if (logger.isDebugEnabled())
 		{
-			logger.debug(
-				"Workflow event not referencing image session data, no JSON to be created.");
-			return;
+			logger.debug("Handling event in OhifViewerEventListener. PipelineName: "+
+				pipelineName+", datatype: "+workflow.getDataType()+", ID: "+
+				experimentId);
 		}
-		
-		// TODO If event is Transferred, Update and Folder Deleted, rebuild json.
 		if (pipelineName.equals("Transferred")
 			|| pipelineName.equals("Update")
 			|| pipelineName.equals("Folder Deleted")
@@ -110,10 +109,27 @@ public class OhifViewerEventListener
 			|| pipelineName.equals("Modified project")
 			|| pipelineName.equals("Configured project sharing"))
 		{
-			logger.debug(
-				"Rebuilding viewer JSON metadata for experiment: "+experimentId);
-			ImageSessionJsonCreator creator = new ImageSessionJsonCreator();
-			creator.create(experimentId);
+			UserI user = workflow.getUser();
+			XnatImagesessiondata sessionData =
+					XnatImagesessiondata.getXnatImagesessiondatasById(
+						experimentId, user, false);
+			if (sessionData == null)
+			{
+				return;
+			}
+			if (logger.isDebugEnabled())
+			{
+				logger.debug("Rebuilding viewer JSON metadata for experiment: " +
+					experimentId);
+			}
+			try
+			{
+				jsonHandler.createAndStoreJsonConfig(sessionData, user);
+			}
+			catch (PluginException ex)
+			{
+				logger.warn(ex.getMessage(), ex);
+			}
 		}
 	}
 

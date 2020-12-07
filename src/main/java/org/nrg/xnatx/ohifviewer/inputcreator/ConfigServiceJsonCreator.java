@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.nrg.xdat.XDAT;
 import org.nrg.xdat.om.XnatImagesessiondata;
+import org.nrg.xft.security.UserI;
 import org.nrg.xnatx.ohifviewer.ViewerUtils;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
@@ -60,10 +61,14 @@ public class ConfigServiceJsonCreator
 
 	public String create(String sessionId) throws PluginException
 	{
-		XnatImagesessiondata sessionData;
+		return create(sessionId, null);
+	}
+
+	public String create(String sessionId, UserI user) throws PluginException
+	{
 		try
 		{
-			sessionData = PluginUtils.getImageSessionData(sessionId, null);
+			return create(PluginUtils.getImageSessionData(sessionId, user));
 		}
 		catch (PluginException ex)
 		{
@@ -71,6 +76,16 @@ public class ConfigServiceJsonCreator
 			throw new PluginException("Session not found: "+sessionId,
 				PluginCode.HttpUnprocessableEntity, ex);
 		}
+	}
+
+	public String create(XnatImagesessiondata sessionData) throws PluginException
+	{
+		if (sessionData == null)
+		{
+			throw new PluginException("SessionData must not be null",
+				PluginCode.HttpUnprocessableEntity);
+		}
+		String sessionId = sessionData.getId();
 		Map<String,String> seriesUidToScanIdMap =
 			PluginUtils.getImageScanUidIdMap(sessionData);
 

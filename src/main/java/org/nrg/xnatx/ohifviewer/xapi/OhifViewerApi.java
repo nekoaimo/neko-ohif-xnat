@@ -53,10 +53,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.apache.commons.io.IOUtils;
 import org.nrg.config.entities.Configuration;
-import org.nrg.config.exceptions.ConfigServiceException;
 import org.nrg.config.services.ConfigService;
 import org.nrg.framework.annotations.XapiRestController;
-import org.nrg.framework.constants.Scope;
 import org.nrg.xapi.rest.AbstractXapiRestController;
 import org.nrg.xapi.rest.Project;
 import org.nrg.xapi.rest.Experiment;
@@ -70,7 +68,7 @@ import org.nrg.xdat.security.services.RoleHolder;
 import org.nrg.xdat.security.services.UserManagementServiceI;
 import org.nrg.xdat.security.helpers.AccessLevel;
 import org.nrg.xft.security.UserI;
-import org.nrg.xnatx.ohifviewer.inputcreator.ConfigServiceJsonCreator;
+import org.nrg.xnatx.ohifviewer.inputcreator.JsonMetadataHandler;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.plugin.PluginUtils;
@@ -96,24 +94,11 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @RequestMapping(value = "/viewer")
 public class OhifViewerApi extends AbstractXapiRestController
 {
-	/**
-	 * JSON metadata revision. This is incremented each time the JSON metadata
-	 * format or content is changed to allow runtime detection of outdated
-	 * metadata
-	 */
-	public static final int JsonRevision = 1;
-
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerApi.class);
 
-	private static final String CreateReason = "Creating Session JSON";
-	private static final String JsonRevisionToolPath = "json-revision";
-	private static final String OhifViewerToolName = "ohif-viewer";
-	private static final String SessionJsonToolPath = "session-json";
-
-	private final ConfigService configService;
-	private final Lock configServiceLock = new ReentrantLock();
 	private final Lock genAllJsonLock = new ReentrantLock();
+	private final JsonMetadataHandler jsonHandler;
 
 	@Autowired
 	public OhifViewerApi(final ConfigService configService,
@@ -121,13 +106,10 @@ public class OhifViewerApi extends AbstractXapiRestController
 		final RoleHolder roleHolder)
 	{
 		super(userManagementService, roleHolder);
-		this.configService = configService;
+		jsonHandler = new JsonMetadataHandler(configService);
 		logger.info("OHIF Viewer XAPI initialised");
 	}
 
-	/*=================================
-	// Session level GET/POST
-	=================================*/
 	@ApiOperation(value = "Checks if Session level JSON exists")
 	@ApiResponses(
 	{
@@ -161,12 +143,11 @@ public class OhifViewerApi extends AbstractXapiRestController
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 
-		if (!checkJsonRevision(experimentId))
+		if (!jsonHandler.isJsonValid(experimentId))
 		{
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-		Configuration jsonConfig = configService.getConfig(OhifViewerToolName,
-			SessionJsonToolPath, Scope.Experiment, experimentId);
+		Configuration jsonConfig = jsonHandler.getJsonConfig(experimentId);
 		return (jsonConfig != null)
 			? new ResponseEntity<>(HttpStatus.OK)
 			: new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -207,27 +188,26 @@ public class OhifViewerApi extends AbstractXapiRestController
 		}
 
 		String json;
-		if (checkJsonRevision(experimentId))
+		if (jsonHandler.isJsonValid(experimentId))
 		{
-			Configuration jsonConfig = configService.getConfig(OhifViewerToolName,
-				SessionJsonToolPath, Scope.Experiment, experimentId);
+			Configuration jsonConfig = jsonHandler.getJsonConfig(experimentId);
 			if (jsonConfig == null)
 			{
-				json = createAndStoreJsonConfig(user, experimentId);
+				json = jsonHandler.createAndStoreJsonConfig(sessionData, user);
 			}
 			else
 			{
 				json = jsonConfig.getContents();
 				if (StringUtils.isNullOrEmpty(json))
 				{
-					json = createAndStoreJsonConfig(user, experimentId);
+					json = jsonHandler.createAndStoreJsonConfig(sessionData, user);
 				}
 			}
 		}
 		else
 		{
 			// Revision check failed? Recreate regardless
-			json = createAndStoreJsonConfig(user, experimentId);
+			json = jsonHandler.createAndStoreJsonConfig(sessionData, user);
 		}
 		StreamingResponseBody srb = createResponseBody(json);
 		return new ResponseEntity<>(srb, HttpStatus.OK);
@@ -265,8 +245,8 @@ public class OhifViewerApi extends AbstractXapiRestController
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 
-		logger.info("Creating experiment metadata for "+experimentId);
-		createAndStoreJsonConfig(user, experimentId);
+		logger.info("Session "+experimentId+" metadata creation requested");
+		jsonHandler.createAndStoreJsonConfig(sessionData, user);
 		logger.info("Session "+experimentId+" metadata creation complete");
 
 		return new ResponseEntity<>(HttpStatus.OK);
@@ -298,6 +278,7 @@ public class OhifViewerApi extends AbstractXapiRestController
 		HttpStatus status;
 		try
 		{
+			logger.info("Project "+projectId+" metadata creation requested");
 			status = generateProjectMetadata(projectId);
 			logger.info("Project "+projectId+" metadata creation complete");
 		}
@@ -335,6 +316,7 @@ public class OhifViewerApi extends AbstractXapiRestController
 		HttpStatus status;
 		try
 		{
+			logger.info("Subject "+subjectId+" metadata creation requested");
 			status = generateSubjectMetadata(projectId, subjectId);
 			logger.info("Subject "+subjectId+" metadata creation complete");
 		}
@@ -369,85 +351,15 @@ public class OhifViewerApi extends AbstractXapiRestController
 		HttpStatus status;
 		try
 		{
+			logger.info("All projects metadata creation requested");
 			status = generateAllMetadata();
+			logger.info("All projects metadata creation complete");
 		}
 		finally
 		{
 			genAllJsonLock.unlock();
 		}
 		return new ResponseEntity<>(status);
-	}
-
-	private boolean checkJsonRevision(String experimentId)
-	{
-		Configuration jsonRevConfig = configService.getConfig(OhifViewerToolName,
-			JsonRevisionToolPath, Scope.Experiment, experimentId);
-		// Check the stored revision. If it doesn't exist, is empty or lower than
-		// the Json
-		if (jsonRevConfig == null)
-		{
-			logger.debug("JSON revision not found");
-			return false;
-		}
-		else
-		{
-			String jsonRev = jsonRevConfig.getContents();
-			if (StringUtils.isNullOrEmpty(jsonRev))
-			{
-				logger.debug("JSON revision empty");
-				return false;
-			}
-			logger.debug("Stored JSON revision: {}", jsonRev);
-			int rev;
-			try
-			{
-				rev = Integer.parseInt(jsonRev);
-			}
-			catch (NumberFormatException ex)
-			{
-				logger.debug("JSON revision invalid: {}", jsonRev);
-				return false;
-			}
-			if (rev < JsonRevision)
-			{
-				logger.debug("JSON revision outdated: "+rev+" < "+JsonRevision);
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private String createAndStoreJsonConfig(UserI user, String experimentId)
-		throws PluginException
-	{
-		String json = null;
-		try
-		{
-			ConfigServiceJsonCreator creator = new ConfigServiceJsonCreator();
-			json = creator.create(experimentId);
-			try
-			{
-				// Method may be called in muliple threads, only access shared vars
-				// under lock.
-				configServiceLock.lock();
-				configService.replaceConfig(user.getUsername(), CreateReason, 
-					OhifViewerToolName, SessionJsonToolPath, true, json,
-					Scope.Experiment, experimentId);
-				configService.replaceConfig(user.getUsername(), CreateReason, 
-					OhifViewerToolName, JsonRevisionToolPath, true,
-					Integer.toString(JsonRevision), Scope.Experiment, experimentId);
-			}
-			finally
-			{
-				configServiceLock.unlock();
-			}
-		}
-		catch (ConfigServiceException ex)
-		{
-			throw new PluginException("Error retrieving JSON config",
-				PluginCode.ConfigService, ex);
-		}
-		return json;
 	}
 
 	private StreamingResponseBody createResponseBody(String input)
@@ -491,7 +403,7 @@ public class OhifViewerApi extends AbstractXapiRestController
 			logger.info("ImageSession ID: "+id);
 			tasks.add((Callable<Void>) () ->
 			{
-				createAndStoreJsonConfig(user, id);
+				jsonHandler.createAndStoreJsonConfig(id, user);
 				return null;
 			});
 		}
