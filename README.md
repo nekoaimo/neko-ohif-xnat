@@ -1,27 +1,23 @@
-# XNAT-OHIF Viewer Plugin 2.2
+# XNAT-OHIF Viewer Plugin 3.0
 
 ![OHIF-XNAT-logo](assets/Logo.png)
 
 ***This version of the plugin is based on [OHIF Viewer 2.0](https://github.com/OHIF/Viewers) and uses the [React](https://reactjs.org/) JavaScript library.***
 
-# Development Branch
-
-***This is the dev branch of the repository that contains the latest developments and does not have pre-built jars. Use this branch at your own risk.***
-
 # Main Documentation
 
-This plugin integrates the OHIF viewer into XNAT, 2.2 comes with a suite of annotation tools, and allows users to import/export ROI Contours and Segmentations to ROICollection Assessors on XNAT.
-~~Up to date viewer bundles are available in the [downloads](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin/downloads/) area.~~
+This plugin integrates the OHIF viewer into XNAT, 3.0 comes with a suite of annotation tools, and allows users to import/export ROI Contours and Segmentations to ROICollection Assessors on XNAT.
+Up to date viewer bundles are available in the [downloads](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin/downloads/) area.
 
-## 2.2 Patch Notes:
+## 3.0 Patch Notes:
 
 Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG.md).
 
 ### Overview
 
-This release is built around the XNAT 1.7.6 specification.
+This release is built around the XNAT 1.8 specification and is not compatible with XNAT 1.7.x or any previous version.
 
-The main difference between 2.x and and 1.0.x is the inclusion of a set of tools for annotating regions of interest within XNAT and storing these in the XNAT database for use in processing pipelines. Using the [ROI Upload Assistant](https://bitbucket.org/icrimaginginformatics/roiuploadassistant), one may also upload regions of interest stored in DICOM `RTSTRUCT`, DICOM `SEG` and `AIM` 4.0 Image Annotation Collection formats from external sources to XNAT. These will be automatically indexed and importable in the viewer.
+A major feature of 3.0 is the inclusion of a set of tools for annotating regions of interest within XNAT and storing these in the XNAT database for use in processing pipelines. Using the [ROI Upload Assistant](https://bitbucket.org/icrimaginginformatics/roiuploadassistant), one may also upload regions of interest stored in DICOM `RTSTRUCT`, DICOM `SEG` and `AIM` 4.0 Image Annotation Collection formats from external sources to XNAT. These will be automatically indexed and importable in the viewer.
 
 ### Annotation Tools
 
@@ -41,7 +37,7 @@ The ROI Contour tools can be used to create and modify contour-based regions of 
 
 ROI Contours may be managed and imported/exported to XNAT via the `Contours` sidebar interface. The sidebar also allows you to toggle:
 
-- `Interpolation` - Whether intermediate contours should be linearly interploated when drawing, such that you only need to manually delineate every few frames.
+- `Interpolation` - Whether intermediate contours should be linearly interpolated when drawing, such that you only need to manually delineate every few frames.
 - `Stats` - Whether to display the labels and 2D statistics of each contour on the viewport.
 
 #### Segmentation Tools
@@ -84,7 +80,7 @@ The plugin adds a new assessor datatype, the `ROICollection`.
   - The 'More/Sync Settings' menu has the option to set all viewports to be synced by default.
   - The 'More/Sync Settings' menu lets the user switch the synchronization strategy to operate via image position or by frame number. Image position is the default.
 
-- The `Smooth` toggle at the top right of each viewport allows the user to toggle voxel interpolation (previousy always on).
+- The `Smooth` toggle at the top right of each viewport allows the user to toggle voxel interpolation (previously always on).
   - Turning smoothing off for very low resolution images can sometimes help with labelmap delineation.
   - Smoothing is on by default.
 
@@ -94,7 +90,7 @@ The plugin adds a new assessor datatype, the `ROICollection`.
 
 - Clicking `View Subject` on a Subject page will now open up a subject-wide viewer session.
 
-- In Subject view, the scan list contains a collapsable list of scans for each Session. You can view and annotate scans from multiple sessions simultaneously.
+- In Subject view, the scan list contains a collapsible list of scans for each Session. You can view and annotate scans from multiple sessions simultaneously.
 - When you annotate ROIs and export them back to XNAT, they will automatically be stored under the appropriate session.
 - If metadata isn't present for all sessions, a dialog will appear telling the user its being generated. Once generated, the user will automatically be redirected to the subject view.
 
@@ -121,14 +117,16 @@ A navigation bar can now be accessed by opening the left-hand `XNAT Nav` tab in 
 - If a user has unsaved annotations, they will get a warning confirmation before being able to navigate to a different view.
 - The navigation bar fetches data about Projects/Subjects/Sessions on demand, resulting in a quick and responsive UI, often capable of navigating XNAT much faster than navigating through the standard XNAT interface.
 
-### Simplified XAPI:
+### REST XAPI:
 
-- The `/viewer` XAPI now only has these end points:
-  - `GET /viewer/projects/{_projectId}/experiments/{_experimentId}/exists` - returns 200 if JSON metadata exists.
-  - `GET /viewer/projects/{_projectId}/experiments/{_experimentId}` - Returns cached JSON metadata or generates it if it doesn't exist.
-  - `POST /viewer/generate-all-metadata` - Admin only command to rebuild all JSON metadata on the XNAT.
-  - `POST /viewer/projects/{_projectId}/experiments/{_experimentId}` - Forced rewrite of JSON metadata. A backdoor if automation is down for any reason.
-- Missing JSON being generated and cached in the GET means a user with READ only permissions to a session can view a session without the need for admin/owner/member intervention.
+- The `/viewer` XAPI has these end points:
+  - `GET /viewer/projects/{projectId}/experiments/{experimentId}/exists` - returns 200 if JSON metadata exists for the specified session.
+  - `GET /viewer/projects/{projectId}/experiments/{experimentId}` - Returns cached JSON metadata for the specified session or generates it if it doesn't exist.
+  - `POST /viewer/generate-all-metadata` - Admin only command to rebuild all JSON metadata on the entire XNAT instance. This operation may take a long time if used on an instance with a large number of sessions.
+  - `POST /viewer/projects/{projectId}` - Admin only command to regenerate JSON metadata for all sessions in the specified project.
+  - `POST /viewer/projects/{projectId}/subjects/{subjectId}` - Admin only command to regenerate JSON metadata for all sessions in the specified subject.
+  - `POST /viewer/projects/{projectId}/experiments/{experimentId}` - Admin only command to regenerate JSON metadata for the specified session. A tool used if automation is down for any reason.
+- Missing JSON being generated and cached in the GET request means a user with READ only permissions to a session can view a session without the need for admin/owner/member intervention.
 
 ### Improved Multiframe Support:
 
@@ -137,7 +135,7 @@ A navigation bar can now be accessed by opening the left-hand `XNAT Nav` tab in 
 
 ### Touch Support:
 
-Touch support is available for easily segmentation of ROI Contours with a stylus/Apple pen, also including:
+Touch support is available for easy segmentation of ROI Contours with a stylus/Apple pen, also including:
 
 - Two finger drag-to-zoom
 - Three finger scroll
@@ -150,8 +148,8 @@ Since the rest of XNAT currently has poor support for mobile browsers, if deline
 - The viewer displays the plugin version number at the top left.
 - The Scans left side bar is now open by default.
 - Scrollbars have been added to left and right sidebars for users without a mousewheel.
-- The series list now displays full 64 character series descriptions and 10 digit series numbers cleanly, with line wrapping prioritising spaces, and otherwise linebreaking where needbe.
-- The 'View Images' button has been changed to 'View Legacy XImgView' to avoid confusion with OHIF. Once XNAT is running on the new React-based OHIF 2.0 and has solid MPR, the old XImgViewer can be deprecated.
+- The series list now displays full 64 character series descriptions and 10 digit series numbers cleanly, with line wrapping prioritising spaces, and otherwise linebreaking where needs be.
+- The 'View Session' button has been changed to 'View Images' as the legacy XImgViewer has been removed.
 
 # Deploying the Pre-built plugin
 
@@ -161,7 +159,9 @@ Since the rest of XNAT currently has poor support for mobile browsers, if deline
 
 # Initialising the viewer in a populated database
 
-In the likely event you are installing this plugin on an XNAT with an already populated database, an admin may call the REST command `POST XNAT_ROOT_URL/xapi/viewer/generate-all-metadata` in order to initiate a process that will iterate through all the sessions in the XNAT and generate the required metadta, using as many threads as are available on the machine.
+In the likely event you are installing this plugin on an XNAT with an already populated database, all existing JSON metadata will be invalid due to changes in the metadata required by the viewer since plugin version 2.1. The outdated metadata for a session will be automatically regenerated the first time a user views the session but this will involve a short delay while the metadata is created.
+
+An admin may call one of the [REST commands](#rest-xapi) in order to initiate a background regeneration of the required metadata. The REST commands have various levels of granularity ranging from single session through single subject, single project to entire XNAT instance. This allows the admin to prioritise metadata regeneration for their most used data. In the case of large data volumes, the REST command may appear to terminate with a time out e.g. a 504 return value. If this is observed, do not resubmit the command as the original server-side processing will continue and this can be monitored in the plugin's log file `ohifviewer.log` in XNAT's normal logging directory. We recommend only running one metadata regeneration command at a time to avoid IO contention.
 
 # Building From Source
 
