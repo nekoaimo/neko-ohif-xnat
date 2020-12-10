@@ -6,8 +6,10 @@
 
 # Main Documentation
 
-This plugin integrates the OHIF viewer into XNAT, 3.0 comes with a suite of annotation tools, and allows users to import/export ROI Contours and Segmentations to ROICollection Assessors on XNAT.
+This plugin integrates the OHIF viewer into XNAT. Version 3.0 comes with a suite of annotation tools, and allows users to import/export ROI Contours and Segmentations to ROICollection Assessors on XNAT.
 Up to date viewer bundles are available in the [downloads](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin/downloads/) area.
+
+***Version 3.0 of this plugin is distributed as a single jar file. If upgrading from v2.1 then both `ohif-viewer-2.1.0.jar` and `xnat-roi-2.2.0.jar` need to be removed from the plugins directory of XNAT***
 
 ## 3.0 Patch Notes:
 
