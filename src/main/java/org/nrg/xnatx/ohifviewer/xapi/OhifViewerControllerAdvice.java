@@ -50,7 +50,7 @@ import org.springframework.web.context.request.WebRequest;
  *
  * @author jamesd
  */
-@ControllerAdvice(assignableTypes=OhifViewerApi.class)
+@ControllerAdvice(assignableTypes={OhifViewerApi.class,OhifAiaaApi.class})
 public class OhifViewerControllerAdvice
 {
 	private final static Logger logger = LoggerFactory.getLogger(
