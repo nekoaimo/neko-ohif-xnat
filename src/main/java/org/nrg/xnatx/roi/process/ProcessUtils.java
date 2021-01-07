@@ -128,14 +128,13 @@ public class ProcessUtils
 		PersistentWorkflowI workflow;
 		try
 		{
-			workflow =PersistentWorkflowUtils.getOrCreateWorkflowData(null, user, 
+			workflow = PersistentWorkflowUtils.getOrCreateWorkflowData(null, user, 
 				xsiType, securityId, projectId,
 				EventUtils.newEventInstance(EventUtils.CATEGORY.DATA,
 					EventUtils.TYPE.WEB_SERVICE, actionDescription));
 		}
 		catch (PersistentWorkflowUtils.JustificationAbsent |
-			PersistentWorkflowUtils.ActionNameAbsent |
-			PersistentWorkflowUtils.IDAbsent ex)
+			PersistentWorkflowUtils.ActionNameAbsent ex)
 		{
 			throw new PluginException("Error creating workflow",
 				PluginCode.HttpInternalError, ex);
