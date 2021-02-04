@@ -89,7 +89,8 @@ public class CreateOhifViewerMetadata
 		OhifViewerInput ovi = createInput(transactionId, root);
 
 		// Convert the Java object to a JSON string
-		Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+		Gson gson = new GsonBuilder().setPrettyPrinting()
+			.serializeSpecialFloatingPointValues().create();
 		String serialisedOvi = gson.toJson(ovi);
 
 		return serialisedOvi;
@@ -127,7 +128,8 @@ public class CreateOhifViewerMetadata
 		{
 			for (Study study : patient.getStudyList())
 			{
-				OhifViewerInputStudy oviStd = new OhifViewerInputStudy(study, patient);
+				OhifViewerInputStudy oviStd = new OhifViewerInputStudy(study,
+					patient);
 				oviStudyList.add(oviStd);
 
 				for (Series series : study.getSeriesList())

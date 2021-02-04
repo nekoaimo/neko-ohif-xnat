@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 public class ConfigServiceJsonCreator
 {
 	private static final Logger logger =
-		LoggerFactory.getLogger(ImageSessionJsonCreator.class);
+		LoggerFactory.getLogger(ConfigServiceJsonCreator.class);
 	private static final String SEP = File.separator;
 	private static final String xnatArchivePath =
 		XDAT.getSiteConfigPreferences().getArchivePath();
@@ -93,13 +93,12 @@ public class ConfigServiceJsonCreator
 			sessionId);
 		String proj = dirInfo.get("proj");
 		String expLabel = dirInfo.get("expLabel");
-		String subj = dirInfo.get("subj");
 
 		logger.debug("Experiment path: {}",
 			PluginUtils.getExperimentPath(sessionData));
 		String xnatScanPath = PluginUtils.getExperimentPath(sessionData)+"SCANS";
 		logger.info("Creating JSON metadata for {}", xnatScanPath);
-		String xnatExperimentScanUrl = getXnatScanUrl(proj, subj, expLabel);
+		String xnatExperimentScanUrl = "/data/experiments/"+sessionId+"/scans/";
 		logger.info("xnatExperimentScanUrl: {}", xnatExperimentScanUrl);
 
 		String json = null;
@@ -146,13 +145,6 @@ public class ConfigServiceJsonCreator
 	{
 		return xnatArchivePath+SEP+proj+SEP+"arc001"+SEP+expLabel+
 			SEP+"RESOURCES/metadata/"+experimentId+".json";
-	}
-
-	private String getXnatScanUrl(String project, String subject,
-		String experimentId)
-	{
-		return "/data/archive/projects/"+project+"/subjects/"+subject
-			+"/experiments/"+experimentId+"/scans/";
 	}
 
 }
