@@ -1,10 +1,19 @@
-**2.1 RC-1**
-Jar File:
-- Greatly reduced size of plugin jar.
+**3.0**
 
-Internals:
-- Dedicated server-side log file and improved logging.
-- ControllerAdvice prevents exceptions escaping the plugin.
+- Fix event-triggered JSON metadata generation for session uploads.
+- Relative URLs in JSON metadata allows XNAT's host name to change without requiring a metadata regeneration.
+- ROICollection data type schema removed and integrated into `xnat-data-models`. Other plugins such as XSync can now use the data type.
+- Stricter checking of session ID and ROICollection ID on overwrite.
+- Finer grained JSON metadata regeneration XAPI calls added.
+- JSON metadata moved into XNAT database. Existing JSON metadata files will be removed during metadata regeneration.
+- Breaking change in XNAT 1.8.0 `deleteWithBackup()` method means 1.7.x and earlier no longer supported.
+- Improved study and series UID checking for SEGs.
+- JSON metadata format update to support OHIF 4.2.7 requirements. Regeneration of all metadata required, will happen automatically if admin doesn't manually intervene.
+- 2D-only modalities supported. Contours can only be stored in AIM format, no RT-STRUCT will be generated.
+- Add `xnat-xnat-viewer` repo as submodule. Add build script to allow single command build of whole plugin.
+- Clean up build dependencies, limit what is included in fatjar. Greatly reduces jar size.
+- Remove build outputs from repo.
+- Merge `xnat-roi-plugin` into `ohif-xnat-viewer-plugin` to roll all functionality into a single jar file. Reduces confusion for users.
 
 **2.0**
 UX:
@@ -23,7 +32,7 @@ UX:
 
 **2.0 RC-7**
 UX:
-- Icons under a scan in the scan list to display whether there are any rois or segments on that scan. Really useful when you import one ROICollection onto a large Session.
+- Icons under a scan in the scan list to display whether there are any ROIs or segments on that scan. Really useful when you import one ROICollection onto a large Session.
 
 **2.0 RC-6**
 UI:

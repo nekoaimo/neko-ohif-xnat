@@ -45,67 +45,83 @@
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
+import org.nrg.xnatx.ohifviewer.ViewerUtils;
+
+import com.google.common.collect.ImmutableList;
+import icr.etherj.dicom.Series;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.Series;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OhifViewerInputSeries extends OhifViewerInputItem
 {	
-	private String seriesInstanceUid;
-	private String seriesDescription;
-	private Integer seriesNumber;
-	private List<OhifViewerInputInstance> instances = new ArrayList<>();
+	private static final Logger logger = LoggerFactory.getLogger(
+		OhifViewerInputSeries.class);
+
+	private String Modality;
+	private String SeriesDate;
+	private String SeriesDescription;
+	private String SeriesInstanceUID;
+	private int SeriesNumber;
+	private String SeriesTime;
+
+	private final List<OhifViewerInputInstance> instances = new ArrayList<>();
   
 	public OhifViewerInputSeries(Series ser)
 	{
-		setSeriesInstanceUid(ser.getUid());
-		setSeriesDescription(ser.getDescription());
-		setSeriesNumber(ser.getNumber());
+		if (ser == null)
+		{
+			logger.error("Series is null");
+			return;
+		}
+		SeriesInstanceUID = ser.getUid();
+		SeriesDescription = ser.getDescription();
+		SeriesNumber = ser.getNumber();
+		SeriesDate = ViewerUtils.getValidatedDateString(ser.getDate());;
+		String seriesDate = ser.getDate();
+		if (seriesDate != null && !seriesDate.trim().isEmpty())
+			SeriesDate = seriesDate;
+		try
+		{
+			double seriesTime = ser.getTime();
+			if (Double.isNaN(seriesTime))
+				seriesTime = 0.0;
+			SeriesTime = String.format("%013.6f", ser.getTime());
+		}
+		catch (Exception e)
+		{
+			SeriesTime = "00000";
+		}
+		Modality = ser.getModality();
 	}
 	
 	public void addInstances(OhifViewerInputInstance instance)
 	{
-		this.instances.add(instance);
+		instances.add(instance);
 	}
 	
 	public List<OhifViewerInputInstance> getInstances()
 	{
-		return instances;
+		return ImmutableList.copyOf(instances);
 	}
 
 	public String getSeriesDescription()
 	{
-		return seriesDescription;
+		return SeriesDescription;
 	}
 
 	public String getSeriesInstanceUid()
 	{
-		return seriesInstanceUid;
+		return SeriesInstanceUID;
 	}
 
-	public Integer getSeriesNumber()
+	public int getSeriesNumber()
 	{
-		return seriesNumber;
+		return SeriesNumber;
 	}
 
-	private void setSeriesInstanceUid(String seriesInstanceUid)
-	{
-		this.seriesInstanceUid = seriesInstanceUid;
-	}
-
-	private void setSeriesDescription(String seriesDescription)
-	{
-		this.seriesDescription = seriesDescription;
-	}
-
-	private void setSeriesNumber(Integer seriesNumber)
-	{
-		this.seriesNumber = seriesNumber;
-	}
-
-	private void setInstances(List<OhifViewerInputInstance> instances)
-	{
-		this.instances = instances;
-	}
-  
 }

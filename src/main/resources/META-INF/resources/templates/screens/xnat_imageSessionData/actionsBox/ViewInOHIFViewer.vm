@@ -3,7 +3,7 @@
 <!-- allowGuest: true -->
 <!-- Sequence: 6 -->
 <li class="yuimenuitem">
-    <a id="ohifViewer" href="#"><div class="ic">&nbsp;</div><div class="ic_spacer">&nbsp;</div>View Session</a>
+    <a id="ohifViewer" href="#"><div class="ic">&nbsp;</div><div class="ic_spacer">&nbsp;</div>View Images</a>
 </li>
 
 <script>
@@ -352,11 +352,11 @@
 
       for (var i = 0; i < studyList.studies.length; i++) {
 
-        if (!studyList.studies[i] || !studyList.studies[i].seriesList) {
+        if (!studyList.studies[i] || !studyList.studies[i].series) {
           continue;
         }
 
-        var series = studyList.studies[i].seriesList;
+        var series = studyList.studies[i].series;
 
         for (var j = 0; j < series.length; j++) {
           if (series[j].instances.length) {
@@ -402,7 +402,7 @@
 
       $('body').pleaseWait('stop');
 
-      XNAT.dialog.static.wait(
+     XNAT.dialog.static.wait(
         "Please wait... generating viewer metadata for session " + experimentLabel + ". This is a one-time operation that may take a few minutes if the session is very large. When complete, the viewer will open."
       );
     }

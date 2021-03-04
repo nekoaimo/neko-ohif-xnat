@@ -34,77 +34,82 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.xapi;
 
+import icr.etherj.StringUtils;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
-import org.apache.commons.io.IOUtils;
-import org.nrg.framework.annotations.XapiRestController;
-import org.nrg.xapi.rest.XapiRequestMapping;
-import org.nrg.xdat.XDAT;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.io.*;
-import java.nio.file.Files;
-import java.util.HashMap;
-import org.nrg.xft.security.UserI;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import org.apache.commons.io.IOUtils;
+import org.nrg.config.entities.Configuration;
+import org.nrg.config.services.ConfigService;
+import org.nrg.framework.annotations.XapiRestController;
+import org.nrg.xapi.rest.AbstractXapiRestController;
+import org.nrg.xapi.rest.Project;
+import org.nrg.xapi.rest.Experiment;
+import org.nrg.xapi.rest.XapiRequestMapping;
+import org.nrg.xdat.model.XnatSubjectassessordataI;
 import org.nrg.xdat.om.XnatExperimentdata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xdat.om.XnatSubjectdata;
 import org.nrg.xdat.security.services.RoleHolder;
 import org.nrg.xdat.security.services.UserManagementServiceI;
-import org.nrg.xapi.rest.AbstractXapiRestController;
-import org.nrg.xapi.rest.Project;
-import org.nrg.xapi.rest.Experiment;
-import org.nrg.xdat.om.XnatExperimentdataShare;
 import org.nrg.xdat.security.helpers.AccessLevel;
-import org.nrg.xnatx.ohifviewer.PluginCode;
-import org.nrg.xnatx.ohifviewer.PluginException;
-import org.nrg.xnatx.ohifviewer.PluginUtils;
-import org.nrg.xnatx.ohifviewer.Security;
-import org.nrg.xnatx.ohifviewer.inputcreator.CreateExperimentMetadata;
-import org.nrg.xnatx.ohifviewer.inputcreator.RunnableCreateExperimentMetadata;
+import org.nrg.xft.security.UserI;
+import org.nrg.xnatx.ohifviewer.inputcreator.JsonMetadataHandler;
+import org.nrg.xnatx.plugin.PluginCode;
+import org.nrg.xnatx.plugin.PluginException;
+import org.nrg.xnatx.plugin.PluginUtils;
+import org.nrg.xnatx.plugin.Security;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 /**
  *
  * @author jpetts
  */
-@Api(description="OHIF Viewer API")
+@Api(description="OHIF Viewer Metadata API")
 @XapiRestController
 @RequestMapping(value = "/viewer")
 public class OhifViewerApi extends AbstractXapiRestController
 {
-	private static final Logger logger = LoggerFactory.getLogger(OhifViewerApi.class);
-	private static final String SEP = File.separator;
-	private static Boolean generateAllJsonLocked = false;
+	private static final Logger logger = LoggerFactory.getLogger(
+		OhifViewerApi.class);
+
+	private final Lock genAllJsonLock = new ReentrantLock();
+	private final JsonMetadataHandler jsonHandler;
 
 	@Autowired
-	public OhifViewerApi(final UserManagementServiceI userManagementService,
+	public OhifViewerApi(final ConfigService configService,
+		final UserManagementServiceI userManagementService,
 		final RoleHolder roleHolder)
 	{
 		super(userManagementService, roleHolder);
+		jsonHandler = new JsonMetadataHandler(configService);
+		logger.info("OHIF Viewer XAPI initialised");
 	}
 
-	/*=================================
-	// Study level GET/POST
-	=================================*/
 	@ApiOperation(value = "Checks if Session level JSON exists")
 	@ApiResponses(
 	{
@@ -128,30 +133,24 @@ public class OhifViewerApi extends AbstractXapiRestController
 		Security.checkSession(user, experimentId);
 		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
 			experimentId, user);
-		Security.checkPermissions(user, sessionData.getXSIType()+"/project", projectId,
-			Security.Read);
+		Security.checkPermissions(user, sessionData.getXSIType()+"/project",
+			projectId, Security.Read);
 
-		boolean isSessionSharedIntoProject = sessionSharedIntoProject(
-			experimentId, projectId);
-		if (!isSessionSharedIntoProject)
+		if (!PluginUtils.isSharedIntoProject(sessionData, projectId))
 		{
-			logger.info("Project IDs not equal");
+			logger.info("Experiment "+experimentId+" is not part of Project "+
+				projectId);
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 
-		String xnatArchivePath = XDAT.getSiteConfigPreferences().getArchivePath();
-		// Get directory info from _experimentId
-		Map<String,String> experimentData = getDirectoryInfo(experimentId);
-		String proj = experimentData.get("proj");
-		String expLabel = experimentData.get("expLabel");
-		String readFilePath = getStudyPath(xnatArchivePath, proj, expLabel,
-			experimentId);
-		File file = new File(readFilePath);
-		if (file.exists())
+		if (!jsonHandler.isJsonValid(experimentId))
 		{
-			return new ResponseEntity<>(HttpStatus.OK);
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		Configuration jsonConfig = jsonHandler.getJsonConfig(experimentId);
+		return (jsonConfig != null)
+			? new ResponseEntity<>(HttpStatus.OK)
+			: new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
 
 	@ApiOperation(value = "Returns the session JSON for the specified experiment ID.")
@@ -181,29 +180,36 @@ public class OhifViewerApi extends AbstractXapiRestController
 		Security.checkPermissions(user, sessionData.getXSIType()+"/project", projectId,
 			Security.Read);
 
-		String xnatArchivePath = XDAT.getSiteConfigPreferences().getArchivePath();
-		// Get directory info from _experimentId
-		Map<String, String> experimentData = getDirectoryInfo(experimentId);
-		String expLabel = experimentData.get("expLabel");
-		String proj = experimentData.get("proj");
-
-		boolean isSessionSharedIntoProject = sessionSharedIntoProject(
-			experimentId, projectId);
-		if (!isSessionSharedIntoProject)
+		if (!PluginUtils.isSharedIntoProject(sessionData, projectId))
 		{
-			logger.info("Project IDs not equal");
+			logger.info("Experiment "+experimentId+" is not part of Project "+
+				projectId);
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 
-		String readFilePath = getStudyPath(xnatArchivePath, proj, expLabel,
-			experimentId);
-		File file = new File(readFilePath);
-		if (!file.exists())
+		String json;
+		if (jsonHandler.isJsonValid(experimentId))
 		{
-			// JSON doesn't exist, so generate and cache it.
-			CreateExperimentMetadata.createMetadata(experimentId);
+			Configuration jsonConfig = jsonHandler.getJsonConfig(experimentId);
+			if (jsonConfig == null)
+			{
+				json = jsonHandler.createAndStoreJsonConfig(sessionData, user);
+			}
+			else
+			{
+				json = jsonConfig.getContents();
+				if (StringUtils.isNullOrEmpty(json))
+				{
+					json = jsonHandler.createAndStoreJsonConfig(sessionData, user);
+				}
+			}
 		}
-		StreamingResponseBody srb = createResponseBody(file);
+		else
+		{
+			// Revision check failed? Recreate regardless
+			json = jsonHandler.createAndStoreJsonConfig(sessionData, user);
+		}
+		StreamingResponseBody srb = createResponseBody(json);
 		return new ResponseEntity<>(srb, HttpStatus.OK);
 	}
 
@@ -232,18 +238,93 @@ public class OhifViewerApi extends AbstractXapiRestController
 		Security.checkPermissions(user, sessionData.getXSIType()+"/project", projectId,
 			Security.Edit, Security.Read);
 
-		boolean isSessionSharedIntoProject = sessionSharedIntoProject(
-			experimentId, projectId);
-		if (!isSessionSharedIntoProject)
+		if (!PluginUtils.isSharedIntoProject(sessionData, projectId))
 		{
+			logger.info("Experiment "+experimentId+" is not part of Project "+
+				projectId);
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 
-		logger.info("Creating experiment metadata for "+experimentId);
-		HttpStatus returnHttpStatus = CreateExperimentMetadata.createMetadata(
-			experimentId);
+		logger.info("Session "+experimentId+" metadata creation requested");
+		jsonHandler.createAndStoreJsonConfig(sessionData, user);
+		logger.info("Session "+experimentId+" metadata creation complete");
 
-		return new ResponseEntity<>(returnHttpStatus);
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+
+	@ApiOperation(value = "Generates the session JSON for every session in the project.")
+	@ApiResponses(
+	{
+		@ApiResponse(code = 201, message = "The JSON metadata has been created for every session in the project."),
+		@ApiResponse(code = 403, message = "The user does not have permission to perform this action."),
+		@ApiResponse(code = 423, message = "This process is already underway and is locked."),
+		@ApiResponse(code = 500, message = "An unexpected error occurred.")
+	})
+	@XapiRequestMapping(
+		value = "projects/{projectId}",
+		method = RequestMethod.POST,
+		restrictTo = AccessLevel.Admin
+	)
+	public ResponseEntity<String> postGenerateProjectJson(
+		final @ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId)
+		throws PluginException
+	{
+		// Don't allow more generate all processes to be started if one is already
+		// running
+		if (!genAllJsonLock.tryLock())
+		{
+			return new ResponseEntity<>(HttpStatus.LOCKED);
+		}
+		HttpStatus status;
+		try
+		{
+			logger.info("Project "+projectId+" metadata creation requested");
+			status = generateProjectMetadata(projectId);
+			logger.info("Project "+projectId+" metadata creation complete");
+		}
+		finally
+		{
+			genAllJsonLock.unlock();
+		}
+		return new ResponseEntity<>(status);
+	}
+
+	@ApiOperation(value = "Generates the session JSON for every session in the subject.")
+	@ApiResponses(
+	{
+		@ApiResponse(code = 201, message = "The JSON metadata has been created for every session in the subject."),
+		@ApiResponse(code = 403, message = "The user does not have permission to perform this action."),
+		@ApiResponse(code = 423, message = "This process is already underway and is locked."),
+		@ApiResponse(code = 500, message = "An unexpected error occurred.")
+	})
+	@XapiRequestMapping(
+		value = "projects/{projectId}/subjects/{subjectId}",
+		method = RequestMethod.POST,
+		restrictTo = AccessLevel.Admin
+	)
+	public ResponseEntity<String> postGenerateSubjectJson(
+		final @ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
+		final @ApiParam(value="Subject ID") @PathVariable("subjectId") @Project String subjectId)
+		throws PluginException
+	{
+		// Don't allow more generate all processes to be started if one is already
+		// running
+		if (!genAllJsonLock.tryLock())
+		{
+			return new ResponseEntity<>(HttpStatus.LOCKED);
+		}
+		HttpStatus status;
+		try
+		{
+			logger.info("Subject "+subjectId+" metadata creation requested");
+			status = generateSubjectMetadata(projectId, subjectId);
+			logger.info("Subject "+subjectId+" metadata creation complete");
+		}
+		finally
+		{
+			genAllJsonLock.unlock();
+		}
+		return new ResponseEntity<>(status);
 	}
 
 	@ApiOperation(value = "Generates the session JSON for every session in the database.")
@@ -261,47 +342,37 @@ public class OhifViewerApi extends AbstractXapiRestController
 	)
 	public ResponseEntity<String> setAllJson() throws PluginException
 	{
-		// Don't allow more generate all processes to be started if one is already running
-		if (generateAllJsonLocked == true)
+		// Don't allow more generate all processes to be started if one is already
+		// running
+		if (!genAllJsonLock.tryLock())
 		{
 			return new ResponseEntity<>(HttpStatus.LOCKED);
 		}
-		else
-		{
-			generateAllJsonLocked = true;
-		}
 		HttpStatus status;
-		// Ensure lock boolean is reset on an exception
 		try
 		{
+			logger.info("All projects metadata creation requested");
 			status = generateAllMetadata();
+			logger.info("All projects metadata creation complete");
 		}
 		finally
 		{
-			generateAllJsonLocked = false;
+			genAllJsonLock.unlock();
 		}
 		return new ResponseEntity<>(status);
 	}
 
-	private StreamingResponseBody createResponseBody(File file)
+	private StreamingResponseBody createResponseBody(String input)
 		throws PluginException
 	{
 		StreamingResponseBody srb = null;
-		try
+		try (InputStream is = IOUtils.toInputStream(input, StandardCharsets.UTF_8))
 		{
-			final InputStream is = Files.newInputStream(file.toPath());
-			srb = new StreamingResponseBody()
-			{
-				@Override
-				public void writeTo(final OutputStream output) throws IOException
-				{
-					IOUtils.copy(is, output);
-				}
-			};
+			srb = (final OutputStream output) -> { IOUtils.copy(is, output); };
 		}
 		catch (IOException ex)
 		{
-			throw new PluginException("IO error for "+file.getPath(),
+			throw new PluginException("IO error streaming JSON: "+ex.getMessage(),
 				PluginCode.IO, ex);
 		}
 		return srb;
@@ -309,271 +380,96 @@ public class OhifViewerApi extends AbstractXapiRestController
 
 	private HttpStatus generateAllMetadata() throws PluginException
 	{
-		List<String> experimentIds = getAllExperimentIds();
+		UserI user = getSessionUser();
+		List<XnatExperimentdata> experiments =
+			XnatExperimentdata.getAllXnatExperimentdatas(user, true);
+		List<String> exptIds = getImageSessionIds(experiments);
+		return generateMetadata(exptIds);
+	}
 
-		// Executes experiment JSON creation in a multithreaded fashion if avialable
+	private HttpStatus generateMetadata(List<String> exptIds)
+		throws PluginException
+	{
+		// Create image session JSON in a multithreaded fashion if available
 		int numThreads = Runtime.getRuntime().availableProcessors();
+		numThreads = (numThreads > 4) ? 4 : numThreads;
 		logger.info("Thread count for parallel JSON creation: " + numThreads);
-		ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
-		// Create a CountDownLatch in order to check when all processes are finished
-		CountDownLatch doneSignal = new CountDownLatch(experimentIds.size());
+		ExecutorService service = Executors.newFixedThreadPool(numThreads);
 
-		for (String experimentId : experimentIds)
+		UserI user = getSessionUser();
+		List<Callable<Void>> tasks = new ArrayList<>();
+		for (String id : exptIds)
 		{
-			logger.info("experimentId " + experimentId);
-			RunnableCreateExperimentMetadata createExperimentMetadata
-				= new RunnableCreateExperimentMetadata(doneSignal, experimentId);
-			executorService.submit(createExperimentMetadata);
+			logger.info("ImageSession ID: "+id);
+			tasks.add((Callable<Void>) () ->
+			{
+				jsonHandler.createAndStoreJsonConfig(id, user);
+				return null;
+			});
 		}
-
-		HttpStatus status;
 		try
 		{
-			doneSignal.await();
-			status = HttpStatus.CREATED;
+			service.invokeAll(tasks);
 		}
 		catch (InterruptedException ex)
 		{
 			throw new PluginException(
-				"JSON creation thread interrupted: "+ex.getMessage(),
+				"JSON creation interrupted: "+ex.getMessage(),
 				PluginCode.HttpInternalError, ex);
 		}
-
-		return status;
-	}
-
-	/*=================================
-	// Series level GET/POST- WIP
-	=================================*/
-
- /*
-
-    @ApiOperation(value = "Returns 200 if series level JSON exists")
-    @ApiResponses({
-      @ApiResponse(code = 200, message = "OK, The session JSON exists."),
-      @ApiResponse(code = 403, message = "The user does not have permission to view the indicated experiment."),
-      @ApiResponse(code = 404, message = "The specified JSON does not exist."),
-      @ApiResponse(code = 500, message = "An unexpected error occurred.")
-    })
-    @XapiRequestMapping(
-      value = "projects/{_projectId}/experiments/{_experimentId}/scans/{_scanId}/exists",
-      produces = MediaType.APPLICATION_JSON_VALUE,
-      method = RequestMethod.GET,
-      restrictTo = AccessLevel.Read
-    )
-    public ResponseEntity<String> doesSeriesJsonExist(
-      @PathVariable("_projectId") @ProjectId final String _projectId,
-      final @PathVariable String _experimentId, @PathVariable String _scanId)
-      throws IOException
-    {
-      // Grab the data archive path
-      String xnatArchivePath = XDAT.getSiteConfigPreferences().getArchivePath();
-
-      // Get directory info from _experimentId
-      HashMap<String,String> experimentData = getDirectoryInfo(_experimentId);
-      String proj     = experimentData.get("proj");
-      String expLabel = experimentData.get("expLabel");
-
-      if (!proj.equals(_projectId)) {
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-      }
-
-      String readFilePath = getSeriesPath(xnatArchivePath, proj, expLabel, _scanId);
-      File file = new File(readFilePath);
-      if (file.exists())
-      {
-        return new ResponseEntity<>(HttpStatus.OK);
-      }
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
-
-
-    @ApiOperation(value = "Returns the session JSON for the specified series.")
-    @ApiResponses({
-      @ApiResponse(code = 200, message = "The session was located and properly rendered to JSON."),
-      @ApiResponse(code = 403, message = "The user does not have permission to view the indicated experiment."),
-      @ApiResponse(code = 500, message = "An unexpected error occurred.")
-    })
-    @XapiRequestMapping(
-      value = "projects/{_projectId}/experiments/{_experimentId}/scans/{_scanId}",
-      produces = MediaType.APPLICATION_JSON_VALUE,
-      method = RequestMethod.GET,
-      restrictTo = AccessLevel.Read
-    )
-    public StreamingResponseBody getSeriesJson(
-      @PathVariable("_projectId") @ProjectId final String _projectId,
-      final @PathVariable String _experimentId, @PathVariable String _scanId)
-      throws FileNotFoundException
-    {
-    // Grab the data archive path
-      String xnatArchivePath = XDAT.getSiteConfigPreferences().getArchivePath();
-
-      // Get directory info from _experimentId
-      HashMap<String,String> experimentData = getDirectoryInfo(_experimentId);
-      String proj     = experimentData.get("proj");
-      String expLabel = experimentData.get("expLabel");
-
-      String readFilePath = getSeriesPath(xnatArchivePath, proj, expLabel, _scanId);
-
-      final Reader reader = new FileReader(readFilePath);
-
-      return new StreamingResponseBody() {
-          @Override
-          public void writeTo(final OutputStream output) throws IOException {
-              IOUtils.copy(reader, output);
-          }
-      };
-    }
-
-
-    @ApiOperation(value = "Generates the session JSON for the specified series.")
-    @ApiResponses({
-      @ApiResponse(code = 201, message = "The session JSON has been created."),
-      @ApiResponse(code = 403, message = "The user does not have permission to view the indicated experient."),
-      @ApiResponse(code = 500, message = "An unexpected error occurred.")
-    })
-    @XapiRequestMapping(
-      value = "projects/{_projectId}/experiments/{_experimentId}/scans/{_scanId}",
-      method = RequestMethod.POST,
-      restrictTo = AccessLevel.Edit
-    )
-    public ResponseEntity<String> postSeriesJson(
-      @PathVariable("_projectId") @ProjectId final String _projectId,
-      final @PathVariable String _experimentId, @PathVariable String _scanId)
-      throws IOException
-    {
-      // Grab the data archive path
-      String xnatRootURL      = XDAT.getSiteConfigPreferences().getSiteUrl();
-      String xnatArchivePath  = XDAT.getSiteConfigPreferences().getArchivePath();
-
-      // Get directory info from _experimentId
-      HashMap<String,String> experimentData = getDirectoryInfo(_experimentId);
-      String proj     = experimentData.get("proj");
-
-      if (!proj.equals(_projectId)) {
-        return new ResponseEntity<String>(HttpStatus.NOT_FOUND);
-      }
-
-      // Runs creation process within the active thread.
-      RunnableCreateSeriesMetadata createSeriesMetadata =
-                new RunnableCreateSeriesMetadata(xnatRootURL, xnatArchivePath, _experimentId, _scanId, null);
-      HttpStatus returnHttpStatus = createSeriesMetadata.runOnCurrentThread();
-
-      return new ResponseEntity<String>(returnHttpStatus);
-    }
-
-	 */
-	private List<String> getAllExperimentIds()
-	{
-		List<String> experimentIds = new ArrayList<>();
-		UserI user = getSessionUser();
-		List<XnatExperimentdata> experiments =
-			XnatExperimentdata.getAllXnatExperimentdatas(user, true);
-		for (XnatExperimentdata experimentI : experiments)
+		finally
 		{
-			if (experimentI instanceof XnatImagesessiondata)
-			{
-				experimentIds.add(experimentI.getId());
-			}
+			service.shutdown();
 		}
-
-		return experimentIds;
+		return HttpStatus.CREATED;
 	}
 
-	private Map<String,String> getDirectoryInfo(String experimentId)
+	private HttpStatus generateProjectMetadata(String projectId)
 		throws PluginException
 	{
-		// Get Experiment data and Project data from the experimentId
+		UserI user = getSessionUser();
+		XnatProjectdata projectData = XnatProjectdata.getProjectByIDorAlias(
+			projectId, user, false);
+		List<String> exptIds = getImageSessionIds(projectData.getExperiments());
+		return generateMetadata(exptIds);
+	}
 
-		XnatExperimentdata expData = null;
-		XnatProjectdata projData = null;
-		XnatImagesessiondata session = null;
-
-		try
-		{
-			expData = XnatExperimentdata.getXnatExperimentdatasById(
-				experimentId, null, false);
-			projData = expData.getProjectData();
-			session = (XnatImagesessiondata) expData;
-		}
-		catch (Exception ex)
+	private HttpStatus generateSubjectMetadata(String projectId,
+		String subjectId) throws PluginException
+	{
+		UserI user = getSessionUser();
+		XnatSubjectdata subjectData = XnatSubjectdata.getXnatSubjectdatasById(
+			subjectId, user, true);
+		if (!subjectData.getProject().equals(projectId))
 		{
 			throw new PluginException(
-				"Experiment "+experimentId+" not found in project",
-				PluginCode.HttpNotFound);
-		}
-
-		// Get the subject data
-		XnatSubjectdata subjData = XnatSubjectdata.getXnatSubjectdatasById(
-			session.getSubjectId(), null, false);
-
-		// Get the required info
-		String expLabel = expData.getArchiveDirectoryName();
-		String proj = projData.getId();
-		String subj = subjData.getLabel();
-
-		// Construct a HashMap to return data
-		Map<String,String> result = new HashMap<>();
-		result.put("expLabel", expLabel);
-		result.put("proj", proj);
-		result.put("subj", subj);
-
-		return result;
-	}
-
-	private String getStudyPath(String xnatArchivePath, String proj,
-		String expLabel, String _experimentId)
-	{
-		String filePath = xnatArchivePath + SEP + proj + SEP + "arc001"
-			+ SEP + expLabel + SEP + "RESOURCES/metadata/" + _experimentId + ".json";
-		return filePath;
-	}
-
-	private boolean sessionSharedIntoProject(String experimentId, String projectId)
-		throws PluginException
-	{
-		logger.info("OhifViewerApi::sessionSharedIntoProject("+experimentId+", "+
-			projectId+")");
-		XnatExperimentdata expData = null;
-		XnatImagesessiondata session = null;
-		try
-		{
-			expData = XnatExperimentdata.getXnatExperimentdatasById(experimentId,
-				null, false);
-			session = (XnatImagesessiondata) expData;
-		}
-		catch (Exception ex)
-		{
-			logger.error("Experiment not found: "+experimentId, ex);
-			throw new PluginException("Experiment not found: "+experimentId,
+				"Subject "+subjectId+" not found in project "+projectId,
 				PluginCode.HttpUnprocessableEntity);
 		}
-
-		if (expData.getProject().equals(projectId))
+		List<String> exptIds = new ArrayList<>();
+		for (XnatSubjectassessordataI assessorData :
+			subjectData.getExperiments_experiment())
 		{
-			logger.info("Experiment "+experimentId+" belongs to project "+projectId);
-			return true;
-		}
-
-		List<XnatExperimentdataShare> xnatExperimentdataShareList =
-			session.getSharing_share();
-		for (XnatExperimentdataShare share : xnatExperimentdataShareList)
-		{
-			logger.info("Share project ID: "+share.getProject());
-			if (share.getProject().equals(projectId))
+			if (assessorData instanceof XnatImagesessiondata)
 			{
-				return true;
+				exptIds.add(assessorData.getId());
 			}
 		}
-		return false;
+		return generateMetadata(exptIds);
+		
 	}
 
-	/*
-    private String getSeriesPath(String xnatArchivePath, String proj, String expLabel, String _scanId)
-    {
-      String filePath = xnatArchivePath + SEP + proj + SEP + "arc001"
-      + SEP + expLabel + SEP + "RESOURCES/metadata/" + _scanId +".json";
-      return filePath;
-    }
-	 */
+	private List<String> getImageSessionIds(List<XnatExperimentdata> experiments)
+	{
+		List<String> exptIds = new ArrayList<>();
+		for (XnatExperimentdata experimentData : experiments)
+		{
+			if (experimentData instanceof XnatImagesessiondata)
+			{
+				exptIds.add(experimentData.getId());
+			}
+		}
+		return exptIds;
+	}
+
 }

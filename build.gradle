@@ -1,6 +1,7 @@
 buildscript {
     ext {
-        vXnat = '1.7.6'
+        vXnat = '1.8.0'
+        pluginAppName = "ICR/XNAT OHIF Viewer Plugin"
     }
     repositories {
         mavenLocal()
@@ -19,19 +20,22 @@ buildscript {
     }
     dependencies {
         classpath "org.nrg.xnat.build:xnat-data-builder:${vXnat}"
-        classpath "io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE"
-        classpath "gradle.plugin.com.palantir.gradle.gitversion:gradle-git-version:0.8.0"
-        classpath "io.franzbecker:gradle-lombok:1.10"
+        classpath "io.spring.gradle:dependency-management-plugin:1.0.9.RELEASE"
+        classpath "com.palantir.gradle.gitversion:gradle-git-version:0.12.3"
+        classpath "io.franzbecker:gradle-lombok:4.0.0"
     }
 }
 
-group 'org.nrg.xnatx'
-version '2.1.0'
+group 'org.nrg.xnatx.plugins'
+version '3.0.0'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
+apply plugin: 'maven-publish'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
+apply plugin: 'com.palantir.git-version'
+apply plugin: 'xnat-data-builder'
 
 idea {
     module {
@@ -42,22 +46,64 @@ idea {
 
 // Use this configuration to put dependencies into the fat jar
 configurations {
-    compile.extendsFrom(compileAndInclude)
+    implementation.extendsFrom(implementAndInclude)
 }
 
+// Pulls in the Jenkins BUILD_NUMBER environment variable if available.
+def buildDate = new Date()
+def buildNumber = System.getenv().BUILD_NUMBER?.toInteger() ?: "Manual"
+def isDirty, branchName, gitHash, gitHashFull, commitDistance, lastTag, isCleanTag
+
+try {
+    def gitDetails = versionDetails()
+    isDirty = gitVersion().endsWith ".dirty"
+    branchName = gitDetails.branchName ?: "Unknown"
+    gitHash = gitDetails.gitHash
+    gitHashFull = gitDetails.gitHashFull
+    commitDistance = gitDetails.commitDistance
+    lastTag = gitDetails.lastTag
+    isCleanTag = gitDetails.isCleanTag
+} catch (IllegalArgumentException e) {
+    logger.info "Got an error trying to read VCS metadata from git. It's possible this project is not under VCS control. Using placeholder values for manifest entries."
+    isDirty = true
+    branchName = "Unknown"
+    gitHash = "None"
+    gitHashFull = "None"
+    commitDistance = 0
+    lastTag = "None"
+    isCleanTag = false
+}
+
+ext.gitManifest = manifest {
+    attributes "Application-Name": pluginAppName,
+            "Build-Date": buildDate,
+            "Build-Number": buildNumber,
+            "Implementation-Version": project.version,
+            "Implementation-Sha": gitHash,
+            "Implementation-Sha-Full": gitHashFull,
+            "Implementation-Commit": commitDistance,
+            "Implementation-LastTag": lastTag,
+            "Implementation-Branch": branchName,
+            "Implementation-CleanTag": isCleanTag,
+            "Implementation-Dirty": isDirty
+}
+
+jar {
+    manifest {
+        from gitManifest
+    }
+}
 
 task fatJar(type: Jar) {
     zip64 true
-    baseName = project.name
-    from { configurations.compileAndInclude.collect { it.isDirectory() ? it : zipTree(it) } }
+    archiveClassifier.set "fat"
+    archiveBaseName.set project.name
+    from { configurations.implementAndInclude.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        from gitManifest
+    }
     with jar
 }
-
-
-
-
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
 
 repositories {
     mavenLocal()
@@ -76,49 +122,39 @@ repositories {
         name 'XNAT Snapshot Repository'
     }
     maven {
-        url 'https://nrgxnat.jfrog.io/nrgxnat/ext-release'
-        name 'XNAT External Release Repository'
+        url 'https://nrgxnat.jfrog.io/nrgxnat/ext-release-local'
+        name 'XNAT External Release (Local) Repository'
+    }
+    maven {
+        url 'https://nrgxnat.jfrog.io/nrgxnat/ext-snapshot-local'
+        name 'XNAT External Snapshot (Local) Repository'
     }
     maven {
         url 'https://jitpack.io'
     }
 
-//    flatDir {
-//       dirs 'lib'
-//   }
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 dependencyManagement.imports {
     mavenBom "org.nrg:parent:${vXnat}"
 }
 
 dependencies {
-    implementation("org.nrg.xnat:web") {
-        transitive = false
-    }
-    implementation("org.nrg.xnat:xnat-data-models") {
-        transitive = false
-    }
-    implementation("org.nrg:automation") {
-        transitive = false
-    }
-    implementation("org.nrg.xdat:core") {
-        transitive = false
-    }
-    implementation("org.nrg:dicom-xnat-sop") {
-        transitive = false
-    }
+    implementation("org.nrg.xnat:web") { transitive = false }
+    implementation("org.nrg.xnat:xnat-data-models:1.8.0-SNAPSHOT") { transitive = false }
+    implementation("org.nrg.xdat:core") { transitive = false }
+    implementation("org.nrg:automation") { transitive = false }
+    implementation("org.nrg:config") { transitive = false }
+    implementation("org.nrg:dicom-xnat-sop") { transitive = false }
     implementation("org.nrg:framework")
-    implementation("org.nrg:prefs") {
-        transitive = false
-    }
-     implementation ('stratum:stratum:1.0') {
-        transitive = false
-    }
+    implementation("org.nrg:prefs") { transitive = false }
 
+    implementation("turbine:turbine") { transitive = false }
+    implementation("org.apache.velocity:velocity") { transitive = false }
+//    implementation ('stratum:stratum') { transitive = false }
 
     implementation "org.springframework:spring-web"
     implementation "org.springframework:spring-webmvc"
@@ -129,8 +165,8 @@ dependencies {
     implementation "commons-io:commons-io"
     implementation "commons-codec:commons-codec"
     implementation "org.apache.commons:commons-lang3"
-    implementation("io.projectreactor:reactor-core:2.0.2.RELEASE") { transitive = false }
-    implementation("io.projectreactor:reactor-bus:2.0.2.RELEASE") { transitive = false }
+    implementation("io.projectreactor:reactor-core") { transitive = false }
+    implementation("io.projectreactor:reactor-bus") { transitive = false }
 
     implementation("org.slf4j:slf4j-api") { transitive = false }
     implementation("org.slf4j:slf4j-log4j12") { transitive = false }
@@ -138,8 +174,105 @@ dependencies {
     implementation("dcm4che:dcm4che-core") { transitive = false }
     implementation("com.google.code.gson:gson") { transitive = false }
 
-    testCompile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.21'
+    // Guava
+    implementation("com.google.guava:guava") { transitive = false }
+    implementation("com.fasterxml.jackson.core:jackson-annotations") { transitive = false }
+    implementation("com.fasterxml.jackson.core:jackson-core") { transitive = false }
+    implementation("com.fasterxml.jackson.core:jackson-databind") { transitive = false }
+    // Logback
+    implementation("ch.qos.logback:logback-classic") { transitive = false }
+    implementation("ch.qos.logback:logback-core") { transitive = false }
+     // EtherJ
+    def vEtherJ = '1.1.3'
+    implementAndInclude("icr.etherj:etherj-core:${vEtherJ}") { transitive = false }
 
-
+    testImplementation "org.slf4j:slf4j-nop:1.7.25"
     testImplementation "junit:junit"
+}
+
+// This tells the compiler where to find source code. This isn't required in a
+// standard build, but the XNAT data builder generates code from XNAT data-type
+// schemas that the compiler needs to know about.
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+            srcDir 'build/xnat-generated/src/main/java'
+        }
+        resources {
+            srcDir 'src/main/resources'
+            srcDir 'build/xnat-generated/src/main/resources'
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifacts {
+                artifact fatJar
+            }
+
+            pom.withXml {
+                def root = asNode()
+                root.appendNode("name", pluginAppName)
+                root.appendNode("url", "https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin")
+                root.appendNode("inceptionYear", "2019")
+
+                root.appendNode("scm").with {
+                    appendNode("url", "https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin")
+                    appendNode("connection", "scm:https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin")
+                    appendNode("developerConnection", "scm:git@bitbucket.org:icrimaginginformatics/ohif-viewer-xnat-plugin.git")
+                }
+
+                root.appendNode("licenses").appendNode("license").with {
+                    appendNode("name", "3-Clause BSD License")
+                    appendNode("url", "https://opensource.org/licenses/BSD-3-Clause")
+                    appendNode("distribution", "repo")
+                }
+
+                root.appendNode("developers").with {
+                    appendNode("developer").with {
+                        appendNode("id", "jamesd")
+                        appendNode("name", "James Darcy")
+                        appendNode("email", "jamesd@icr.ac.uk")
+                    }
+                    appendNode("developer").with {
+                        appendNode("id", "jpetts")
+                        appendNode("name", "James Petts")
+                        appendNode("email", "jpetts@icr.ac.uk")
+                    }
+                    appendNode("developer").with {
+                        appendNode("id", "rherrick")
+                        appendNode("name", "Rick Herrick")
+                        appendNode("email", "jrherrick@wustl.edu")
+                    }
+                    appendNode("developer").with {
+                        appendNode("id", "malsad")
+                        appendNode("name", "Mo Alsad")
+                        appendNode("email", "mo.alsad@gmail.com")
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                // These properties must be set in the ~/.gradle/gradle.properties file or passed on the Gradle command
+                // line in the form -PrepoUsername=foo -PrepoPassword=bar.
+                username propertyWithDefault("repoUsername", "username")
+                password propertyWithDefault("repoPassword", "password")
+            }
+            if (project.version.endsWith("-SNAPSHOT")) {
+                url "https://nrgxnat.jfrog.io/nrgxnat/libs-snapshot-local"
+            } else {
+                url "https://nrgxnat.jfrog.io/nrgxnat/libs-release-local"
+            }
+        }
+    }
+}
+
+def propertyWithDefault(String name, Object value) {
+    hasProperty(name) ? property(name) : value
 }

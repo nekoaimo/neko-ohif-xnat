@@ -50,7 +50,7 @@ import java.util.List;
 public class OhifViewerInput
 {
 	private String transactionId;
-	private List<OhifViewerInputStudy> studies = new ArrayList<>();
+	private final List<OhifViewerInputStudy> studies = new ArrayList<>();
 	
 	
 	public String getTransactionId()

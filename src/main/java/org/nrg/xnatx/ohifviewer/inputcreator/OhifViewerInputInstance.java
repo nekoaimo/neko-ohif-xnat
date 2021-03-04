@@ -34,106 +34,87 @@
 *********************************************************************/
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
-import org.nrg.dcm.SOPModel;
+import icr.etherj.dicom.SopInstance;
 import java.io.File;
+
+import org.nrg.dcm.SOPModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.Series;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.SopInstance;
 
 /**
  *
  * @author jpetts
  */
-public class OhifViewerInputInstance extends OhifViewerInputItem {
-	protected static final String RESOURCES = "/resources/";
-	protected static final String FILES = "/files/";
-	private static final Logger logger = LoggerFactory.getLogger(OhifViewerInputInstance.class);
+public class OhifViewerInputInstance extends OhifViewerInputItem
+{
+	private static final String FILES = "/files/";
+	private static final String RESOURCES = "/resources/";
+	private static final Logger logger =
+		LoggerFactory.getLogger(OhifViewerInputInstance.class);
 
-	private String sopInstanceUid;
-	private Integer instanceNumber;
-	private Integer columns;
-	private Integer rows;
-	private String numberOfFrames;
-	private String frameOfReferenceUID;
-	private String imagePositionPatient;
-	private String imageOrientationPatient;
-	private String pixelSpacing;
+	private OhifViewerInputInstanceMetadata metadata;
 	private String url;
 
-	public OhifViewerInputInstance(SopInstance sop, Series ser,
-		String xnatScanUrl, String scanId)
+	public OhifViewerInputInstance(SopInstance sop, String xnatScanUrl,
+		String scanId)
 	{
-		setSopInstanceUid(sop.getUid());
-		setInstanceNumber(sop.getInstanceNumber());
-		setColumns(sop.getColumnCount());
-		setRows(sop.getRowCount());
-		setFrameOfReferenceUID(sop.getFrameOfReferenceUid());
-		setImagePositionPatient(dbl2DcmString(sop.getImagePositionPatient()));
-		setImageOrientationPatient(dbl2DcmString(sop.getImageOrientationPatient()));
-		setPixelSpacing(dbl2DcmString(sop.getPixelSpacing()));
+		if (sop == null)
+		{
+			logger.error("SopInstance is null");
+			return;
+		}
 
-		// Set number of frames if multiframe image, set to empty string if not so the viewer ignores it.
-		if (sop.getNumberOfFrames() > 1)
-		{
-			setNumberOfFrames(Integer.toString(sop.getNumberOfFrames()));
-		}
-		else
-		{
-			setNumberOfFrames("");
-		}
+		metadata = new OhifViewerInputInstanceMetadata(sop);
 
 		String file = new File(sop.getPath()).getName();
-		String sopClassUid = sop.getSopClassUid();
-		String resource = getResourceType(sopClassUid);
-		xnatScanUrl = selectCorrectProtocol(xnatScanUrl);
-		String urlString = xnatScanUrl + scanId + RESOURCES + resource + FILES + file;
-		setUrl(urlString);
+		String SOPClassUID = sop.getSopClassUid();
+		String resource = getResourceType(SOPClassUID);
+		url = xnatScanUrl+scanId+RESOURCES+resource+FILES+file;
 	}
 
-	public Integer getColumns()
+	public int getColumns()
 	{
-		return columns;
+		return metadata.getColumns();
 	}
 
 	public String getFrameOfReferenceUID()
 	{
-		return frameOfReferenceUID;
+		return metadata.getFrameOfReferenceUID();
 	}
 
 	public String getImageOrientationPatient()
 	{
-		return imageOrientationPatient;
+		return dbl2DcmString(metadata.getImageOrientationPatient());
 	}
 
 	public String getImagePositionPatient()
 	{
-		return imagePositionPatient;
+		return dbl2DcmString(metadata.getImagePositionPatient());
 	}
 
-	public Integer getInstanceNumber()
+	public int getInstanceNumber()
 	{
-		return instanceNumber;
+		return metadata.getInstanceNumber();
 	}
 
 	public String getNumberOfFrames()
 	{
-		return numberOfFrames;
+		return Integer.toString(metadata.getNumberOfFrames());
 	}
 
 	public String getPixelSpacing()
 	{
-		return pixelSpacing;
+		return dbl2DcmString(metadata.getPixelSpacing());
 	}
 
-	public Integer getRows()
+	public int getRows()
 	{
-		return rows;
+		return metadata.getRows();
 	}
 
 	public String getSopInstanceUid()
 	{
-		return sopInstanceUid;
+		return metadata.getSOPInstanceUID();
 	}
 
 	private String getResourceType(String sopClassUid)
@@ -147,83 +128,4 @@ public class OhifViewerInputInstance extends OhifViewerInputItem {
 		return url;
 	}
 
-	private String selectCorrectProtocol(String xnatScanUrl)
-	{
-		try
-		{
-		  xnatScanUrl = selectProtocol(xnatScanUrl);
-		}
-		catch (Exception ex)
-		{
-		  logger.error(ex.getMessage());
-		}
-
-		return xnatScanUrl;
-	}
-
-	private String selectProtocol(String xnatScanUrl) throws Exception
-	{
-		if (xnatScanUrl.contains("https"))
-		{
-			return xnatScanUrl.replace("https", "dicomweb");
-		}
-		else if (xnatScanUrl.contains("http"))
-		{
-			return xnatScanUrl.replace("http", "dicomweb");
-		}
-		else
-		{
-			throw new Exception("Unrecognised protocol in XNAT url");
-		}
-	}
-
-	private void setColumns(Integer columns)
-	{
-		this.columns = columns;
-	}
-
-	private void setFrameOfReferenceUID(String frameOfReferenceUID)
-	{
-		this.frameOfReferenceUID = frameOfReferenceUID;
-	}
-
-	private void setImageOrientationPatient(String imageOrientationPatient)
-	{
-		this.imageOrientationPatient = imageOrientationPatient;
-	}
-
-	private void setImagePositionPatient(String imagePositionPatient)
-	{
-		this.imagePositionPatient = imagePositionPatient;
-	}
-
-	private void setInstanceNumber(Integer instanceNumber)
-	{
-		this.instanceNumber = instanceNumber;
-	}
-
-	private void setNumberOfFrames(String numberOfFrames)
-	{
-		this.numberOfFrames = numberOfFrames;
-	}
-
-	private void setPixelSpacing(String pixelSpacing)
-	{
-		this.pixelSpacing = pixelSpacing;
-	}
-
-	private void setRows(Integer rows)
-	{
-		this.rows = rows;
-	}
-
-	private void setSopInstanceUid(String sopInstanceUid)
-	{
-		this.sopInstanceUid = sopInstanceUid;
-	}
-
-	private void setUrl(String url)
-	{
-		this.url = url;
-	}
 }

@@ -1,0 +1,22 @@
+<tr>
+	<th align="left">$displayManager.getSingularDisplayNameForImageSession(): </th>
+	<td>
+		#set($sess_id = $!om.getImageSessionData().getId())
+		#set($xsiType = $!om.getImageSessionData().getXSIType())
+		#set($field = "${xsiType}.ID")
+		#set($click = "$link.setAction('DisplayItemAction').addPathInfo('search_element', $xsiType).addPathInfo('search_field', $field).addPathInfo('search_value', $!sess_id).addPathInfo('project', $project)")
+		<a class=b href="$click">$!om.getImageSessionData().getIdentifier($project, false)</a>
+	</td>
+</tr>
+<tr>
+	<th align="left">$displayManager.getSingularDisplayNameForProject() ID: </th>
+	<td>$project</td>
+</tr>
+<tr>
+	<th align="left">$displayManager.getSingularDisplayNameForSubject() ID: </th>
+	<td>$!om.getSubjectid()</td>
+</tr>
+<tr>
+	<th align="left">$displayManager.getSingularDisplayNameForImageSession() ID: </th>
+	<td>$!om.getImageSessionData().getId()</td>
+</tr>

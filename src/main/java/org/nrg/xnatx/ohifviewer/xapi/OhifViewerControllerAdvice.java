@@ -34,10 +34,10 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.xapi;
 
+import icr.etherj.ExceptionCode;
 import org.nrg.xapi.exceptions.NotFoundException;
-import org.nrg.xnatx.ohifviewer.etherj.ExceptionCode;
-import org.nrg.xnatx.ohifviewer.PluginCode;
-import org.nrg.xnatx.ohifviewer.PluginException;
+import org.nrg.xnatx.plugin.PluginCode;
+import org.nrg.xnatx.plugin.PluginException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -50,7 +50,7 @@ import org.springframework.web.context.request.WebRequest;
  *
  * @author jamesd
  */
-@ControllerAdvice(assignableTypes=OhifViewerApi.class)
+@ControllerAdvice(assignableTypes={OhifViewerApi.class,OhifAiaaApi.class})
 public class OhifViewerControllerAdvice
 {
 	private final static Logger logger = LoggerFactory.getLogger(

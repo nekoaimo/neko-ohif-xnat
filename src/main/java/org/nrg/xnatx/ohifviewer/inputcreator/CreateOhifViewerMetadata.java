@@ -37,6 +37,14 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import icr.etherj.PathScan;
+import icr.etherj.dicom.DicomReceiver;
+import icr.etherj.dicom.DicomToolkit;
+import icr.etherj.dicom.Patient;
+import icr.etherj.dicom.PatientRoot;
+import icr.etherj.dicom.Series;
+import icr.etherj.dicom.SopInstance;
+import icr.etherj.dicom.Study;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -44,15 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.dcm4che2.data.DicomObject;
-import org.nrg.xnatx.ohifviewer.PluginUtils;
-import org.nrg.xnatx.ohifviewer.etherj.PathScan;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.DicomReceiver;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.DicomToolkit;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.Patient;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.PatientRoot;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.Series;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.SopInstance;
-import org.nrg.xnatx.ohifviewer.etherj.dicom.Study;
+import org.nrg.xnatx.ohifviewer.ViewerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +89,7 @@ public class CreateOhifViewerMetadata
 		OhifViewerInput ovi = createInput(transactionId, root);
 
 		// Convert the Java object to a JSON string
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 		String serialisedOvi = gson.toJson(ovi);
 
 		return serialisedOvi;
@@ -99,7 +99,7 @@ public class CreateOhifViewerMetadata
 	{
 		logger.info("DICOM search: {}", path);
 
-		DicomReceiver dcmRec = new DicomReceiver();
+		DicomReceiver dcmRec = new DicomReceiver(true);
 		PathScan<DicomObject> pathScan = dcmTk.createPathScan();
 		pathScan.addContext(dcmRec);
 		pathScan.scan(path, true);
@@ -138,16 +138,17 @@ public class CreateOhifViewerMetadata
 					String scanId = seriesUidToScanIdMap.get(series.getUid());
 					if ((scanId == null) || scanId.isEmpty())
 					{
-						logger.warn("Series UID "+series.getUid()+" has a null or empty scan ID");
+						logger.warn("Series UID "+series.getUid()+
+							" has a null or empty scan ID");
 						continue;
 					}
-
 					for (SopInstance sop : series.getSopInstanceList())
 					{
-						if (PluginUtils.isDisplayableSopClass(sop.getSopClassUid()))
+						if (ViewerUtils.isDisplayableSopClass(sop.getSopClassUid()))
 						{
-							OhifViewerInputInstance oviInst = new OhifViewerInputInstance(sop,
-								series, this.xnatExperimentScanUrl, scanId);
+							OhifViewerInputInstance oviInst =
+								new OhifViewerInputInstance(sop, xnatExperimentScanUrl,
+									scanId);
 							oviSer.addInstances(oviInst);
 						}
 					}
