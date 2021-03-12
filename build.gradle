@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        vXnat = '1.8.0-SNAPSHOT'
+        vXnat = '1.8.0'
         pluginAppName = "ICR/XNAT OHIF Viewer Plugin"
     }
     repositories {
@@ -27,7 +27,7 @@ buildscript {
 }
 
 group 'org.nrg.xnatx.plugins'
-version '3.0.0'
+version '3.1.0-SNAPSHOT'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
@@ -144,10 +144,12 @@ dependencyManagement.imports {
 
 dependencies {
     implementation("org.nrg.xnat:web") { transitive = false }
-    implementation("org.nrg.xnat:xnat-data-models:1.8.0-SNAPSHOT") { transitive = false }
+    implementation("org.nrg.xnat:xnat-data-models") { transitive = false }
     implementation("org.nrg.xdat:core") { transitive = false }
     implementation("org.nrg:automation") { transitive = false }
     implementation("org.nrg:config") { transitive = false }
+    implementation("org.nrg:dicomtools") { transitive = false }
+    implementation("org.nrg:dicom-xnat-mx") { transitive = false }
     implementation("org.nrg:dicom-xnat-sop") { transitive = false }
     implementation("org.nrg:framework")
     implementation("org.nrg:prefs") { transitive = false }

@@ -7,7 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 @XnatPlugin(
 	value = "ohifViewerPlugin",
 	name = "XNAT OHIF Viewer Plugin",
-	version = "3.0.0",
+	version = "3.1.0-SNAPSHOT",
 	description = "Integrates the OHIF Cornerstone Viewer into XNAT.",
 	logConfigurationFile="/ohifviewer-logback.xml",
 	dataModels={
@@ -20,6 +20,7 @@ import org.springframework.context.annotation.ComponentScan;
 	entityPackages={"icr.xnat.plugin.roi.entity"},
 	openUrls = {"/viewer.html", "/*.js", "/*.stats.json", "/*.css", "/packages/**/*", "/sockjs/**/*"})
 @ComponentScan({
+	"org.nrg.dcm.xnat",
 	"org.nrg.xnatx.ohifviewer.xapi",
 	"org.nrg.xnatx.ohifviewer.event.listeners",
 	"org.nrg.xnatx.roi.data",
