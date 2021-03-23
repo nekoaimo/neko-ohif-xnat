@@ -20,7 +20,6 @@ import org.springframework.context.annotation.ComponentScan;
 	entityPackages={"icr.xnat.plugin.roi.entity"},
 	openUrls = {"/viewer.html", "/*.js", "/*.stats.json", "/*.css", "/packages/**/*", "/sockjs/**/*"})
 @ComponentScan({
-	"org.nrg.dcm.xnat",
 	"org.nrg.xnatx.ohifviewer.xapi",
 	"org.nrg.xnatx.ohifviewer.event.listeners",
 	"org.nrg.xnatx.roi.data",
