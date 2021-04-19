@@ -34,6 +34,10 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.event.listeners;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import org.nrg.config.services.ConfigService;
 import org.nrg.xdat.om.WrkWorkflowdata;
@@ -64,6 +68,8 @@ public class OhifViewerEventListener
 		OhifViewerEventListener.class);
 
 	private final JsonMetadataHandler jsonHandler;
+	private final List<String> triggerRegexes = new ArrayList<>();
+	private final Set<String> triggerPipelines = new HashSet<>();
 
 	@Inject
 	public OhifViewerEventListener(EventBus eventBus, ConfigService configService)
@@ -73,6 +79,7 @@ public class OhifViewerEventListener
 				"[.]?("+PersistentWorkflowUtils.COMPLETE+")"),
 			this);
 		jsonHandler = new JsonMetadataHandler(configService);
+		createTriggers();
 		logger.info("OHIF Viewer event listener initialised");
 	}
 
@@ -84,6 +91,25 @@ public class OhifViewerEventListener
 		{
 			handleEvent(wfsEvent);
 		}
+	}
+
+	private void createTriggers()
+	{
+		// Trigger pipelines are the pipeline names of workflow events we should
+		// rebuild the viewer JSON for.
+		triggerPipelines.add("Transferred"); // Session created
+		triggerPipelines.add("Merged"); // Data added to existing session
+		triggerPipelines.add("Update");
+		triggerPipelines.add("Folder Deleted");
+		triggerPipelines.add("Folder Created");
+		triggerPipelines.add("Removed scan");
+		triggerPipelines.add("Modified Subject");
+		triggerPipelines.add("Created resource");
+		triggerPipelines.add("Modified project");
+		triggerPipelines.add("Configured project sharing");
+
+		// Trigger regexes match pipeline names that are not fixed.
+		triggerRegexes.add("Modified .* Session");
 	}
 
 	private void handleEvent(WorkflowStatusEvent wfsEvent)
@@ -98,16 +124,8 @@ public class OhifViewerEventListener
 				pipelineName+", datatype: "+workflow.getDataType()+", ID: "+
 				experimentId);
 		}
-		if (pipelineName.equals("Transferred")
-			|| pipelineName.equals("Update")
-			|| pipelineName.equals("Folder Deleted")
-			|| pipelineName.equals("Folder Created")
-			|| pipelineName.equals("Removed scan")
-			|| pipelineName.equals("Modified Subject")
-			|| pipelineName.equals("Created resource")
-			|| pipelineName.matches("Modified .* Session")
-			|| pipelineName.equals("Modified project")
-			|| pipelineName.equals("Configured project sharing"))
+		if (triggerPipelines.contains(pipelineName)
+			|| triggerMatches(pipelineName))
 		{
 			UserI user = workflow.getUser();
 			XnatImagesessiondata sessionData =
@@ -119,8 +137,9 @@ public class OhifViewerEventListener
 			}
 			if (logger.isDebugEnabled())
 			{
-				logger.debug("Rebuilding viewer JSON metadata for experiment: " +
-					experimentId);
+				logger.debug("Rebuilding viewer JSON metadata for experiment: "
+					+experimentId+" User: "+user.getUsername()
+					+" Trigger event: '"+pipelineName+"'");
 			}
 			try
 			{
@@ -131,6 +150,18 @@ public class OhifViewerEventListener
 				logger.warn(ex.getMessage(), ex);
 			}
 		}
+	}
+
+	private boolean triggerMatches(String pipelineName)
+	{
+		for (String regex : triggerRegexes)
+		{
+			if (pipelineName.matches(regex))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

@@ -60,7 +60,7 @@ public class JsonMetadataHandler
 	 * format or content is changed to allow runtime detection of outdated
 	 * metadata
 	 */
-	public static final int JsonRevision = 1;
+	public static final int JsonRevision = 2;
 
 	private static final Logger logger = LoggerFactory.getLogger(
 		JsonMetadataHandler.class);
