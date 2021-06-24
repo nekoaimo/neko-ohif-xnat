@@ -117,6 +117,7 @@ public class JsonMetadataHandler
 		try
 		{
 			String sessionId = sessionData.getId();
+			String username = user.getUsername();
 			logger.info("Creating session metadata for "+sessionId);
 			ConfigServiceJsonCreator creator = new ConfigServiceJsonCreator();
 			json = creator.create(sessionData);
@@ -125,10 +126,11 @@ public class JsonMetadataHandler
 				// Method may be called in muliple threads, only access shared vars
 				// under lock.
 				configServiceLock.lock();
-				configService.replaceConfig(user.getUsername(), CreateReason, 
+				logger.info("Storing session metadata for "+sessionId);
+				configService.replaceConfig(username, CreateReason, 
 					OhifViewerToolName, SessionJsonToolPath, true, json,
 					Scope.Experiment, sessionId);
-				configService.replaceConfig(user.getUsername(), CreateReason, 
+				configService.replaceConfig(username, CreateReason, 
 					OhifViewerToolName, JsonRevisionToolPath, true,
 					Integer.toString(JsonRevision), Scope.Experiment, sessionId);
 				logger.info("Session "+sessionId+" metadata created and stored");

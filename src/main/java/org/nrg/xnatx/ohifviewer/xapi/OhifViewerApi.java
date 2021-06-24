@@ -403,7 +403,17 @@ public class OhifViewerApi extends AbstractXapiRestController
 			logger.info("ImageSession ID: "+id);
 			tasks.add((Callable<Void>) () ->
 			{
-				jsonHandler.createAndStoreJsonConfig(id, user);
+				try
+				{
+					jsonHandler.createAndStoreJsonConfig(id, user);
+				}
+				catch (Exception ex)
+				{
+					// Need to catch everything, especially unexpected exceptions
+					logger.warn(
+						"Error creating JSON for session "+id+": "+ex.getMessage(),
+						ex);
+				}
 				return null;
 			});
 		}
