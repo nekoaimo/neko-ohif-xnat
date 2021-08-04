@@ -92,8 +92,8 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
             SamplesPerPixel = dcm.getInt(Tag.SamplesPerPixel, 1);
             HighBit = dcm.getInt(Tag.HighBit, 15);
             ImageType = dcm.getStrings(Tag.ImageType, emptyStrArray);
-            WindowWidth = DataUtils.getDSArray(dcm, Tag.WindowWidth, 400);
-            WindowCenter = DataUtils.getDSArray(dcm, Tag.WindowCenter, 40);
+            WindowWidth = DataUtils.getDSArray(dcm, Tag.WindowWidth, 0);
+            WindowCenter = DataUtils.getDSArray(dcm, Tag.WindowCenter, 0);
             RescaleIntercept = DataUtils.getDSValue(dcm, Tag.RescaleIntercept, 0.0);
             RescaleSlope = DataUtils.getDSValue(dcm, Tag.RescaleSlope, 1.0);
             RescaleType = dcm.getString(Tag.RescaleType, "");
