@@ -1,8 +1,8 @@
-**3.1.0 RC**
+**3.1.0RC-1**
 
 - Upgraded to v4.9.20 of the mainstream OHIF Viewer ([@ohif/viewer@4.9.20](https://github.com/OHIF/Viewers/releases/tag/%40ohif%2Fviewer%404.9.20)).
 - Filter ROI collection import list based session label and scan number.
-- DICOM tag browser added.
+- DICOM tag browser added. Note: this is a new feature developed by the core OHIF team that we have added. It is still a work-in-progress and incomplete in terms of the tags that are included (notably, meta-elements, sequences and private tags are currently missing).
 - Visual notifications added to warn about inconsistencies in scan data, e.g. frames have different dimensions.
 - Highlight active scan in the Scan Browser panel, and show the number of available ROIs per scan.
 - Added new segmentation tools: correction scissors and brush eraser.
