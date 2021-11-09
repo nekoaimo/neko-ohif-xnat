@@ -48,7 +48,7 @@
 								<td nowrap>$!fullAssessor.getLabel()</td>
 			#else
 								<td nowrap />
-								<td nowrap />
+								<td nowrap>$!assessor.getLabel()</td>
 			#end
 								<td nowrap>$!assessor.getProperty("date")</td>
 								<td nowrap>$!assessor.getProjectDisplayID()</td>
