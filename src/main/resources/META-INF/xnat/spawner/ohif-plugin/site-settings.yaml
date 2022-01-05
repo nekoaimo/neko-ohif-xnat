@@ -1,0 +1,34 @@
+# the 'root' element is the main entry point for the element tree
+siteSettings:
+    # the root 'kind' property must be 'tabs' to inject into settings UIs
+    kind: tabs
+    groups:
+        # create a custom tab group for your plugin
+        ohifTabs: OHIF Viewer
+    contents:
+        ${ohifTab}
+
+ohifTab:
+    kind: tab
+    # add your tab to the group defined above - REQUIRED for rendering
+    group: ohifTabs
+    label: OHIF Viewer Settings
+    contents:
+        ${ohifConfig}
+
+ohifConfig:
+    kind: panel.form
+    name: ohifConfigForm
+    label: OHIF Viewer Configuration
+    method: POST
+    url: /xapi/siteConfig
+    contentType: json
+    contents:
+        ${addOhifViewLinkToProjectListingDefaults}
+
+addOhifViewLinkToProjectListingDefaults:
+    kind: panel.input.switchbox
+    name: addOhifViewLinkToProjectListingDefaults
+    id: addOhifViewLinkToProjectListingDefaults
+    label: Add OHIF view link to project page listings by default
+    description: Users may select "View" as a column from any subject or image session search listing to include a link to open the viewer for that row. Enabling this option will make the column show up by default for subject or image session search listings from the project page. A tomcat restart is required for this change to take effect.
