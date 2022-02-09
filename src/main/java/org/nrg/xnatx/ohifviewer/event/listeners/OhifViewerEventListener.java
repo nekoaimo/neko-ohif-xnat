@@ -68,6 +68,7 @@ public class OhifViewerEventListener
 		OhifViewerEventListener.class);
 
 	private final JsonMetadataHandler jsonHandler;
+	private final Set<String> logPipelines = new HashSet<>();
 	private final List<String> triggerRegexes = new ArrayList<>();
 	private final Set<String> triggerPipelines = new HashSet<>();
 
@@ -95,6 +96,8 @@ public class OhifViewerEventListener
 
 	private void createTriggers()
 	{
+		logPipelines.add("Configured project sharing");
+
 		// Trigger pipelines are the pipeline names of workflow events we should
 		// rebuild the viewer JSON for.
 		triggerPipelines.add("Transferred"); // Session created
@@ -106,7 +109,6 @@ public class OhifViewerEventListener
 		triggerPipelines.add("Modified Subject");
 		triggerPipelines.add("Created resource");
 		triggerPipelines.add("Modified project");
-		triggerPipelines.add("Configured project sharing");
 
 		// Trigger regexes match pipeline names that are not fixed.
 		triggerRegexes.add("Modified .* Session");
@@ -123,6 +125,11 @@ public class OhifViewerEventListener
 			logger.debug("Handling event in OhifViewerEventListener. PipelineName: "+
 				pipelineName+", datatype: "+workflow.getDataType()+", ID: "+
 				experimentId);
+		}
+		if (logPipelines.contains(pipelineName))
+		{
+			logger.info("No action taken for event: "+pipelineName);
+			return;
 		}
 		if (triggerPipelines.contains(pipelineName)
 			|| triggerMatches(pipelineName))
