@@ -101,7 +101,8 @@ public class OhifViewerEventListener
 		/* None currently */
 
 		// Trigger pipelines are the pipeline names of workflow events we should
-		// rebuild the viewer JSON for.
+		// rebuild the viewer JSON for because they indicate modification of
+		// DICOM data
 		triggerPipelines.add("Transferred"); // Session created
 		triggerPipelines.add("Merged"); // Data added to existing session
 		triggerPipelines.add("Removed scan");
@@ -110,6 +111,11 @@ public class OhifViewerEventListener
 		// importers, it sets proper metadata and converts catalogs to DCM type.
 		// It does NOT apply anon.
 		triggerPipelines.add("Pulled Data from DICOM");
+		// Moving, as opposed to sharing, to a new project applies the target
+		// project's anon script
+		triggerPipelines.add("Modified project");
+		// Modifying subject reapplies relevant anon script
+		triggerPipelines.add("Modified subject");
 
 		// Trigger regexes match pipeline names that are not fixed.
 		/* None currently */
