@@ -96,22 +96,23 @@ public class OhifViewerEventListener
 
 	private void createTriggers()
 	{
-		logPipelines.add("Configured project sharing");
+		// Log pipelines are the pipeline names of workflow events we should log
+		// but not act on.
+		/* None currently */
 
 		// Trigger pipelines are the pipeline names of workflow events we should
 		// rebuild the viewer JSON for.
 		triggerPipelines.add("Transferred"); // Session created
 		triggerPipelines.add("Merged"); // Data added to existing session
-		triggerPipelines.add("Update");
-		triggerPipelines.add("Folder Deleted");
-		triggerPipelines.add("Folder Created");
 		triggerPipelines.add("Removed scan");
-		triggerPipelines.add("Modified Subject");
-		triggerPipelines.add("Created resource");
-		triggerPipelines.add("Modified project");
+		triggerPipelines.add("Rename");
+		// Special conversion for DICOM uploaded outside of XNAT’s normal
+		// importers, it sets proper metadata and converts catalogs to DCM type.
+		// It does NOT apply anon.
+		triggerPipelines.add("Pulled Data from DICOM");
 
 		// Trigger regexes match pipeline names that are not fixed.
-		triggerRegexes.add("Modified .* Session");
+		/* None currently */
 	}
 
 	private void handleEvent(WorkflowStatusEvent wfsEvent)
@@ -140,6 +141,9 @@ public class OhifViewerEventListener
 						experimentId, user, false);
 			if (sessionData == null)
 			{
+				logger.info("No session data found for ID: "+experimentId
+					+" User: "+user.getUsername()
+					+" Trigger event: '"+pipelineName+"'");
 				return;
 			}
 			if (logger.isDebugEnabled())
