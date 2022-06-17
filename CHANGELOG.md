@@ -1,4 +1,4 @@
-**3.2.0**
+**3.3.0**
 
 - Removed events that should not trigger a JSON metadata rebuild. Only rebuild on certain events if project anonymization enabled and add support for a subject-level event.
 - New feature: lazy loading of contour ROIs. The feature can be activated in preferences.
