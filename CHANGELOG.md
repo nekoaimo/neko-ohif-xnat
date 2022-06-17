@@ -1,5 +1,22 @@
 **3.2.0**
 
+- Removed events that should not trigger a JSON metadata rebuild. Only rebuild on certain events if project anonymization enabled and add support for a subject-level event.
+- New feature: lazy loading of contour ROIs. The feature can be activated in preferences.
+- New feature: concurrent loading of contour ROIs (optionally enabled in preferences).
+- New feature: store and retrieve a project template for contour ROI colors. Added server-side storage of color template.
+- New feature: switch between contour ROI color schemes - project template, from metadata, and custom values.
+- Supported drawing/import/export of mask ROIs for the Ultrasound Image Storage 1.2.840.10008.5.1.4.1.1.6.1.
+- Added UI controls to sort the contour ROI list by name. Applies only to the locked collections.
+- Used automatically generated notation to identify scans with duplicate series number.
+- Fixed contour ROI import/export for multiframe images.
+- Fixed segmentation and mask tools for touch-based interaction.
+- Fixed the rendering position of the contour sculpt tool.
+- Switched to SVGR loader to enable custom title for icons.
+- Removed unnecessary ITK modules to reduce the bundle size.
+- Other minor improvements and bug fixes.
+
+**3.2.0**
+
 - Prevent regenerating session JSON on project sharing events.
 - Set subject's ID/name as title in the browser tab.
 - Use rescaled colormap for image fusion in the 3D MPR mode.

@@ -748,7 +748,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 				return;
 			case Constants.RtStruct:
 			case Constants.Segmentation:
-				if (!is3D(modality))
+				if (!is3D(modality) && !modality.equals("US"))
 				{
 					throw new PluginException(
 						"Collection type "+type+" not supported for modality "+modality,

@@ -34,17 +34,22 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.event.listeners;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import javax.inject.Inject;
 import org.nrg.config.services.ConfigService;
 import org.nrg.xdat.om.WrkWorkflowdata;
 import org.nrg.xdat.om.XnatImagesessiondata;
+import org.nrg.xdat.om.XnatSubjectassessordata;
+import org.nrg.xdat.om.XnatSubjectdata;
+import org.nrg.xdat.schema.SchemaElement;
+import org.nrg.xft.event.EventUtils;
 import org.nrg.xft.event.entities.WorkflowStatusEvent;
 import org.nrg.xft.event.persist.PersistentWorkflowUtils;
+import org.nrg.xft.exception.ElementNotFoundException;
+import org.nrg.xft.exception.XFTInitException;
 import org.nrg.xft.security.UserI;
+import org.nrg.xnat.helpers.merge.AnonUtils;
+import org.nrg.xnat.turbine.utils.ArchivableItem;
 import org.nrg.xnatx.ohifviewer.inputcreator.JsonMetadataHandler;
 import org.nrg.xnatx.plugin.PluginException;
 import org.slf4j.Logger;
@@ -67,18 +72,19 @@ public class OhifViewerEventListener
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerEventListener.class);
 
+	private final AnonUtils anonUtils;
 	private final JsonMetadataHandler jsonHandler;
-	private final Set<String> logPipelines = new HashSet<>();
-	private final List<String> triggerRegexes = new ArrayList<>();
-	private final Set<String> triggerPipelines = new HashSet<>();
+	private final Map<String, Boolean> triggerPipelines = new HashMap<>();
+	private final Map<String, Boolean> triggerPipelinesSubject = new HashMap<>();
 
 	@Inject
-	public OhifViewerEventListener(EventBus eventBus, ConfigService configService)
+	public OhifViewerEventListener(EventBus eventBus, ConfigService configService, AnonUtils anonUtils)
 	{
 		eventBus.on(
 			R(WorkflowStatusEvent.class.getName()+
 				"[.]?("+PersistentWorkflowUtils.COMPLETE+")"),
 			this);
+		this.anonUtils = anonUtils;
 		jsonHandler = new JsonMetadataHandler(configService);
 		createTriggers();
 		logger.info("OHIF Viewer event listener initialised");
@@ -96,79 +102,116 @@ public class OhifViewerEventListener
 
 	private void createTriggers()
 	{
-		logPipelines.add("Configured project sharing");
-
 		// Trigger pipelines are the pipeline names of workflow events we should
-		// rebuild the viewer JSON for.
-		triggerPipelines.add("Transferred"); // Session created
-		triggerPipelines.add("Merged"); // Data added to existing session
-		triggerPipelines.add("Update");
-		triggerPipelines.add("Folder Deleted");
-		triggerPipelines.add("Folder Created");
-		triggerPipelines.add("Removed scan");
-		triggerPipelines.add("Modified Subject");
-		triggerPipelines.add("Created resource");
-		triggerPipelines.add("Modified project");
-
-		// Trigger regexes match pipeline names that are not fixed.
-		triggerRegexes.add("Modified .* Session");
+		// rebuild the viewer JSON for because they indicate modification of
+		// DICOM data. A map value of true indicates we should only rebuild if
+		// project anon is enabled (otherwise, no changes to DICOM should occur)
+		triggerPipelines.put(EventUtils.TRANSFER, false); // Session created
+		triggerPipelines.put("Merged", false); // Data added to existing session
+		triggerPipelines.put("Removed scan", false);
+		// Special conversion for DICOM uploaded outside of XNAT’s normal
+		// importers, it sets proper metadata and converts catalogs to DCM type.
+		// It does NOT apply anon, but it will be the first we hear of these files
+		// as DICOM (a.k.a., no TRANSFER or MERGE event)
+		triggerPipelines.put(EventUtils.DICOM_PULL, false);
+		// Moving, as opposed to sharing, to a new project applies the target
+		// project's anon script
+		triggerPipelines.put(EventUtils.MODIFY_PROJECT, true);
+		// Moving to another subject reapplies project anon script
+		triggerPipelines.put("Modified subject", true);
+		// Modifying subject or session label reapplies project anon script
+		triggerPipelines.put(EventUtils.RENAME, true);
+		triggerPipelinesSubject.put(EventUtils.RENAME, true);
 	}
 
 	private void handleEvent(WorkflowStatusEvent wfsEvent)
 	{
 		final WrkWorkflowdata workflow = (WrkWorkflowdata) wfsEvent.getWorkflow();
 		String pipelineName = workflow.getPipelineName();
-		String experimentId = workflow.getId();
+		String dataType = workflow.getDataType();
+		String id = workflow.getId();
 
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("Handling event in OhifViewerEventListener. PipelineName: "+
-				pipelineName+", datatype: "+workflow.getDataType()+", ID: "+
-				experimentId);
-		}
-		if (logPipelines.contains(pipelineName))
-		{
-			logger.info("No action taken for event: "+pipelineName);
+		logger.debug("Handling event in OhifViewerEventListener. PipelineName: {}, DataType: {}, ID: {}",
+				pipelineName, dataType, id);
+
+		UserI user = workflow.getUser();
+		SchemaElement se;
+		try {
+			se = SchemaElement.GetElement(dataType);
+		} catch (XFTInitException | ElementNotFoundException e) {
+			logger.error("Unable to determine SchemaElement for dataType {}", dataType, e);
 			return;
 		}
-		if (triggerPipelines.contains(pipelineName)
-			|| triggerMatches(pipelineName))
+
+		if (XnatSubjectdata.SCHEMA_ELEMENT_NAME.equals(dataType) &&
+				triggerPipelinesSubject.containsKey(pipelineName))
 		{
-			UserI user = workflow.getUser();
+			XnatSubjectdata subjectData =
+					XnatSubjectdata.getXnatSubjectdatasById(id, user, false);
+
+			checkAnonAndGenerateJson(subjectData, user, id, pipelineName,
+					triggerPipelinesSubject.get(pipelineName));
+		}
+		else if (se.instanceOf(XnatImagesessiondata.SCHEMA_ELEMENT_NAME) &&
+				triggerPipelines.containsKey(pipelineName))
+		{
 			XnatImagesessiondata sessionData =
 					XnatImagesessiondata.getXnatImagesessiondatasById(
-						experimentId, user, false);
-			if (sessionData == null)
-			{
-				return;
-			}
-			if (logger.isDebugEnabled())
-			{
-				logger.debug("Rebuilding viewer JSON metadata for experiment: "
-					+experimentId+" User: "+user.getUsername()
-					+" Trigger event: '"+pipelineName+"'");
-			}
-			try
-			{
-				jsonHandler.createAndStoreJsonConfig(sessionData, user);
-			}
-			catch (PluginException ex)
-			{
-				logger.warn(ex.getMessage(), ex);
-			}
+						id, user, false);
+			checkAnonAndGenerateJson(sessionData, user, id, pipelineName,
+					triggerPipelines.get(pipelineName));
 		}
 	}
 
-	private boolean triggerMatches(String pipelineName)
-	{
-		for (String regex : triggerRegexes)
+	private void checkAnonAndGenerateJson(ArchivableItem item,
+										  UserI user,
+										  String id,
+										  String pipelineName,
+										  boolean generateOnlyWhenProjectAnonEnabled) {
+		if (item == null)
 		{
-			if (pipelineName.matches(regex))
+			logger.info("No item for ID: {} User: {} Trigger event: {}",
+					id, user.getUsername(), pipelineName);
+			return;
+		}
+		if (generateOnlyWhenProjectAnonEnabled)
+		{
+			String project = item.getProject();
+			if (!anonUtils.isProjectScriptEnabled(project))
 			{
-				return true;
+				logger.debug("No project anon for project: {}, skipping event: {}",
+						project, pipelineName);
+				return;
 			}
 		}
-		return false;
+
+		if (item instanceof XnatSubjectdata) {
+			for (final XnatSubjectassessordata expt : ((XnatSubjectdata) item)
+					.getExperiments_experiment(XnatImagesessiondata.SCHEMA_ELEMENT_NAME))
+			{
+				logger.debug("Rebuilding viewer JSON metadata for ID: {} User: {} Trigger event: {} (subject)",
+						expt.getId(), user.getUsername(), pipelineName);
+				generateJson((XnatImagesessiondata) expt, user);
+			}
+		}
+		else if (item instanceof XnatImagesessiondata)
+		{
+
+			logger.debug("Rebuilding viewer JSON metadata for ID: {} User: {} Trigger event: {}",
+					id, user.getUsername(), pipelineName);
+			generateJson((XnatImagesessiondata) item, user);
+		}
+	}
+
+	private void generateJson(XnatImagesessiondata item, UserI user) {
+		try
+		{
+			jsonHandler.createAndStoreJsonConfig(item, user);
+		}
+		catch (PluginException ex)
+		{
+			logger.warn(ex.getMessage(), ex);
+		}
 	}
 
 }
