@@ -44,15 +44,18 @@
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
+import com.google.gson.annotations.SerializedName;
 import org.nrg.xnatx.ohifviewer.ViewerUtils;
 
 import com.google.common.collect.ImmutableList;
 import icr.etherj.dicom.Patient;
-import icr.etherj.dicom.Series;
 import icr.etherj.dicom.SopInstance;
 import icr.etherj.dicom.Study;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,61 +64,48 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerInputStudy.class);
 
-	private String PatientID;
+    @SerializedName("series")
+    private final List<OhifViewerInputSeries> seriesList = new ArrayList<>();
+    transient private final Map<String, OhifViewerInputSeries> seriesMap = new LinkedHashMap<>();
+    private String PatientID;
 	private String PatientName;
 	private String StudyDate;
 	private String StudyDescription;
 	private String StudyInstanceUID;
 	private String StudyTime;
 
-	private final List<OhifViewerInputSeries> series = new ArrayList<>();
+    public void allocateStudyTime(SopInstance sopInst)
+    {
+        StudyTime = sopInst.getStudyTime();
+    }
 
-	private void allocateStudyTime(Study study)
-	{
-		//ToDo: implement Study getTime()
-		StudyTime = "000000";
-		List<Series> series = study.getSeriesList();
-		if (series.size() > 0)
-		{
-			List<SopInstance> sopInstances = series.get(0).getSopInstanceList();
-			if (sopInstances.size() > 0)
-			{
-				StudyTime = ViewerUtils.getValidatedTimeString(sopInstances.get(0).getStudyTime());
-			}
-		}
-	}
+    public OhifViewerInputStudy(Study study, Patient patient)
+    {
+        if (study == null) {
+            logger.error("Study is null");
+        } else {
+            StudyInstanceUID = study.getUid();
+            StudyDescription = study.getDescription();
+            StudyDate = ViewerUtils.getValidatedDateString(study.getDate());
+        }
+        if (patient == null) {
+            logger.error("Patient is null");
+        } else {
+            PatientName = patient.getName();
+            PatientID = patient.getId();
+        }
+    }
 
-	public OhifViewerInputStudy(Study study, Patient patient)
-	{
-		if (study == null)
-		{
-			logger.error("Study is null");
-		}
-		else
-		{
-			StudyInstanceUID = study.getUid();
-			StudyDescription = study.getDescription();
-			StudyDate = ViewerUtils.getValidatedDateString(study.getDate());
-			allocateStudyTime(study);
-		}
-		if (patient == null)
-		{
-			logger.error("Patient is null");
-		}
-		else
-		{
-			PatientName = patient.getName();;
-			PatientID = patient.getId();
-		}
-	}
-
-	public void addSeries(OhifViewerInputSeries series)
-	{
-		if (series != null)
-		{
-			this.series.add(series);
-		}
-	}
+    public void addSeries(OhifViewerInputSeries series)
+    {
+        if (series != null) {
+            String uid = series.getSeriesInstanceUid();
+            if (!seriesMap.containsKey(uid)) {
+                seriesMap.put(series.getSeriesInstanceUid(), series);
+                seriesList.add(series);
+            }
+        }
+    }
 		
 	public String getPatientName()
 	{
@@ -124,11 +114,16 @@ public class OhifViewerInputStudy extends OhifViewerInputItem
 
 	public List<OhifViewerInputSeries> getSeriesList()
 	{
-		return ImmutableList.copyOf(series);
+        return ImmutableList.copyOf(seriesMap.values());
 	}
 
 	public String getStudyInstanceUid()
 	{
 		return StudyInstanceUID;
 	}
+
+    public OhifViewerInputSeries getSeries(String seriesInstanceUid)
+    {
+        return seriesMap.get(seriesInstanceUid);
+    }
 }

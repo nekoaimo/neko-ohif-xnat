@@ -36,6 +36,7 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import org.nrg.xdat.XDAT;
 import org.nrg.xdat.om.XnatImagesessiondata;
@@ -59,12 +60,12 @@ public class ConfigServiceJsonCreator
 	private static final String xnatArchivePath =
 		XDAT.getSiteConfigPreferences().getArchivePath();
 
-	public String create(String sessionId) throws PluginException
+	public Path create(String sessionId) throws PluginException
 	{
 		return create(sessionId, null);
 	}
 
-	public String create(String sessionId, UserI user) throws PluginException
+	public Path create(String sessionId, UserI user) throws PluginException
 	{
 		try
 		{
@@ -78,7 +79,7 @@ public class ConfigServiceJsonCreator
 		}
 	}
 
-	public String create(XnatImagesessiondata sessionData) throws PluginException
+	public Path create(XnatImagesessiondata sessionData) throws PluginException
 	{
 		if (sessionData == null)
 		{
@@ -94,19 +95,19 @@ public class ConfigServiceJsonCreator
 		String proj = dirInfo.get("proj");
 		String expLabel = dirInfo.get("expLabel");
 
-		logger.debug("Experiment path: {}",
-			PluginUtils.getExperimentPath(sessionData));
-		String xnatScanPath = PluginUtils.getExperimentPath(sessionData)+"SCANS";
+		String experimentPath = PluginUtils.getExperimentPath(sessionData);
+		logger.debug("Experiment path: {}", experimentPath);
+		String xnatScanPath = experimentPath+"SCANS";
 		logger.info("Creating JSON metadata for {}", xnatScanPath);
 		String xnatExperimentScanUrl = "/data/experiments/"+sessionId+"/scans/";
 		logger.info("xnatExperimentScanUrl: {}", xnatExperimentScanUrl);
 
-		String json = null;
+		Path jsonFilePath = null;
 		try
 		{
 			CreateOhifViewerMetadata jsonCreator = new CreateOhifViewerMetadata(
 				xnatScanPath, xnatExperimentScanUrl, seriesUidToScanIdMap);
-			json = jsonCreator.jsonify(sessionId);
+			jsonFilePath = jsonCreator.jsonify(sessionId);
 			clearLegacyJsonFile(xnatArchivePath, proj, expLabel, sessionId);
 		}
 		catch (IOException ex)
@@ -115,7 +116,7 @@ public class ConfigServiceJsonCreator
 			throw new PluginException("Jsonifier exception:\n" + ex.getMessage(),
 				PluginCode.IO, ex);
 		}
-		return json;
+		return jsonFilePath;
 	}
 
 	private void clearLegacyJsonFile(String xnatArchivePath, String proj,

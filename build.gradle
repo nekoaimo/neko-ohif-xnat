@@ -143,6 +143,8 @@ dependencyManagement.imports {
 }
 
 dependencies {
+    implementation "javax.servlet:javax.servlet-api"
+
     implementation("org.nrg.xnat:web") { transitive = false }
     implementation("org.nrg.xnat:xnat-data-models") { transitive = false }
     implementation("org.nrg.xdat:core") { transitive = false }

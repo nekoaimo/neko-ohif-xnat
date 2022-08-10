@@ -34,15 +34,13 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.xapi;
 
-import icr.etherj.StringUtils;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +50,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.apache.commons.io.IOUtils;
-import org.nrg.config.entities.Configuration;
+import org.apache.commons.lang3.StringUtils;
 import org.nrg.config.services.ConfigService;
 import org.nrg.framework.annotations.XapiRestController;
 import org.nrg.xapi.rest.AbstractXapiRestController;
@@ -69,6 +67,7 @@ import org.nrg.xdat.security.services.UserManagementServiceI;
 import org.nrg.xdat.security.helpers.AccessLevel;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnatx.ohifviewer.inputcreator.JsonMetadataHandler;
+import org.nrg.xnatx.ohifviewer.service.OhifSessionDataService;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.plugin.PluginUtils;
@@ -82,8 +81,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  *
@@ -99,14 +99,16 @@ public class OhifViewerApi extends AbstractXapiRestController
 
 	private final Lock genAllJsonLock = new ReentrantLock();
 	private final JsonMetadataHandler jsonHandler;
+    private final OhifSessionDataService ohifJsonService;
 
 	@Autowired
-	public OhifViewerApi(final ConfigService configService,
+	public OhifViewerApi(final OhifSessionDataService ohifJsonService,
 		final UserManagementServiceI userManagementService,
 		final RoleHolder roleHolder)
 	{
 		super(userManagementService, roleHolder);
-		jsonHandler = new JsonMetadataHandler(configService);
+		jsonHandler = new JsonMetadataHandler(ohifJsonService);
+        this.ohifJsonService = ohifJsonService;
 		logger.info("OHIF Viewer XAPI initialised");
 	}
 
@@ -147,10 +149,7 @@ public class OhifViewerApi extends AbstractXapiRestController
 		{
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-		Configuration jsonConfig = jsonHandler.getJsonConfig(experimentId);
-		return (jsonConfig != null)
-			? new ResponseEntity<>(HttpStatus.OK)
-			: new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 	@ApiOperation(value = "Returns the session JSON for the specified experiment ID.")
@@ -166,10 +165,10 @@ public class OhifViewerApi extends AbstractXapiRestController
 		method = RequestMethod.GET,
 		restrictTo = AccessLevel.Read
 	)
-	@ResponseBody
-	public ResponseEntity<StreamingResponseBody> getExperimentJson(
+	public void getExperimentJson(
 		final @ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
-		final @ApiParam(value="Experiment ID") @PathVariable("experimentId") @Experiment String experimentId)
+		final @ApiParam(value="Experiment ID") @PathVariable("experimentId") @Experiment String experimentId,
+        HttpServletResponse response)
 		throws PluginException
 	{
 		UserI user = getSessionUser();
@@ -184,33 +183,25 @@ public class OhifViewerApi extends AbstractXapiRestController
 		{
 			logger.info("Experiment "+experimentId+" is not part of Project "+
 				projectId);
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            response.setStatus(HttpStatus.NOT_FOUND.value());
+            return;
 		}
 
-		String json;
-		if (jsonHandler.isJsonValid(experimentId))
-		{
-			Configuration jsonConfig = jsonHandler.getJsonConfig(experimentId);
-			if (jsonConfig == null)
-			{
-				json = jsonHandler.createAndStoreJsonConfig(sessionData, user);
-			}
-			else
-			{
-				json = jsonConfig.getContents();
-				if (StringUtils.isNullOrEmpty(json))
-				{
-					json = jsonHandler.createAndStoreJsonConfig(sessionData, user);
-				}
-			}
+        if (!jsonHandler.isJsonValid(experimentId)) {
+            // Revision check failed? Recreate regardless
+            jsonHandler.createAndStoreJsonConfig(sessionData, user);
+        }
+        try (
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(response.getOutputStream());
+                BufferedWriter writer = new BufferedWriter(outputStreamWriter)
+        ) {
+            ohifJsonService.transferSessionJson(experimentId, writer);
+            logger.debug("Finished the transfer of session JSON");
+        } catch (IOException e) {
+            if (StringUtils.contains(e.getClass().getName(), "ClientAbortException")) {
+                logger.error("Failed to transfer", e);
+            }
 		}
-		else
-		{
-			// Revision check failed? Recreate regardless
-			json = jsonHandler.createAndStoreJsonConfig(sessionData, user);
-		}
-		StreamingResponseBody srb = createResponseBody(json);
-		return new ResponseEntity<>(srb, HttpStatus.OK);
 	}
 
 	@ApiOperation(value = "Generates the session JSON for the specified experiment ID.")
@@ -365,13 +356,12 @@ public class OhifViewerApi extends AbstractXapiRestController
 	private StreamingResponseBody createResponseBody(String input)
 		throws PluginException
 	{
-		StreamingResponseBody srb = null;
-		try (InputStream is = IOUtils.toInputStream(input, StandardCharsets.UTF_8))
-		{
-			srb = (final OutputStream output) -> { IOUtils.copy(is, output); };
-		}
-		catch (IOException ex)
-		{
+		StreamingResponseBody srb;
+        try (InputStream is = IOUtils.toInputStream(input, StandardCharsets.UTF_8)) {
+            srb = (final OutputStream output) -> {
+                IOUtils.copy(is, output);
+            };
+        } catch (IOException ex) {
 			throw new PluginException("IO error streaming JSON: "+ex.getMessage(),
 				PluginCode.IO, ex);
 		}

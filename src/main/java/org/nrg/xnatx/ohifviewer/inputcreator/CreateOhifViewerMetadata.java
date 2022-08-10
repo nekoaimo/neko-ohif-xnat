@@ -37,6 +37,7 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonWriter;
 import icr.etherj.PathScan;
 import icr.etherj.dicom.DicomReceiver;
 import icr.etherj.dicom.DicomToolkit;
@@ -46,8 +47,11 @@ import icr.etherj.dicom.Series;
 import icr.etherj.dicom.SopInstance;
 import icr.etherj.dicom.Study;
 import java.io.ByteArrayOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -80,85 +84,35 @@ public class CreateOhifViewerMetadata
 		this.seriesUidToScanIdMap = seriesUidToScanIdMap;
 	}
 
-	public String jsonify(final String transactionId) throws IOException
+	/**
+	 * Create the serialized JSON file and return its Path object
+	 * @param transactionId
+	 * @returnPath to file that contains the serialized JSON created
+	 * @throws IOException
+	 */
+	public Path jsonify(final String transactionId) throws IOException
 	{
-		// Use Etherj to do the heavy lifting of sifting through all the scan data.
-		PatientRoot root = scanPath(xnatScanPath);
-		// Transform the Etherj output into a java object with the structure needed
-		// by the OHIF viewer.
-		OhifViewerInput ovi = createInput(transactionId, root);
+		OhifViewerInput ovi = scanPathAndCreateInput(transactionId, xnatScanPath, xnatExperimentScanUrl, seriesUidToScanIdMap);
 
 		// Convert the Java object to a JSON string
-		Gson gson = new GsonBuilder().setPrettyPrinting()
-			.serializeSpecialFloatingPointValues().create();
-		String serialisedOvi = gson.toJson(ovi);
-
-		return serialisedOvi;
+		Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
+		Path jsonFilePath = Files.createTempFile("ohif", null);
+		logger.debug("Temp file named {} created for storing serialized JSON", jsonFilePath.toString());
+		try (JsonWriter writer = new JsonWriter(new FileWriter(jsonFilePath.toFile()))) {
+			gson.toJson(ovi, OhifViewerInput.class, writer);
+		}
+		return jsonFilePath;
 	}
 
-	private PatientRoot scanPath(String path) throws IOException
-	{
-		logger.info("DICOM search: {}", path);
+	private OhifViewerInput scanPathAndCreateInput(String transactionId, String xnatScanPath, String xnatExperimentScanUrl, Map<String,String> seriesUidToScanIdMap) throws IOException {
+		logger.info("DICOM search: {}", xnatScanPath);
 
-		DicomReceiver dcmRec = new DicomReceiver(true);
+		CustomDicomReceiver dcmRec = new CustomDicomReceiver(transactionId, xnatExperimentScanUrl, seriesUidToScanIdMap);
 		PathScan<DicomObject> pathScan = dcmTk.createPathScan();
 		pathScan.addContext(dcmRec);
-		pathScan.scan(path, true);
-		PatientRoot root = dcmRec.getPatientRoot();
+		pathScan.scan(xnatScanPath, true);
+		OhifViewerInput ovi = dcmRec.getOhifViewerInput();
 
-		return root;
-	}
-
-	private OhifViewerInput createInput(String transactionId, PatientRoot root)
-	{
-		OhifViewerInput ovi = new OhifViewerInput();
-		List<OhifViewerInputStudy> oviStudyList = new ArrayList<>();
-
-		ovi.setTransactionId(transactionId);
-
-		if (logger.isDebugEnabled())
-		{
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			PrintStream ps = new PrintStream(baos);
-			root.display(ps, true);
-			logger.debug(baos.toString());
-		}
-
-		for (Patient patient : root.getPatientList())
-		{
-			for (Study study : patient.getStudyList())
-			{
-				OhifViewerInputStudy oviStd = new OhifViewerInputStudy(study,
-					patient);
-				oviStudyList.add(oviStd);
-
-				for (Series series : study.getSeriesList())
-				{
-					OhifViewerInputSeries oviSer = new OhifViewerInputSeries(series);
-					oviStd.addSeries(oviSer);
-
-					String scanId = seriesUidToScanIdMap.get(series.getUid());
-					if ((scanId == null) || scanId.isEmpty())
-					{
-						logger.warn("Series UID "+series.getUid()+
-							" has a null or empty scan ID");
-						continue;
-					}
-					for (SopInstance sop : series.getSopInstanceList())
-					{
-						if (ViewerUtils.isDisplayableSopClass(sop.getSopClassUid()))
-						{
-							OhifViewerInputInstance oviInst =
-								new OhifViewerInputInstance(sop, xnatExperimentScanUrl,
-									scanId);
-							oviSer.addInstances(oviInst);
-						}
-					}
-				}
-			}
-		}
-		ovi.setStudies(oviStudyList);
 		return ovi;
 	}
-
 }
