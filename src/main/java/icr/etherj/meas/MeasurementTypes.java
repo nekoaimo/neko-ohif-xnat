@@ -1,5 +1,5 @@
 /*********************************************************************
- * Copyright (c) 2018, Institute of Cancer Research
+ * Copyright (c) 2022, Institute of Cancer Research
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,27 +32,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
-package org.nrg.xnatx.roi;
+package icr.etherj.meas;
 
 /**
  *
- * @author jamesd
+ * @author mo.alsad
  */
-public class Constants
+public class MeasurementTypes
 {
-	public static final String AIM = "AIM";
-	public static final String CRSession = "CRSession";
-	public static final String CTSession = "CTSession";
-	public static final String ContourStack = "ContourStack";
-	public static final String Measurement = "MEAS";
-	public static final String MRSession = "MRSession";
-	public static final String Nifti = "NIFTI";
-	public static final String PETMRSession = "PETMRSession";
-	public static final String PETSession = "PETSession";
-	public static final String RoiCollection = "RoiCollection";
-	public static final String RtStruct = "RTSTRUCT";
-	public static final String Segmentation = "SEG";
+    public static final String Angle = "Angle";
+    public static final String ArrowAnnotate = "ArrowAnnotate";
+    public static final String Bidirectional = "Bidirectional";
+    public static final String CircleRoi = "CircleRoi";
+    public static final String EllipticalRoi = "EllipticalRoi";
+    public static final String FreehandMouse = "FreehandMouse";
+    public static final String Length = "Length";
+    public static final String RectangleRoi = "RectangleRoi";
 
-	private Constants()
-	{}
+    private MeasurementTypes()
+    {}
 }

@@ -326,6 +326,9 @@ public class DefaultCollectionStorage extends BaseCollectionProcessor
 			case Constants.Nifti:
 				fileName += ".nii.gz";
 				break;
+			case Constants.Measurement:
+				fileName += ".json";
+				break;
 			default:
 				logger.error("File name generate failed for target type: {}",
 					roiCollection.getType());

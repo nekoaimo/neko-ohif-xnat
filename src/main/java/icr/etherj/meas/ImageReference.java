@@ -36,10 +36,52 @@ package icr.etherj.meas;
 
 import icr.etherj.AbstractDisplayable;
 
+import java.io.PrintStream;
+
 /**
- *
  * @author mo.alsad
  */
-public class ImageMeasurementCollection extends MeasurementCollection
+public class ImageReference extends AbstractDisplayable
 {
+    private int frameIndex = 0;
+    private String SOPInstanceUID = "";
+
+    public ImageReference()
+    {
+    }
+
+    public ImageReference(int frameIndex, String SOPInstanceUID)
+    {
+        this.frameIndex = frameIndex;
+        this.SOPInstanceUID = SOPInstanceUID;
+    }
+
+    public int getFrameIndex()
+    {
+        return frameIndex;
+    }
+
+    public void setFrameIndex(int frameIndex)
+    {
+        this.frameIndex = frameIndex;
+    }
+
+    public String getSOPInstanceUID()
+    {
+        return SOPInstanceUID;
+    }
+
+    public void setSOPInstanceUID(String SOPInstanceUID)
+    {
+        this.SOPInstanceUID = SOPInstanceUID;
+    }
+
+    @Override
+    public void display(PrintStream ps, String indent, boolean recurse)
+    {
+        ps.println(indent + this.getClass().getName());
+        String pad = indent + "  * ";
+        ps.println(pad + "SOPInstanceUID: " + SOPInstanceUID);
+        ps.println(pad + "frameIndex: " + frameIndex);
+    }
 }

@@ -85,6 +85,8 @@ public final class PluginCode extends AbstractExceptionCode
 	public static final PluginCode XNAT = new PluginCode("XNAT", "06001");
 	public static final PluginCode ConfigService = new PluginCode(
 		"ConfigService", "06002");
+	// 07 JSON
+	public static final PluginCode JSON = new PluginCode("JSON", "07001");
 
 	@Override
 	public String toString()

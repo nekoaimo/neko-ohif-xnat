@@ -32,63 +32,54 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
-package org.nrg.xnatx.roi.data;
-
-import icr.etherj.meas.ImageMeasurementCollection;
-import icr.xnat.plugin.roi.entity.Roi;
-import org.nrg.xnatx.plugin.PluginException;
-
-import java.util.List;
+package icr.etherj;
 
 /**
  *
  * @author mo.alsad
  */
-public class IcrMeasurementCollection extends AbstractRoiCollection
-        implements RoiCollection
+public class JsonException extends DisplayableException
 {
-    private final ImageMeasurementCollection imc;
+    /**
+     * Creates a new instance of
+     * <code>JsonException</code> without detail message.
+     */
+    public JsonException()
+    {
+    }
 
     /**
+     * Constructs an instance of
+     * <code>JsonException</code> with the specified detail message.
      *
-     * @param id
-     * @param rawBytes
-     * @throws PluginException
+     * @param msg the detail message.
      */
-    public IcrMeasurementCollection(String id, byte[] rawBytes) throws PluginException {
-        super(id, rawBytes);
-        setFileExtension("json");
-        setFileFormat("JSON");
-        setTypeDescription("Measurement instance file");
+    public JsonException(String msg)
+    {
+        super(msg);
     }
 
-    @Override
-    public String getDate() {
-        return null;
+    /**
+     * Constructs an instance of
+     * <code>JsonException</code> with the specified detail message and
+     * cause.
+     *
+     * @param msg the detail message.
+     * @param cause the cause.
+     */
+    public JsonException(String msg, Throwable cause)
+    {
+        super(msg, cause);
     }
 
-    @Override
-    public String getName() {
-        return null;
-    }
-
-    @Override
-    public List<Roi> getRoiList() {
-        return null;
-    }
-
-    @Override
-    public String getTime() {
-        return null;
-    }
-
-    @Override
-    public String getType() {
-        return null;
-    }
-
-    @Override
-    public String getUid() {
-        return null;
+    /**
+     * Constructs an instance of
+     * <code>JsonException</code> with the specified cause.
+     *
+     * @param cause the cause.
+     */
+    public JsonException(Throwable cause)
+    {
+        super(cause);
     }
 }

@@ -35,11 +35,202 @@
 package icr.etherj.meas;
 
 import icr.etherj.AbstractDisplayable;
+import icr.etherj.Uids;
+
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- *
  * @author mo.alsad
  */
 public class MeasurementCollection extends AbstractDisplayable
 {
+    private final Map<String, ImageMeasurement> imageMeasurements = new LinkedHashMap<>();
+    private String created = "";
+    private String description = "";
+    private Equipment equipment = null;
+    private CollectionImageReference imageReference = null;
+    private String modified = "";
+    private String name = "";
+    private transient String path = "";
+    private int revision = 1;
+    private Subject subject = null;
+    private User user = null;
+    private String uuid = Uids.generateDicomUid();
+
+    public MeasurementCollection()
+    {
+    }
+
+    public ImageMeasurement addImageMeasurement(ImageMeasurement measurement)
+    {
+        return this.imageMeasurements.put(measurement.getUuid(), measurement);
+    }
+
+    public void display(PrintStream ps, String indent, boolean recurse)
+    {
+        ps.println(indent + getClass().getName());
+        String pad = indent + "  * ";
+        ps.println(pad + "UUID: " + uuid);
+        ps.println(pad + "Name: " + name);
+        ps.println(pad + "Description: " + description);
+        ps.println(pad + "Created: " + created);
+        ps.println(pad + "Modified: " + modified);
+        ps.println(pad + "Revision: " + revision);
+
+        if (subject != null) {
+            subject.display(ps, indent + "  ");
+        }
+
+        if (user != null) {
+            user.display(ps, indent + "  ");
+        }
+
+        if (equipment != null) {
+            equipment.display(ps, indent + "  ");
+        }
+
+        if (imageReference != null) {
+            imageReference.display(ps, indent + "  ");
+        }
+
+        ps.println(pad + "ImageMeasurements:");
+        for (ImageMeasurement imm : this.getImageMeasurementList()) {
+            imm.display(ps, indent + "    ");
+        }
+    }
+
+    public String getCreated()
+    {
+        return created;
+    }
+
+    public String getDescription()
+    {
+        return description;
+    }
+
+    public Equipment getEquipment()
+    {
+        return equipment;
+    }
+
+    public ImageMeasurement getIamgeMeasurement(String uuid)
+    {
+        return this.imageMeasurements.get(uuid);
+    }
+
+    public int getIamgeMeasurementCount()
+    {
+        return this.imageMeasurements.size();
+    }
+
+    public List<ImageMeasurement> getImageMeasurementList()
+    {
+        return new ArrayList<>(this.imageMeasurements.values());
+    }
+
+    public CollectionImageReference getImageReference()
+    {
+        return imageReference;
+    }
+
+    public String getModified()
+    {
+        return modified;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public String getPath()
+    {
+        return path;
+    }
+
+    public int getRevision()
+    {
+        return revision;
+    }
+
+    public Subject getSubject()
+    {
+        return subject;
+    }
+
+    public User getUser()
+    {
+        return user;
+    }
+
+    public String getUuid()
+    {
+        return uuid;
+    }
+
+    public void setCreated(String created)
+    {
+        this.created = created;
+    }
+
+    public void setDescription(String description)
+    {
+        this.description = description;
+    }
+
+    public void setEquipment(Equipment equipment)
+    {
+        this.equipment = equipment;
+    }
+
+    public void setImageReference(CollectionImageReference imageReference)
+    {
+        this.imageReference = imageReference;
+    }
+
+    public void setModified(String modified)
+    {
+        this.modified = modified;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
+    }
+
+    public void setPath(String path)
+    {
+        this.path = path;
+    }
+
+    public void setRevision(int revision)
+    {
+        this.revision = revision;
+    }
+
+    public void setSubject(Subject subject)
+    {
+        this.subject = subject;
+    }
+
+    public void setUser(User user)
+    {
+        this.user = user;
+    }
+
+    public void setUuid(String uuid)
+    {
+        if (uuid != null && !uuid.isEmpty())
+        {
+            this.uuid = uuid;
+        } else
+        {
+            throw new IllegalArgumentException("UUID must not be null or empty");
+        }
+    }
 }

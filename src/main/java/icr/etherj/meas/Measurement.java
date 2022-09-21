@@ -1,5 +1,5 @@
 /*********************************************************************
- * Copyright (c) 2018, Institute of Cancer Research
+ * Copyright (c) 2022, Institute of Cancer Research
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,27 +32,89 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
-package org.nrg.xnatx.roi;
+package icr.etherj.meas;
+
+
+import icr.etherj.AbstractDisplayable;
+
+import java.io.PrintStream;
+import java.text.DecimalFormat;
 
 /**
- *
- * @author jamesd
+ * @author mo.alsad
  */
-public class Constants
+public class Measurement extends AbstractDisplayable
 {
-	public static final String AIM = "AIM";
-	public static final String CRSession = "CRSession";
-	public static final String CTSession = "CTSession";
-	public static final String ContourStack = "ContourStack";
-	public static final String Measurement = "MEAS";
-	public static final String MRSession = "MRSession";
-	public static final String Nifti = "NIFTI";
-	public static final String PETMRSession = "PETMRSession";
-	public static final String PETSession = "PETSession";
-	public static final String RoiCollection = "RoiCollection";
-	public static final String RtStruct = "RTSTRUCT";
-	public static final String Segmentation = "SEG";
+    private static final DecimalFormat df = new DecimalFormat("0.00");
+    // Comment is used for ArrowAnnotation
+    private String comment = "";
+    private String name = "";
+    private String unit = "";
+    private float value = 0;
 
-	private Constants()
-	{}
+    public Measurement()
+    {
+    }
+
+    public Measurement(String comment, String name, float value, String unit)
+    {
+        this.comment = comment;
+        this.name = name;
+        this.value = value;
+        this.unit = unit;
+    }
+
+    @Override
+    public void display(PrintStream ps, String indent, boolean recurse)
+    {
+        ps.println(indent+getClass().getName());
+        String pad = indent+"  * ";
+        if (name.equals("arrow"))
+        {
+            ps.println(pad+String.format("%s = %s", name, comment));
+        } else
+        {
+            ps.println(pad+String.format("%s = %,.2f %s %s", name, value, unit, comment));
+        }
+    }
+
+    public String getComment()
+    {
+        return comment;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public String getUnit()
+    {
+        return unit;
+    }
+
+    public float getValue()
+    {
+        return value;
+    }
+
+    public void setComment(String comment)
+    {
+        this.comment = comment;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
+    }
+
+    public void setUnit(String unit)
+    {
+        this.unit = unit;
+    }
+
+    public void setValue(float value)
+    {
+        this.value = value;
+    }
 }
