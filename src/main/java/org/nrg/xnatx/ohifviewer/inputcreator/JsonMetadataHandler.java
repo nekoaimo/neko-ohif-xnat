@@ -34,17 +34,19 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import icr.etherj.StringUtils;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.hibernate.engine.jdbc.ClobProxy;
+import org.nrg.config.entities.Configuration;
 import org.nrg.config.services.ConfigService;
+import org.nrg.framework.constants.Scope;
+import org.nrg.framework.services.SerializerService;
+import org.nrg.xdat.XDAT;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnatx.ohifviewer.entity.OhifSessionData;
@@ -71,7 +73,6 @@ public class JsonMetadataHandler
 	private static final Logger logger = LoggerFactory.getLogger(
 		JsonMetadataHandler.class);
 
-	private static final String CreateReason = "Creating Session JSON";
 	private static final String JsonRevisionToolPath = "json-revision";
 	private static final String OhifViewerToolName = "ohif-viewer";
 	private static final String SessionJsonToolPath = "session-json";
@@ -119,9 +120,12 @@ public class JsonMetadataHandler
 					PluginCode.HttpUnprocessableEntity);
 		}
 		String sessionId = sessionData.getId();
-		logger.info("Creating session metadata for "+sessionId);
-		ConfigServiceJsonCreator creator = new ConfigServiceJsonCreator();
-		Path jsonPath = creator.create(sessionData);
+		Path jsonPath;
+		try {
+			jsonPath = loadFromConfigOrCreateJsonTempFile(sessionId, sessionData);
+		} catch (IOException e) {
+			throw new PluginException("Unable to load or create json for session " + sessionId, e);
+		}
 		try (BufferedReader reader = new BufferedReader(new FileReader(jsonPath.toFile()))) {
 			OhifSessionData ohifSessionData = new OhifSessionData();
 			ohifSessionData.setSessionId(sessionId);
@@ -129,11 +133,11 @@ public class JsonMetadataHandler
 			ohifSessionData.setSessionJson(ClobProxy.generateProxy(reader, Files.size(jsonPath)));
 			ohifSessionDataService.createOrUpdate(ohifSessionData);
 		} catch (FileNotFoundException e) {
-			throw new PluginException(jsonPath + " Not Found", PluginCode.FileNotFound);
+			throw new PluginException(jsonPath + " Not Found", PluginCode.FileNotFound, e);
 		} catch (IOException e) {
-			throw new PluginException("Failed to load " + jsonPath);
+			throw new PluginException("Failed to load " + jsonPath, e);
 		} finally {
-			// Delete json file
+			// Delete temporary json file
 			try {
 				Files.delete(jsonPath);
 				logger.debug("{} has been deleted", jsonPath);
@@ -143,6 +147,41 @@ public class JsonMetadataHandler
 		}
 
 		logger.info("Session "+sessionId+" metadata created and stored");
+	}
+
+	private Path loadFromConfigOrCreateJsonTempFile(String sessionId, XnatImagesessiondata sessionData)
+			throws IOException, PluginException {
+		ConfigService configService = XDAT.getConfigService();
+		Configuration configuration = configService.getConfig(OhifViewerToolName, SessionJsonToolPath,
+				Scope.Experiment, sessionId);
+		Path jsonPath;
+		if (configuration == null) {
+			logger.info("Creating session metadata for " + sessionId);
+			ConfigServiceJsonCreator creator = new ConfigServiceJsonCreator();
+			jsonPath = creator.create(sessionData);
+		} else {
+			logger.info("Migrating session metadata for " + sessionId);
+			SerializerService serializerService = XDAT.getContextService().getBean(SerializerService.class);
+			ObjectMapper objectMapper = serializerService == null ?
+					new ObjectMapper() :
+					serializerService.getObjectMapper();
+			jsonPath = Files.createTempFile("ohif", null);
+			// read from config and minify json
+			objectMapper.writeValue(jsonPath.toFile(), objectMapper.readTree(configuration.getContents()));
+			deleteConfigServiceArtifacts(configService, configuration, sessionId);
+		}
+		return jsonPath;
+	}
+
+	private void deleteConfigServiceArtifacts(ConfigService configService,
+											  Configuration configuration,
+											  String sessionId) {
+		configService.delete(configuration);
+		Configuration revisionConfig = configService.getConfig(OhifViewerToolName, JsonRevisionToolPath,
+				Scope.Experiment, sessionId);
+		if (revisionConfig != null) {
+			configService.delete(revisionConfig);
+		}
 	}
 
 	/**

@@ -102,7 +102,7 @@ public class ConfigServiceJsonCreator
 		String xnatExperimentScanUrl = "/data/experiments/"+sessionId+"/scans/";
 		logger.info("xnatExperimentScanUrl: {}", xnatExperimentScanUrl);
 
-		Path jsonFilePath = null;
+		Path jsonFilePath;
 		try
 		{
 			CreateOhifViewerMetadata jsonCreator = new CreateOhifViewerMetadata(
