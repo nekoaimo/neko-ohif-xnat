@@ -168,20 +168,8 @@ public class JsonMetadataHandler
 			jsonPath = Files.createTempFile("ohif", null);
 			// read from config and minify json
 			objectMapper.writeValue(jsonPath.toFile(), objectMapper.readTree(configuration.getContents()));
-			deleteConfigServiceArtifacts(configService, configuration, sessionId);
 		}
 		return jsonPath;
-	}
-
-	private void deleteConfigServiceArtifacts(ConfigService configService,
-											  Configuration configuration,
-											  String sessionId) {
-		configService.delete(configuration);
-		Configuration revisionConfig = configService.getConfig(OhifViewerToolName, JsonRevisionToolPath,
-				Scope.Experiment, sessionId);
-		if (revisionConfig != null) {
-			configService.delete(revisionConfig);
-		}
 	}
 
 	/**
