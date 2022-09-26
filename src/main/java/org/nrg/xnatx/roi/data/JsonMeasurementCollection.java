@@ -121,7 +121,7 @@ public class JsonMeasurementCollection extends AbstractRoiCollection
             Roi roi = new Roi();
             roi.setUid(im.getUuid());
             roi.setName(im.getName());
-            roi.setGeometricType(Constants.Measurement);
+            roi.setGeometricType(im.getToolType());
             roi.setRoiCollectionId(getId());
             roiList.add(roi);
         }
