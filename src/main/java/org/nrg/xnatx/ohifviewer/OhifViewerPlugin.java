@@ -17,12 +17,14 @@ import org.springframework.context.annotation.ComponentScan;
 			plural = "ROI Collections",
 			code = "ROIC")
 	},
-	entityPackages={"icr.xnat.plugin.roi.entity"},
+	entityPackages={"icr.xnat.plugin.roi.entity", "org.nrg.xnatx.ohifviewer.entity"},
 	openUrls = {"/viewer.html", "/*.js", "/*.stats.json", "/*.css", "/packages/**/*", "/sockjs/**/*"})
 @ComponentScan({
+	"org.nrg.xnatx.ohifviewer.data",
 	"org.nrg.xnatx.ohifviewer.xapi",
 	"org.nrg.xnatx.ohifviewer.event.listeners",
 	"org.nrg.xnatx.ohifviewer.init",
+	"org.nrg.xnatx.ohifviewer.service",
 	"org.nrg.xnatx.roi.data",
 	"org.nrg.xnatx.roi.event.listeners",
 	"org.nrg.xnatx.roi.service",
