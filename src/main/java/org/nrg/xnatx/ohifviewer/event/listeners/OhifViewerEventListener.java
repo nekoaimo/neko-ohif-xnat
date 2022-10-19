@@ -207,7 +207,7 @@ public class OhifViewerEventListener
 	private void generateJson(XnatImagesessiondata item, UserI user) {
 		try
 		{
-			jsonHandler.createAndStoreJsonConfig(item, user);
+			jsonHandler.createAndStoreJsonConfig(item, user, true);
 		}
 		catch (PluginException ex)
 		{
