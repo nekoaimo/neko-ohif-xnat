@@ -107,7 +107,19 @@ public class JsonMetadataHandler
 	 * @throws PluginException
 	 */
 	public void createAndStoreJsonConfig(XnatImagesessiondata sessionData,
-		UserI user) throws PluginException
+										 UserI user) throws PluginException {
+		createAndStoreJsonConfig(sessionData, user, false);
+	}
+	/**
+	 * Create and store JSON metadata for the specified session and user.
+	 * @param sessionData
+	 * @param user
+	 * @param ignoreExisting if true, any previously existing json will be ignored
+	 * @return the JSON metadata
+	 * @throws PluginException
+	 */
+	public void createAndStoreJsonConfig(XnatImagesessiondata sessionData,
+		UserI user, boolean ignoreExisting) throws PluginException
 	{
 		if (sessionData == null)
 		{
@@ -122,7 +134,7 @@ public class JsonMetadataHandler
 		String sessionId = sessionData.getId();
 		Path jsonPath;
 		try {
-			jsonPath = loadFromConfigOrCreateJsonTempFile(sessionId, sessionData);
+			jsonPath = loadFromConfigOrCreateJsonTempFile(sessionId, sessionData, ignoreExisting);
 		} catch (IOException e) {
 			throw new PluginException("Unable to load or create json for session " + sessionId, e);
 		}
@@ -146,21 +158,22 @@ public class JsonMetadataHandler
 			}
 		}
 
-		logger.info("Session "+sessionId+" metadata created and stored");
+		logger.info("Session {} metadata created and stored", sessionId);
 	}
 
-	private Path loadFromConfigOrCreateJsonTempFile(String sessionId, XnatImagesessiondata sessionData)
+	private Path loadFromConfigOrCreateJsonTempFile(String sessionId, XnatImagesessiondata sessionData,
+													boolean ignoreExisting)
 			throws IOException, PluginException {
 		ConfigService configService = XDAT.getConfigService();
 		Configuration configuration = configService.getConfig(OhifViewerToolName, SessionJsonToolPath,
 				Scope.Experiment, sessionId);
 		Path jsonPath;
-		if (configuration == null) {
-			logger.info("Creating session metadata for " + sessionId);
+		if (ignoreExisting || configuration == null || !configuration.isEnabled()) {
+			logger.info("Creating session metadata for {}", sessionId);
 			ConfigServiceJsonCreator creator = new ConfigServiceJsonCreator();
 			jsonPath = creator.create(sessionData);
 		} else {
-			logger.info("Migrating session metadata for " + sessionId);
+			logger.info("Migrating session metadata for {}", sessionId);
 			SerializerService serializerService = XDAT.getContextService().getBean(SerializerService.class);
 			ObjectMapper objectMapper = serializerService == null ?
 					new ObjectMapper() :
@@ -169,7 +182,22 @@ public class JsonMetadataHandler
 			// read from config and minify json
 			objectMapper.writeValue(jsonPath.toFile(), objectMapper.readTree(configuration.getContents()));
 		}
+		if (configuration != null) {
+			disableConfigServiceArtifacts(configService, configuration, sessionId);
+		}
 		return jsonPath;
+	}
+
+	private void disableConfigServiceArtifacts(ConfigService configService,
+											   Configuration configuration,
+											   String sessionId) {
+		// config service delete is just a disable; deletion will need to be a manual database operation
+		configService.delete(configuration);
+		Configuration revisionConfig = configService.getConfig(OhifViewerToolName, JsonRevisionToolPath,
+				Scope.Experiment, sessionId);
+		if (revisionConfig != null) {
+			configService.delete(revisionConfig);
+		}
 	}
 
 	/**
