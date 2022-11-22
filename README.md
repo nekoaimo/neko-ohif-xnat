@@ -11,10 +11,9 @@ Up to date viewer bundles are available in the [downloads](https://bitbucket.org
 
 ***Version 3.0 of this plugin is distributed as a single jar file. If upgrading from v2.1 then both `ohif-viewer-2.1.0.jar` and `xnat-roi-2.2.0.jar` need to be removed from the plugins directory of XNAT***
 
-## 3.3.0 Release Notes:
+## 3.4.0 Release Notes:
 
 Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG.md).
-
 
 ### Overview
 
