@@ -1,3 +1,10 @@
+**3.4.0 ALPHA-1**
+
+- Improved session JSON creation, serialisation and retrieval processes.
+  - JSON metadata minification with up to 50% size reduction.
+  - Optimised CPU and memory utilisation.
+- Populate instance-level fields that were dropped from the optimised JSON metadata.
+
 **3.4.0**
 
 - Enabled NVIDIA AIAA tools. Switch between AIAA or MONAILabel tools based on the backend configuration.
