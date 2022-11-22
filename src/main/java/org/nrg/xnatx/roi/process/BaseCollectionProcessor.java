@@ -220,6 +220,11 @@ public abstract class BaseCollectionProcessor
 				params.put("description", "NIfTI File");
 				params.put("format", "NIFTI");
 				break;
+			case Constants.Measurement:
+				params.put("content", "EXTERNAL");
+				params.put("description", "Measurement Collection");
+				params.put("format", "JSON");
+				break;
 			default:
 				throw new PluginException(
 					"Unknown ROI collection type: "+targetType,
@@ -352,6 +357,12 @@ public abstract class BaseCollectionProcessor
 				resCatalog.setDescription("NIfTI File");
 				resCatalog.setFormat("NIFTI");
 				resCatalog.setLabel(Constants.Nifti);
+				break;
+			case Constants.Measurement:
+				resCatalog.setContent("EXTERNAL");
+				resCatalog.setDescription("Measurement Collection");
+				resCatalog.setFormat("JSON");
+				resCatalog.setLabel(Constants.Measurement);
 				break;
 			default:
 				throw new PluginException(

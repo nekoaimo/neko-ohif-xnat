@@ -44,6 +44,7 @@ public class Constants
 	public static final String CRSession = "CRSession";
 	public static final String CTSession = "CTSession";
 	public static final String ContourStack = "ContourStack";
+	public static final String Measurement = "MEAS";
 	public static final String MRSession = "MRSession";
 	public static final String Nifti = "NIFTI";
 	public static final String PETMRSession = "PETMRSession";

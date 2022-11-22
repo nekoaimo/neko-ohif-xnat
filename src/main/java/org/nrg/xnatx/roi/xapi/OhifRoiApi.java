@@ -53,20 +53,14 @@ import org.nrg.xnatx.plugin.ElementPermissions;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.plugin.Security;
-import org.nrg.xnatx.roi.data.AimRoiCollection;
-import org.nrg.xnatx.roi.data.RoiCollection;
-import org.nrg.xnatx.roi.data.RtStructRoiCollection;
+import org.nrg.xnatx.roi.data.*;
 import org.nrg.xnatx.roi.process.CollectionConverter;
 import org.nrg.xnatx.roi.process.CollectionStorage;
 import org.nrg.xnatx.roi.service.RoiService;
 import org.nrg.xnatx.plugin.PluginUtils;
-import org.nrg.xnatx.roi.data.StudyUidContainer;
 import org.nrg.xnatx.roi.process.DefaultCollectionConverter;
 import org.nrg.xnatx.roi.process.DefaultCollectionStorage;
-import org.nrg.xnatx.roi.data.DsdUtils;
-import org.nrg.xnatx.roi.data.NiftiRoiCollection;
 import icr.xnat.plugin.roi.entity.Roi;
-import org.nrg.xnatx.roi.data.SegmentationRoiCollection;
 import org.nrg.xnatx.roi.process.ProcessUtils;
 import org.nrg.xnatx.roi.process.Result;
 import org.nrg.xnatx.roi.service.DicomSpatialDataService;
@@ -325,7 +319,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 	public ResponseEntity<InputStreamResource> getCollection(
 		@ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
 		@ApiParam(value="Collection ID|Label") @PathVariable("idOrLabel") String idOrLabel,
-		@ApiParam(value="Type", allowableValues="AIM,RTSTRUCT,SEG") @RequestParam(value="type", required=false, defaultValue="") String requestedType)
+		@ApiParam(value="Type", allowableValues="AIM,RTSTRUCT,SEG,MEAS") @RequestParam(value="type", required=false, defaultValue="") String requestedType)
 		throws PluginException
 	{
 		logger.info("RoiApi::getCollection(projectId="+projectId+
@@ -535,7 +529,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		@ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
 		@ApiParam(value="Session ID") @PathVariable("sessionId") @Experiment String sessionId,
 		@ApiParam(value="Collection Label") @PathVariable("label") String label,
-		@ApiParam(value="Type", allowableValues="AIM,RTSTRUCT,SEG") @RequestParam(value="type", required=true) String type,
+		@ApiParam(value="Type", allowableValues="AIM,RTSTRUCT,SEG,MEAS") @RequestParam(value="type", required=true) String type,
 		@ApiParam(value="Overwrite") @RequestParam(value="overwrite", required=false, defaultValue="false") boolean overwrite,
 //		@ApiParam(value="Series UID") @RequestParam(value="seriesuid", required=false, defaultValue="") String seriesUid,
 		InputStream is)
@@ -748,6 +742,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 				return;
 			case Constants.RtStruct:
 			case Constants.Segmentation:
+			case Constants.Measurement:
 				if (!is3D(modality) && !modality.equals("US"))
 				{
 					throw new PluginException(
@@ -868,6 +863,10 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 						ByteStreams.toByteArray(is));
 					populateUids((NiftiRoiCollection) roiCollection, sessionId, user,
 						seriesUid);
+					break;
+				case Constants.Measurement:
+					roiCollection = new JsonMeasurementCollection(id,
+							ByteStreams.toByteArray(is));
 					break;
 				default:
 					throw new PluginException("Unknown ROI collection type: "+type,
@@ -1102,6 +1101,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 				break;
 			case Constants.Segmentation:
 			case Constants.Nifti:
+			case Constants.Measurement:
 				logger.info("Collection type "+type+" does not have alternate types");
 				break;
 			default:
