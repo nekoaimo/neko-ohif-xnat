@@ -1,4 +1,4 @@
-**3.4.0 ALPHA-1**
+**3.5.0 ALPHA-1**
 
 - Improved session JSON creation, serialisation and retrieval processes.
   - JSON metadata minification with up to 50% size reduction.
