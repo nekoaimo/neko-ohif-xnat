@@ -864,10 +864,10 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 					populateUids((NiftiRoiCollection) roiCollection, sessionId, user,
 						seriesUid);
 					break;
-				case Constants.Measurement:
-					roiCollection = new JsonMeasurementCollection(id,
-							ByteStreams.toByteArray(is));
-					break;
+//				case Constants.Measurement:
+//					roiCollection = new JsonMeasurementCollection(id,
+//							ByteStreams.toByteArray(is));
+//					break;
 				default:
 					throw new PluginException("Unknown ROI collection type: "+type,
 						PluginCode.HttpUnprocessableEntity);

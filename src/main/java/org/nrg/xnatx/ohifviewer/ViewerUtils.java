@@ -98,6 +98,7 @@ public class ViewerUtils
 		displayableSopClassUids.add("1.2.840.10008.5.1.4.1.1.77.1.5.1"); // Ophthalmic Photography 8-Bit Image Storage
 		displayableSopClassUids.add("1.2.840.10008.5.1.4.1.1.77.1.5.2"); // Ophthalmic Photography 16-Bit Image Storage
 		displayableSopClassUids.add("1.2.840.10008.5.1.4.1.1.77.1.5.4"); // Ophthalmic Tomography Image Storage
+		displayableSopClassUids.add("1.2.840.10008.5.1.4.1.1.77.1.6"); // VL Whole Slide Microscopy Image Storage
 		displayableSopClassUids.add("1.2.840.10008.5.1.4.1.1.77.2"); // VL Multiframe Image Storage
 	}
 
