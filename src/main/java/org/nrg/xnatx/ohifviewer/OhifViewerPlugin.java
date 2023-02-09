@@ -25,6 +25,7 @@ import org.springframework.context.annotation.ComponentScan;
 	"org.nrg.xnatx.ohifviewer.event.listeners",
 	"org.nrg.xnatx.ohifviewer.init",
 	"org.nrg.xnatx.ohifviewer.service",
+	"org.nrg.xnatx.ohifviewer.inputcreator",
 	"org.nrg.xnatx.roi.data",
 	"org.nrg.xnatx.roi.event.listeners",
 	"org.nrg.xnatx.roi.service",

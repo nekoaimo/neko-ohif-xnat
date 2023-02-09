@@ -34,37 +34,26 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.xapi;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiParam;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.nrg.config.services.ConfigService;
 import org.nrg.framework.annotations.XapiRestController;
 import org.nrg.xapi.rest.AbstractXapiRestController;
-import org.nrg.xapi.rest.Project;
 import org.nrg.xapi.rest.Experiment;
+import org.nrg.xapi.rest.Project;
 import org.nrg.xapi.rest.XapiRequestMapping;
 import org.nrg.xdat.model.XnatSubjectassessordataI;
 import org.nrg.xdat.om.XnatExperimentdata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatProjectdata;
 import org.nrg.xdat.om.XnatSubjectdata;
+import org.nrg.xdat.security.helpers.AccessLevel;
 import org.nrg.xdat.security.services.RoleHolder;
 import org.nrg.xdat.security.services.UserManagementServiceI;
-import org.nrg.xdat.security.helpers.AccessLevel;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnatx.ohifviewer.inputcreator.JsonMetadataHandler;
 import org.nrg.xnatx.ohifviewer.service.OhifSessionDataService;
@@ -84,6 +73,19 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  *
@@ -102,12 +104,13 @@ public class OhifViewerApi extends AbstractXapiRestController
     private final OhifSessionDataService ohifJsonService;
 
 	@Autowired
-	public OhifViewerApi(final OhifSessionDataService ohifJsonService,
-		final UserManagementServiceI userManagementService,
-		final RoleHolder roleHolder)
+	public OhifViewerApi(final JsonMetadataHandler jsonHandler,
+						 final OhifSessionDataService ohifJsonService,
+						 final UserManagementServiceI userManagementService,
+						 final RoleHolder roleHolder)
 	{
 		super(userManagementService, roleHolder);
-		jsonHandler = new JsonMetadataHandler(ohifJsonService);
+		this.jsonHandler = jsonHandler;
         this.ohifJsonService = ohifJsonService;
 		logger.info("OHIF Viewer XAPI initialised");
 	}
