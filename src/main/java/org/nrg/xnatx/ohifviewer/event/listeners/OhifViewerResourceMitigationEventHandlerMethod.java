@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.nrg.framework.services.SerializerService;
 import org.nrg.xapi.exceptions.InsufficientPrivilegesException;
 import org.nrg.xapi.exceptions.NotFoundException;
-import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xft.event.XftItemEventI;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnat.entities.ResourceSurveyRequest;
@@ -12,7 +11,6 @@ import org.nrg.xnat.services.archive.ResourceSurveyService;
 import org.nrg.xnat.services.messaging.archive.AbstractResourceMitigationEventHandlerMethod;
 import org.nrg.xnat.services.messaging.archive.ResourceMitigationEventProperties;
 import org.nrg.xnatx.ohifviewer.inputcreator.JsonMetadataHandler;
-import org.nrg.xnatx.plugin.PluginException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -62,18 +60,9 @@ public class OhifViewerResourceMitigationEventHandlerMethod extends AbstractReso
 
         if (!requests.isEmpty()) {
             log.info("There are {} outstanding resource survey requests for image session {}: OHIF metadata shouldn't be regenerated until all outstanding requests have completed", requests.size(), sessionId);
-            return true;
+        } else {
+            log.info("There are no outstanding resource survey requests for image session {}: OHIF metadata can be safely regenerated now", sessionId);
         }
-
-        log.info("There are no outstanding resource survey requests for image session {}: OHIF metadata can be safely regenerated now", sessionId);
-        final XnatImagesessiondata session = XnatImagesessiondata.getXnatImagesessiondatasById(sessionId, requester, false);
-
-        try {
-            metadataHandler.createAndStoreJsonConfig(session, requester, true);
-            return true;
-        } catch (PluginException e) {
-            log.warn("An error occurred trying to re-generate OHIF metadata for session {}", sessionId, e);
-            return false;
-        }
+        return true;
     }
 }
