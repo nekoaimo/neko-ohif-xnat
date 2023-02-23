@@ -735,10 +735,10 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		switch (type)
 		{
 			case Constants.AIM:
+			case Constants.Measurement:
 				return;
 			case Constants.RtStruct:
 			case Constants.Segmentation:
-			case Constants.Measurement:
 				if (!is3D(modality) && !modality.equals("US"))
 				{
 					throw new PluginException(
