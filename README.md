@@ -20,6 +20,8 @@ Up to date viewer bundles are available in the [downloads](https://bitbucket.org
 A new handler was introduced in the viewer to mitigate the issue which is dependent on XNAT 1.8.7, breaking backward compatibility with older XNAT releases.
 In order to maintain compatibility with earlier XNAT 1.8.* releases, **v3.5.0-BC _does not include this mitigation handler_**.
 
+> Version 3.5.0-BC of the plugin jar can be downloaded via [here](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin/raw/8e7acf6360b666d680bacab62ba39daab77f4842/plugin-jar/ohif-viewer-3.5.0-BC-fat.jar).
+
 Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG.md).
 
 ### Overview
