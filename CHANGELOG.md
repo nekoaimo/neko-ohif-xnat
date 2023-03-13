@@ -1,3 +1,8 @@
+**3.5.0-BC**
+
+- All the features from **v3.5.0** apart from the handler that mitigates the effect of [XNAT-7202 issue](https://radiologics.atlassian.net/browse/XNAT-7202):
+  - In order to maintain compatiblility with XNAT 1.8.* releases, **v3.5.0-BC _does not include this mitigation handler_**.
+
 **3.5.0**
 
 - ROI contour rendering in the 3D MPR mode.
