@@ -34,9 +34,6 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.event.listeners;
 
-import java.util.*;
-import javax.inject.Inject;
-import org.nrg.config.services.ConfigService;
 import org.nrg.xdat.om.WrkWorkflowdata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatSubjectassessordata;
@@ -59,6 +56,10 @@ import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.fn.Consumer;
 
+import javax.inject.Inject;
+import java.util.HashMap;
+import java.util.Map;
+
 import static reactor.bus.selector.Selectors.R;
 
 /**
@@ -78,14 +79,14 @@ public class OhifViewerEventListener
 	private final Map<String, Boolean> triggerPipelinesSubject = new HashMap<>();
 
 	@Inject
-	public OhifViewerEventListener(EventBus eventBus, ConfigService configService, AnonUtils anonUtils)
+	public OhifViewerEventListener(EventBus eventBus, AnonUtils anonUtils, JsonMetadataHandler jsonHandler)
 	{
 		eventBus.on(
 			R(WorkflowStatusEvent.class.getName()+
 				"[.]?("+PersistentWorkflowUtils.COMPLETE+")"),
 			this);
 		this.anonUtils = anonUtils;
-		jsonHandler = new JsonMetadataHandler(configService);
+		this.jsonHandler = jsonHandler;
 		createTriggers();
 		logger.info("OHIF Viewer event listener initialised");
 	}
@@ -206,7 +207,7 @@ public class OhifViewerEventListener
 	private void generateJson(XnatImagesessiondata item, UserI user) {
 		try
 		{
-			jsonHandler.createAndStoreJsonConfig(item, user);
+			jsonHandler.createAndStoreJsonConfig(item, user, true);
 		}
 		catch (PluginException ex)
 		{

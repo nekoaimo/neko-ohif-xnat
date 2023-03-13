@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        vXnat = '1.8.0'
+        vXnat = '1.8.7'
         pluginAppName = "ICR/XNAT OHIF Viewer Plugin"
     }
     repositories {
@@ -20,22 +20,23 @@ buildscript {
     }
     dependencies {
         classpath "org.nrg.xnat.build:xnat-data-builder:${vXnat}"
-        classpath "io.spring.gradle:dependency-management-plugin:1.0.9.RELEASE"
+        classpath "io.spring.gradle:dependency-management-plugin:1.1.0"
         classpath "com.palantir.gradle.gitversion:gradle-git-version:0.12.3"
-        classpath "io.franzbecker:gradle-lombok:4.0.0"
+        classpath "io.franzbecker:gradle-lombok:5.0.0"
     }
 }
 
 group 'org.nrg.xnatx.plugins'
-version '3.4.1'
+version '3.5.0'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
+apply plugin: 'io.franzbecker.gradle-lombok'
 apply plugin: 'com.palantir.git-version'
-apply plugin: 'xnat-data-builder'
+apply plugin: 'org.nrg.xnat.build.xnat-data-builder'
 
 idea {
     module {
@@ -143,6 +144,8 @@ dependencyManagement.imports {
 }
 
 dependencies {
+    implementation "javax.servlet:javax.servlet-api"
+
     implementation("org.nrg.xnat:web") { transitive = false }
     implementation("org.nrg.xnat:xnat-data-models") { transitive = false }
     implementation("org.nrg.xdat:core") { transitive = false }
@@ -185,7 +188,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic") { transitive = false }
     implementation("ch.qos.logback:logback-core") { transitive = false }
      // EtherJ
-    def vEtherJ = '1.1.5'
+    def vEtherJ = '1.1.6'
     implementAndInclude("icr.etherj:etherj-core:${vEtherJ}") { transitive = false }
 
     testImplementation "org.slf4j:slf4j-nop:1.7.25"

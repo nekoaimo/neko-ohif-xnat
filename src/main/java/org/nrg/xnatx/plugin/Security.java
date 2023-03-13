@@ -35,9 +35,6 @@
 package org.nrg.xnatx.plugin;
 
 import org.nrg.xnatx.roi.Constants;
-import org.nrg.xnatx.plugin.ElementPermissions;
-import org.nrg.xnatx.plugin.PluginCode;
-import org.nrg.xnatx.plugin.PluginException;
 import java.util.HashMap;
 import java.util.Map;
 import org.nrg.xdat.om.XnatExperimentdata;

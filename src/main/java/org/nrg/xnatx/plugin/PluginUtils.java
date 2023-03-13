@@ -110,7 +110,7 @@ public class PluginUtils
 	{
 		File sessionDir = expData.getSessionDir();
 		return (sessionDir != null)
-			? expData.getSessionDir().getPath()+File.separator
+			? sessionDir.getPath()+File.separator
 			: null;
 	}
 

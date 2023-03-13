@@ -1,3 +1,23 @@
+**3.5.0**
+
+- ROI contour rendering in the 3D MPR mode.
+- Volume calculation and display for contour and mask ROIs.
+- Calculate and display the 2D statistics of mask ROIs.
+- Refactored the ROI Collections export for shared projects configuration.
+- Populate DICOM Equipment module values from the reference scan for storing ROI Collections.
+- Display scan modality in the scan browser.
+- Upgraded underlying JavaScript packages and tools.
+- Fixed measurement import/export issue for multiframe images.
+- Fixed issues caused when using Node.js v16.14.0.
+- Restrict NM image fusion only for image type 'RECON TOMO'.
+
+**3.5.0 ALPHA-1**
+
+- Improved session JSON creation, serialisation and retrieval processes.
+  - JSON metadata minification with up to 50% size reduction.
+  - Optimised CPU and memory utilisation.
+- Populate instance-level fields that were dropped from the optimised JSON metadata.
+
 **3.4.1**
 
 - Fixed import and export issues of measurement data for DICOM multiframe images.
@@ -6,7 +26,7 @@
 **3.4.0**
 
 - Enabled NVIDIA AIAA tools. Switch between AIAA or MONAILabel tools based on the backend configuration.
-- Fixed label value to label name mapping in the MONAILabel client.~~~~
+- Fixed label value to label name mapping in the MONAILabel client.
 
 **3.4.0 RC-2**
 
@@ -14,7 +34,7 @@
 - Added a progress indicator to monitor the loading progress of images. Currently, does not support multiframe images or images that were removed from cache.
 - Show a dialog upon creating measurements to set name and description.
 - Added support to set and restore presentation state parameters from measurements.
-- Fixed issues caused when switching between the 3D MPR and the standard viewer modes.~~~~
+- Fixed issues caused when switching between the 3D MPR and the standard viewer modes.
 
 **3.4.0 RC-1**
 
@@ -22,7 +42,7 @@
 - New feature: Measurement Service to manage and interact with measurement annotations.
   - Measurement panel: groups measurements into working and imported collections.
   - Export and import measurement collections to and from the XNAT platform.
-  - Individual measurement interaction buttons: edit metadata, toggle visibility, jump ~~~~to slice, and remove.
+  - Individual measurement interaction buttons: edit metadata, toggle visibility, jump to slice, and remove.
   - Measurement API to interface with measurements from other Viewer extensions.
 - New feature: Client for MONAI Label server to facilitate interactive medical image annotation.
   - Interactively segment parts of an image using clicks (DeepGrow & DeepEdit models).

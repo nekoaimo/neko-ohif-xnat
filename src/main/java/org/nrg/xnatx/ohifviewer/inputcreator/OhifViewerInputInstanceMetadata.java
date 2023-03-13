@@ -25,7 +25,6 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
     private double[] ImagePositionPatient;
     private String[] ImageType;
     private int InstanceNumber;
-    private String Modality;
     private int NumberOfFrames;
     private String PhotometricInterpretation;
     private int PixelRepresentation;
@@ -35,14 +34,8 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
     private String RescaleType;
     private int Rows;
     private int SamplesPerPixel;
-    private String SeriesDate;
-    private String SeriesInstanceUID;
-    private String SeriesTime;
     private String SOPClassUID;
     private String SOPInstanceUID;
-    private String StudyInstanceUID;
-    private String StudyDate;
-    private String StudyTime;
     private double[] WindowWidth;
     private double[] WindowCenter;
 
@@ -63,7 +56,6 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
                 ImagePositionPatient[i] = 0.0;
         }
         InstanceNumber = sop.getInstanceNumber();
-        Modality = sop.getModality();
         NumberOfFrames = sop.getNumberOfFrames();
         PixelSpacing = sop.getPixelSpacing();
         for (int i = 0; i < PixelSpacing.length; i++)
@@ -72,14 +64,8 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
                 PixelSpacing[i] = 1.0;
         }
         Rows = sop.getRowCount();
-        SeriesDate = ViewerUtils.getValidatedDateString(sop.getSeriesDate());
-        SeriesInstanceUID = sop.getSeriesUid();
-        SeriesTime = ViewerUtils.getValidatedTimeString(sop.getSeriesTime());
         SOPClassUID = sop.getSopClassUid();
         SOPInstanceUID = sop.getUid();
-        StudyDate = ViewerUtils.getValidatedDateString(sop.getStudyDate());
-        StudyInstanceUID = sop.getStudyUid();
-        StudyTime = ViewerUtils.getValidatedTimeString(sop.getStudyTime());
 
         if (ViewerUtils.isDisplayableSopClass(sop.getSopClassUid())) {
             DicomObject dcm = sop.getDicomObject();
@@ -140,10 +126,6 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
         return InstanceNumber;
     }
 
-    public String getModality() {
-        return Modality;
-    }
-
     public int getNumberOfFrames() {
         return NumberOfFrames;
     }
@@ -168,16 +150,8 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
         return SamplesPerPixel;
     }
 
-    public String getSeriesInstanceUID() {
-        return SeriesInstanceUID;
-    }
-
     public String getSOPInstanceUID() {
         return SOPInstanceUID;
-    }
-
-    public String getStudyInstanceUID() {
-        return StudyInstanceUID;
     }
 
     public double[] getWindowWidth() {

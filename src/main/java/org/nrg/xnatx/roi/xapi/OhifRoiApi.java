@@ -257,8 +257,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 	})
 	@XapiRequestMapping(
 		value="/projects/{projectId}/collections/{idOrLabel}",
-		method=RequestMethod.DELETE,
-		restrictTo=AccessLevel.Delete)
+		method=RequestMethod.DELETE)
 	@ResponseBody
 	public ResponseEntity<String> deleteCollection(
 		@ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
@@ -522,7 +521,6 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 	@XapiRequestMapping(
 		value="/projects/{projectId}/sessions/{sessionId}/collections/{label}",
 		method=RequestMethod.PUT,
-		restrictTo=AccessLevel.Edit,
 		consumes=MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	@ResponseBody
 	public ResponseEntity<String> putCollection(
@@ -552,8 +550,6 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		Security.checkPermissions(user, sessionData.getXSIType()+"/project", projectId,
 			Security.Create, Security.Edit, Security.Read);
 		Security.checkPermissions(user, RoiCollElement, projectId,
-			Security.Create, Security.Edit, Security.Read);
-		Security.checkPermissions(user, sessionData,
 			Security.Create, Security.Edit, Security.Read);
 
 		String modality = PluginUtils.getImageSessionModality(sessionData);
@@ -739,10 +735,10 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		switch (type)
 		{
 			case Constants.AIM:
+			case Constants.Measurement:
 				return;
 			case Constants.RtStruct:
 			case Constants.Segmentation:
-			case Constants.Measurement:
 				if (!is3D(modality) && !modality.equals("US"))
 				{
 					throw new PluginException(
@@ -915,10 +911,18 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 				continue;
 			}
 			XnatSubjectdata subjectData = sessionData.getSubjectData();
-			StudyUidContainer container = new StudyUidContainer(projectId,
-				subjectData.getId(), subjectData.getLabel(), sessionData.getId(),
-				sessionData.getLabel(), xsiType);
-			set.add(container);
+			try
+			{
+				StudyUidContainer container = new StudyUidContainer(projectId,
+					subjectData.getId(), subjectData.getLabel(), sessionData.getId(),
+					sessionData.getLabel(), xsiType);
+				set.add(container);
+			}
+			catch (IllegalArgumentException ex)
+			{
+				logger.warn("Error locating StudyUidContainer for {}: {}", studyUid,
+					ex.getMessage());
+			}
 		}
 		return set;
 	}

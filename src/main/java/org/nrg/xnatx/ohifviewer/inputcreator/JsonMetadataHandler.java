@@ -35,24 +35,36 @@
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import icr.etherj.StringUtils;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.engine.jdbc.ClobProxy;
 import org.nrg.config.entities.Configuration;
-import org.nrg.config.exceptions.ConfigServiceException;
 import org.nrg.config.services.ConfigService;
 import org.nrg.framework.constants.Scope;
+import org.nrg.framework.services.SerializerService;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xft.security.UserI;
+import org.nrg.xnatx.ohifviewer.entity.OhifSessionData;
+import org.nrg.xnatx.ohifviewer.service.OhifSessionDataService;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.plugin.PluginUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  *
  * @author jamesd
  */
+@Service
 public class JsonMetadataHandler
 {
 	/**
@@ -65,17 +77,22 @@ public class JsonMetadataHandler
 	private static final Logger logger = LoggerFactory.getLogger(
 		JsonMetadataHandler.class);
 
-	private static final String CreateReason = "Creating Session JSON";
 	private static final String JsonRevisionToolPath = "json-revision";
 	private static final String OhifViewerToolName = "ohif-viewer";
 	private static final String SessionJsonToolPath = "session-json";
 
+	private final OhifSessionDataService ohifSessionDataService;
 	private final ConfigService configService;
-	private final Lock configServiceLock = new ReentrantLock();
+	private final SerializerService serializer;
 
-	public JsonMetadataHandler(final ConfigService configService)
+	@Autowired
+	public JsonMetadataHandler(final OhifSessionDataService ohifSessionDataService,
+							   final ConfigService configService,
+							   final SerializerService serializer)
 	{
+		this.ohifSessionDataService = ohifSessionDataService;
 		this.configService = configService;
+		this.serializer = serializer;
 	}
 
 	/**
@@ -85,12 +102,12 @@ public class JsonMetadataHandler
 	 * @return the JSON metadata
 	 * @throws PluginException
 	 */
-	public String createAndStoreJsonConfig(String sessionId, UserI user)
+	public void createAndStoreJsonConfig(String sessionId, UserI user)
 		throws PluginException
 	{
 		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
 			sessionId, user);
-		return createAndStoreJsonConfig(sessionData, user);
+		createAndStoreJsonConfig(sessionData, user);
 	}
 
 	/**
@@ -100,56 +117,102 @@ public class JsonMetadataHandler
 	 * @return the JSON metadata
 	 * @throws PluginException
 	 */
-	public String createAndStoreJsonConfig(XnatImagesessiondata sessionData,
-		UserI user) throws PluginException
+	public void createAndStoreJsonConfig(XnatImagesessiondata sessionData,
+										 UserI user) throws PluginException {
+		createAndStoreJsonConfig(sessionData, user, false);
+	}
+	/**
+	 * Create and store JSON metadata for the specified session and user.
+	 * @param sessionData
+	 * @param user
+	 * @param ignoreExisting if true, any previously existing json will be ignored
+	 * @return the JSON metadata
+	 * @throws PluginException
+	 */
+	public void createAndStoreJsonConfig(XnatImagesessiondata sessionData,
+		UserI user, boolean ignoreExisting) throws PluginException
 	{
 		if (sessionData == null)
 		{
 			throw new PluginException("SessionData must not be null",
-				PluginCode.HttpUnprocessableEntity);
+					PluginCode.HttpUnprocessableEntity);
 		}
 		if (user == null)
 		{
 			throw new PluginException("User must not be null",
-				PluginCode.HttpUnprocessableEntity);
+					PluginCode.HttpUnprocessableEntity);
 		}
-		String json = null;
-		try
-		{
-			String sessionId = sessionData.getId();
-			logger.info("Creating session metadata for "+sessionId);
-			ConfigServiceJsonCreator creator = new ConfigServiceJsonCreator();
-			json = creator.create(sessionData);
-			try
-			{
-				// Method may be called in muliple threads, only access shared vars
-				// under lock.
-				configServiceLock.lock();
-				configService.replaceConfig(user.getUsername(), CreateReason, 
-					OhifViewerToolName, SessionJsonToolPath, true, json,
-					Scope.Experiment, sessionId);
-				configService.replaceConfig(user.getUsername(), CreateReason, 
-					OhifViewerToolName, JsonRevisionToolPath, true,
-					Integer.toString(JsonRevision), Scope.Experiment, sessionId);
-				logger.info("Session "+sessionId+" metadata created and stored");
+		String sessionId = sessionData.getId();
+		Path jsonPath;
+		try {
+			jsonPath = loadFromConfigOrCreateJsonTempFile(sessionId, sessionData, ignoreExisting);
+		} catch (IOException e) {
+			throw new PluginException("Unable to load or create json for session " + sessionId, e);
+		}
+		try (BufferedReader reader = new BufferedReader(new FileReader(jsonPath.toFile()))) {
+			OhifSessionData ohifSessionData = new OhifSessionData();
+			ohifSessionData.setSessionId(sessionId);
+			ohifSessionData.setRevision(Integer.toString(JsonRevision));
+			ohifSessionData.setSessionJson(ClobProxy.generateProxy(reader, Files.size(jsonPath)));
+			ohifSessionDataService.createOrUpdate(ohifSessionData);
+		} catch (FileNotFoundException e) {
+			throw new PluginException(jsonPath + " Not Found", PluginCode.FileNotFound, e);
+		} catch (IOException e) {
+			throw new PluginException("Failed to load " + jsonPath, e);
+		} finally {
+			// Delete temporary json file
+			try {
+				Files.delete(jsonPath);
+				logger.debug("{} has been deleted", jsonPath);
+			} catch (IOException e) {
+				logger.warn("Failed to delete {}", jsonPath);
 			}
-			finally
-			{
-				configServiceLock.unlock();
-			}
 		}
-		catch (ConfigServiceException ex)
-		{
-			throw new PluginException("Error storing JSON config",
-				PluginCode.ConfigService, ex);
-		}
-		return json;
+
+		logger.info("Session {} metadata created and stored", sessionId);
 	}
 
-	public Configuration getJsonConfig(String sessionId)
-	{
-		return configService.getConfig(OhifViewerToolName, SessionJsonToolPath,
-			Scope.Experiment, sessionId);
+	public boolean deleteSessionConfig(String sessionId) {
+		OhifSessionData data = ohifSessionDataService.getSessionData(sessionId);
+		if (data == null) {
+			logger.info("Got request to delete OHIF metadata for session ID {} but there isn't stored metadata for that session", sessionId);
+			return false;
+		}
+		logger.info("Got request to delete OHIF metadata for session ID {}, proceeding", sessionId);
+		ohifSessionDataService.delete(data);
+		return true;
+	}
+
+	private Path loadFromConfigOrCreateJsonTempFile(String sessionId, XnatImagesessiondata sessionData,
+													boolean ignoreExisting)
+			throws IOException, PluginException {
+		Configuration configuration = configService.getConfig(OhifViewerToolName, SessionJsonToolPath,
+				Scope.Experiment, sessionId);
+		Path jsonPath;
+		if (ignoreExisting || configuration == null || !configuration.isEnabled()) {
+			logger.info("Creating session metadata for {}", sessionId);
+			ConfigServiceJsonCreator creator = new ConfigServiceJsonCreator();
+			jsonPath = creator.create(sessionData);
+		} else {
+			logger.info("Migrating session metadata for {}", sessionId);
+			jsonPath = Files.createTempFile("ohif", null);
+			// read from config and minify json
+			serializer.getObjectMapper().writeValue(jsonPath.toFile(), serializer.deserializeJson(configuration.getContents()));
+		}
+		if (configuration != null) {
+			disableConfigServiceArtifacts(configuration, sessionId);
+		}
+		return jsonPath;
+	}
+
+	private void disableConfigServiceArtifacts(Configuration configuration, String sessionId) {
+		// config service delete is just a disable; deletion will need to be a manual database operation
+		configService.delete(configuration);
+		Configuration revisionConfig = configService.getConfig(OhifViewerToolName, JsonRevisionToolPath,
+				Scope.Experiment, sessionId);
+		if (revisionConfig != null) {
+			configService.delete(revisionConfig);
+		}
 	}
 
 	/**
@@ -160,32 +223,32 @@ public class JsonMetadataHandler
 	 */
 	public boolean isJsonValid(String sessionId)
 	{
-		Configuration jsonRevConfig = configService.getConfig(OhifViewerToolName,
-			JsonRevisionToolPath, Scope.Experiment, sessionId);
+		OhifSessionData ohifSessionData = ohifSessionDataService.getSessionData(sessionId);
+		if (ohifSessionData == null)
+		{
+			logger.debug("JSON not found");
+			return false;
+		}
+
+		String revision = ohifSessionData.getRevision();
 		// Check the stored revision. If it doesn't exist, is empty or lower than
 		// the Json
-		if (jsonRevConfig == null)
+		if (StringUtils.isNullOrEmpty(revision))
 		{
-			logger.debug("JSON revision not found");
+			logger.debug("JSON revision empty");
 			return false;
 		}
 		else
 		{
-			String jsonRev = jsonRevConfig.getContents();
-			if (StringUtils.isNullOrEmpty(jsonRev))
-			{
-				logger.debug("JSON revision empty");
-				return false;
-			}
-			logger.debug("Stored JSON revision: {}", jsonRev);
+			logger.debug("Stored JSON revision: {}", revision);
 			int rev;
 			try
 			{
-				rev = Integer.parseInt(jsonRev);
+				rev = Integer.parseInt(revision);
 			}
 			catch (NumberFormatException ex)
 			{
-				logger.debug("JSON revision invalid: {}", jsonRev);
+				logger.debug("JSON revision invalid: {}", revision);
 				return false;
 			}
 			if (rev < JsonRevision)
