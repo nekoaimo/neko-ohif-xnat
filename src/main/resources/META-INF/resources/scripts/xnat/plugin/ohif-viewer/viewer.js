@@ -319,7 +319,7 @@ function generateJSONOpenSubjectViewer(sessionsThatNeedJSON, newTab, projectId, 
   var xhrGenerate = [];
   for (var i = 0; i < sessionsThatNeedJSON.length; i++) {
     var experimentId = sessionsThatNeedJSON[i].ID;
-    var experimentExistsUrl = rootUrlWithPort + "/xapi/viewer/projects/" + projectId + "/experiments/" + experimentId;
+    var experimentExistsUrl = XNAT.url.rootUrl("/xapi/viewer/projects/" + projectId + "/experiments/" + experimentId);
 
     xhrGenerate[i] = new XMLHttpRequest();
 
