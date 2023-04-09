@@ -97,11 +97,11 @@ public class JsonROIColorListHandler
 			configService.replaceConfig(user.getUsername(), CreateProjectReason,
 					OhifROIColorToolName, ProjectJsonToolPath, true, json, Scope.Project,
 				projectId);
-			logger.info("Project "+projectId+" AIAA server list stored");
+			logger.info("Project "+projectId+" ROI Colors stored");
 		}
 		catch (ConfigServiceException ex)
 		{
-			throw new PluginException("Error storing site AIAA JSON config",
+			throw new PluginException("Error storing ROI Colors config",
 				PluginCode.ConfigService, ex);
 		}
 		finally
