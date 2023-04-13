@@ -1,3 +1,15 @@
+**3.5.1**
+
+- Added Viewer Config API (/viewerConfig). Currently, serves endpoints only to GET and PUT ROI Presets.
+- Select ROI labels using a list populated from presets stored on XNAT at project-level.
+- Display overlays in the scan thumbnail view for scans with overlay data.
+- Deactivated the export of ROI Collections in cases of unsupported modalities or insufficient permission.
+- Improved alert messages to clarify that viewer will automatically open, surface errors to user if metadata cannot be generated.
+- Added scrollbar to the scan browser.
+- Fixed a bug in obtaining XNAT user details for guest access.
+- Fixed a bug preventing guests from loading the viewer.
+- Fixed bug blocking json generation from subject page "View Images" link.
+
 **3.5.0**
 
 - ROI contour rendering in the 3D MPR mode.
