@@ -34,6 +34,9 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.event.listeners;
 
+import java.util.*;
+import javax.inject.Inject;
+import org.nrg.config.services.ConfigService;
 import org.nrg.xdat.om.WrkWorkflowdata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatSubjectassessordata;
@@ -48,6 +51,7 @@ import org.nrg.xft.security.UserI;
 import org.nrg.xnat.helpers.merge.AnonUtils;
 import org.nrg.xnat.turbine.utils.ArchivableItem;
 import org.nrg.xnatx.ohifviewer.inputcreator.JsonMetadataHandler;
+import org.nrg.xnatx.ohifviewer.service.OhifSessionDataService;
 import org.nrg.xnatx.plugin.PluginException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,10 +59,6 @@ import org.springframework.stereotype.Service;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.fn.Consumer;
-
-import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
 
 import static reactor.bus.selector.Selectors.R;
 
@@ -79,14 +79,14 @@ public class OhifViewerEventListener
 	private final Map<String, Boolean> triggerPipelinesSubject = new HashMap<>();
 
 	@Inject
-	public OhifViewerEventListener(EventBus eventBus, AnonUtils anonUtils, JsonMetadataHandler jsonHandler)
+	public OhifViewerEventListener(EventBus eventBus, AnonUtils anonUtils, OhifSessionDataService ohifSessionDataService)
 	{
 		eventBus.on(
 			R(WorkflowStatusEvent.class.getName()+
 				"[.]?("+PersistentWorkflowUtils.COMPLETE+")"),
 			this);
 		this.anonUtils = anonUtils;
-		this.jsonHandler = jsonHandler;
+		jsonHandler = new JsonMetadataHandler(ohifSessionDataService);
 		createTriggers();
 		logger.info("OHIF Viewer event listener initialised");
 	}
