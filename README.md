@@ -11,7 +11,14 @@ Up to date viewer bundles are available in the [downloads](https://bitbucket.org
 
 ***Version 3.0 of this plugin is distributed as a single jar file. If upgrading from v2.1 then both `ohif-viewer-2.1.0.jar` and `xnat-roi-2.2.0.jar` need to be removed from the plugins directory of XNAT***
 
-## 3.5.1 Release Notes:
+## 3.5.1-BC Release Notes:
+
+> :warning: **v3.5.1-BC** is intended for XNAT releases earlier than 1.8.7. If you have XNAT 1.8.7 installed or want to mitigate the [XNAT-7202 issue](https://radiologics.atlassian.net/browse/XNAT-7202), please use the Viewer plugin [**v3.5.1**](https://bitbucket.org/icrimaginginformatics/ohif-viewer-xnat-plugin/downloads/ohif-viewer-3.5.1-XNAT-1.8.7.jar).
+
+> Includes all the features from **v3.5.1** apart from the handler that mitigates the effect of [XNAT-7202 issue](https://radiologics.atlassian.net/browse/XNAT-7202).
+[This issue only affects data that was imported via C-STORE in XNAT 1.8.5 and 1.8.6](https://wiki.xnat.org/documentation/getting-started-with-xnat/what-s-new-in-xnat/xnat-1-8-6-1-release-notes).
+A new handler was introduced in the viewer to mitigate the issue which is dependent on XNAT 1.8.7, breaking backward compatibility with older XNAT releases.
+In order to maintain compatibility with earlier XNAT 1.8.* releases, **v3.5.1-BC _does not include this mitigation handler_**.
 
 Note full patch-by-patch changes are available in the [CHANGELOG](./CHANGELOG.md).
 

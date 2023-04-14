@@ -1,3 +1,8 @@
+**3.5.1-BC**
+
+- All the features from **v3.5.x** apart from the handler that mitigates the effect of [XNAT-7202 issue](https://radiologics.atlassian.net/browse/XNAT-7202):
+  - In order to maintain compatiblility with XNAT 1.8.* releases, **v3.5.x-BC _does not include this mitigation handler_**.
+
 **3.5.1**
 
 - Added Viewer Config API (/viewerConfig). Currently, serves endpoints only to GET and PUT ROI Presets.

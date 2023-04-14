@@ -27,7 +27,7 @@ buildscript {
 }
 
 group 'org.nrg.xnatx.plugins'
-version '3.5.1'
+version '3.5.1-BC'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
