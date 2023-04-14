@@ -218,11 +218,11 @@ function checkSessionJSON(newTab, projectId, subjectId, experimentId, parentProj
 }
 
 function checkSubjectForSessionJSON(newTab, projectId, subjectId, parentProjectId) {
-  var subjectExperimentListUrl = XNAT.url.rootUrl('/data/archive/projects/'+ projectId + "/subjects/" + subjectId + "/experiments?format=json");
+  const subjectExperimentListUrl = XNAT.url.rootUrl('/data/archive/projects/'+ projectId + "/subjects/" + subjectId + "/experiments?format=json");
 
   console.log(subjectExperimentListUrl);
 
-  var xhr = new XMLHttpRequest();
+  const xhr = new XMLHttpRequest();
 
   xhr.addEventListener('error', function () {
     $('body').pleaseWait('stop');
@@ -235,19 +235,19 @@ function checkSubjectForSessionJSON(newTab, projectId, subjectId, parentProjectI
   });
 
   xhr.onload = function () {
-    var experimentList = xhr.response.ResultSet.Result;
+    const experimentList = xhr.response.ResultSet.Result;
 
     console.log("on load, experimentList:");
     console.log(experimentList);
 
-    var sessionsChecked = 0;
-    var sessionsThatNeedJSON = [];
+    let sessionsChecked = 0;
+    const sessionsThatNeedJSON = [];
 
-    var xhrExists = [];
-    for (var i = 0; i < experimentList.length; i++) {
-      var experimentId = experimentList[i].ID;
-      var experimentLabel = experimentList[i].label;
-      var experimentExistsUrl = XNAT.url.rootUrl("/xapi/viewer/projects/" + projectId + "/experiments/" + experimentId + "/exists");
+    const xhrExists = [];
+    for (let i = 0; i < experimentList.length; i++) {
+      const experimentId = experimentList[i].ID;
+      const experimentLabel = experimentList[i].label;
+      const experimentExistsUrl = XNAT.url.rootUrl("/xapi/viewer/projects/" + projectId + "/experiments/" + experimentId + "/exists");
 
       xhrExists[i] = new XMLHttpRequest();
 
@@ -295,31 +295,25 @@ function checkSubjectForSessionJSON(newTab, projectId, subjectId, parentProjectI
 
 function generateJSONOpenSubjectViewer(sessionsThatNeedJSON, newTab, projectId, subjectId, parentProjectId) {
   console.log(sessionsThatNeedJSON);
-  console.log('TODO.. generate JSON and then open viewer.');
 
   if (sessionsThatNeedJSON.length === 0) {
     openSubjectView(newTab, projectId, subjectId, parentProjectId);
     return;
   }
 
-  let message = "Generating missing viewer metadata for sessions:"
-
-  for (let i = 0; i < sessionsThatNeedJSON.length; i++) {
-    message = message + " " + sessionsThatNeedJSON[i].label;
-  }
-
-  var sessionsGenerated = 0;
-
   $('body').pleaseWait('stop');
-  XNAT.dialog.message(
-      'Generating Missing Viewer Data: ' + sessionsGenerated + "/" + sessionsThatNeedJSON.length,
-      message + ". If the sessions are very large please wait a minute before attempting to open the viewer. This will only happen once."
+  const waitDialog = XNAT.dialog.static.wait(
+      "Please wait, generating viewer metadata for sessions: " + sessionsThatNeedJSON.map(s => s.label).join(", ") +
+      ". This is a one-time operation that may take a few minutes if the sessions are large. " +
+      "When it is complete, the viewer will open."
   );
 
-  var xhrGenerate = [];
-  for (var i = 0; i < sessionsThatNeedJSON.length; i++) {
-    var experimentId = sessionsThatNeedJSON[i].ID;
-    var experimentExistsUrl = rootUrlWithPort + "/xapi/viewer/projects/" + projectId + "/experiments/" + experimentId;
+  let sessionsGenerated = 0;
+  let sessionsFailed = 0;
+  const xhrGenerate = [];
+  for (let i = 0; i < sessionsThatNeedJSON.length; i++) {
+    const experimentId = sessionsThatNeedJSON[i].ID;
+    const experimentExistsUrl = XNAT.url.rootUrl("/xapi/viewer/projects/" + projectId + "/experiments/" + experimentId);
 
     xhrGenerate[i] = new XMLHttpRequest();
 
@@ -330,18 +324,17 @@ function generateJSONOpenSubjectViewer(sessionsThatNeedJSON, newTab, projectId, 
 
       if (this.status === 200) {
         sessionsGenerated++;
+      } else {
+        sessionsFailed++;
       }
 
       console.log(sessionsGenerated);
       if (sessionsGenerated === sessionsThatNeedJSON.length) {
         openSubjectView(newTab, projectId, subjectId, parentProjectId);
-      } else {
-        $('body').pleaseWait('stop');
-
-        XNAT.dialog.message(
-            'Generating Missing Viewer Data: ' + sessionsGenerated + "/" + sessionsThatNeedJSON.length,
-            message + ". If the sessions are very large please wait a minute before attempting to open the viewer. This will only happen once."
-        );
+      } else if (sessionsGenerated + sessionsFailed === sessionsThatNeedJSON.length) {
+        waitDialog.close();
+        XNAT.dialog.alert("Error", "Unable to generate viewer metadata for " + sessionsFailed +
+            " sessions. Please check the server logs for more information.")
       }
     }
 
@@ -519,4 +512,3 @@ function openViewer(params, newTab, parentProjectId) {
     window.location.href = openViewerUrl;
   }
 }
-
