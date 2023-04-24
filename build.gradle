@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        vXnat = '1.8.7-SNAPSHOT'
+        vXnat = '1.8.7'
         pluginAppName = "ICR/XNAT OHIF Viewer Plugin"
     }
     repositories {
@@ -27,7 +27,7 @@ buildscript {
 }
 
 group 'org.nrg.xnatx.plugins'
-version '3.5.0-ALPHA.1'
+version '3.5.1'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'

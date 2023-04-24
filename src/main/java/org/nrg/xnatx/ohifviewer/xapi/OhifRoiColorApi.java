@@ -73,6 +73,7 @@ import javax.naming.InvalidNameException;
  *
  * @author mo.alsad
  */
+@Deprecated
 @Api(description="OHIF Viewer ROI Color API")
 @XapiRestController
 @RequestMapping(value = "/ohifroicolor")
@@ -125,7 +126,7 @@ public class OhifRoiColorApi extends AbstractXapiRestController
 	{
 		@ApiResponse(code = 200, message = "The project was located and JSON ROI Color list returned."),
 		@ApiResponse(code = 403, message = "The user does not have permission to view the indicated project."),
-		@ApiResponse(code = 404, message = "The JSON server list was not found for the indicated project."),
+		@ApiResponse(code = 404, message = "The JSON ROI Color list was not found for the indicated project."),
 		@ApiResponse(code = 500, message = "An unexpected error occurred.")
 	})
 	@XapiRequestMapping(
@@ -148,7 +149,7 @@ public class OhifRoiColorApi extends AbstractXapiRestController
 	@ApiOperation(value = "Sets the ROI Colors JSON for the specified project.")
 	@ApiResponses(
 	{
-		@ApiResponse(code = 200, message = "The JSON ROI Color list was returned."),
+		@ApiResponse(code = 200, message = "The JSON ROI Color list was stored."),
 		@ApiResponse(code = 403, message = "The user does not have permission to access the resource."),
 		@ApiResponse(code = 422, message = "Unprocessable entity, most likely malformed JSON or URL in the JSON."),
 		@ApiResponse(code = 500, message = "An unexpected error occurred.")
