@@ -34,8 +34,8 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.data;
 
-
 import icr.etherj.JsonException;
+import icr.etherj.StringUtils;
 import icr.etherj.aim.AimUtils;
 import icr.etherj.meas.*;
 import icr.xnat.plugin.roi.entity.Roi;
@@ -55,117 +55,126 @@ import java.util.List;
  * @author mo.alsad
  */
 public class JsonMeasurementCollection extends AbstractRoiCollection
-        implements RoiCollection
+	implements RoiCollection
 {
-    private final MeasurementCollection imc;
 
+	private final MeasurementCollection imc;
 
-    public JsonMeasurementCollection(String id, byte[] rawBytes) throws PluginException
-    {
-        super(id, rawBytes);
-        setFileExtension("json");
-        setFileFormat("JSON");
-        setTypeDescription("Measurement Collection");
-        DefaultJsonParser parser = new DefaultJsonParser();
-        try
-        {
-            imc = parser.parse(new ByteArrayInputStream(rawBytes));
-            buildUidSets();
-        } catch (JsonException ex)
-        {
-            throw new PluginException(ex.getMessage(), PluginCode.JSON, ex);
-        } catch (IOException ex)
-        {
-            throw new PluginException(ex.getMessage(), PluginCode.IO, ex);
-        } catch (IllegalArgumentException ex)
-        {
-            throw new PluginException(ex.getMessage(), PluginCode.IllegalArgument, ex);
-        }
-    }
+	public JsonMeasurementCollection(String id, byte[] rawBytes) throws PluginException
+	{
+		super(id, rawBytes);
+		setFileExtension("json");
+		setFileFormat("JSON");
+		setTypeDescription("Measurement Collection");
+		DefaultJsonParser parser = new DefaultJsonParser();
+		try
+		{
+			imc = parser.parse(new ByteArrayInputStream(rawBytes));
+			buildUidSets();
+		}
+		catch (JsonException ex)
+		{
+			throw new PluginException(ex.getMessage(), PluginCode.JSON, ex);
+		}
+		catch (IOException ex)
+		{
+			throw new PluginException(ex.getMessage(), PluginCode.IO, ex);
+		}
+		catch (IllegalArgumentException ex)
+		{
+			throw new PluginException(ex.getMessage(), PluginCode.IllegalArgument, ex);
+		}
+	}
 
-    /**
-     * @return
-     */
-    @Override
-    public String getDate()
-    {
-        Date dt = AimUtils.parseDateTime(imc.getCreated());
-        DateFormat format = new SimpleDateFormat("yyyyMMdd");
-        return format.format(dt);
-    }
+	/**
+	 * @return
+	 */
+	@Override
+	public String getDate()
+	{
+		Date dt = AimUtils.parseDateTime(imc.getCreated());
+		DateFormat format = new SimpleDateFormat("yyyyMMdd");
+		return format.format(dt);
+	}
 
-    public MeasurementCollection getMeasurementCollection()
-    {
-        return imc;
-    }
+	public MeasurementCollection getMeasurementCollection()
+	{
+		return imc;
+	}
 
-    /**
-     * @return
-     */
-    @Override
-    public String getName()
-    {
-        return imc.getName();
-    }
+	/**
+	 * @return
+	 */
+	@Override
+	public String getName()
+	{
+		String name = imc.getName();
+		if (StringUtils.isNullOrEmpty(name))
+		{
+			return "MEAS";
+		}
+		name = name.trim();
+		return StringUtils.isNullOrEmpty(name) ? "MEAS" : name;
+	}
 
-    /**
-     * @return
-     */
-    @Override
-    public List<Roi> getRoiList()
-    {
-        List<Roi> roiList = new ArrayList<>();
-        List<ImageMeasurement> imList = imc.getImageMeasurementList();
-        for (ImageMeasurement im : imList)
-        {
-            Roi roi = new Roi();
-            roi.setUid(im.getUuid());
-            roi.setName(im.getName());
-            roi.setGeometricType(im.getToolType());
-            roi.setRoiCollectionId(getId());
-            roiList.add(roi);
-        }
-        return roiList;
-    }
+	/**
+	 * @return
+	 */
+	@Override
+	public List<Roi> getRoiList()
+	{
+		List<Roi> roiList = new ArrayList<>();
+		List<ImageMeasurement> imList = imc.getImageMeasurementList();
+		for (ImageMeasurement im : imList)
+		{
+			Roi roi = new Roi();
+			roi.setUid(im.getUuid());
+			roi.setName(im.getName());
+			roi.setGeometricType(im.getToolType());
+			roi.setRoiCollectionId(getId());
+			roiList.add(roi);
+		}
+		return roiList;
+	}
 
-    /**
-     * @return
-     */
-    @Override
-    public String getTime()
-    {
-        Date dt = AimUtils.parseDateTime(imc.getCreated());
-        DateFormat format = new SimpleDateFormat("HHmmss");
-        return format.format(dt);
-    }
+	/**
+	 * @return
+	 */
+	@Override
+	public String getTime()
+	{
+		Date dt = AimUtils.parseDateTime(imc.getCreated());
+		DateFormat format = new SimpleDateFormat("HHmmss");
+		return format.format(dt);
+	}
 
-    /**
-     * @return
-     */
-    @Override
-    public String getType()
-    {
-        return Constants.Measurement;
-    }
+	/**
+	 * @return
+	 */
+	@Override
+	public String getType()
+	{
+		return Constants.Measurement;
+	}
 
-    /**
-     * @return
-     */
-    @Override
-    public String getUid()
-    {
-        return imc.getUuid();
-    }
+	/**
+	 * @return
+	 */
+	@Override
+	public String getUid()
+	{
+		return imc.getUuid();
+	}
 
-    private void buildUidSets()
-    {
-        CollectionImageReference cir = imc.getImageReference();
-        addSeriesUid(cir.getSeriesInstanceUID());
-        addStudyUid(cir.getStudyInstanceUID());
-        List<ImageReference> ic = cir.getImageCollection();
-        for (ImageReference ir : ic)
-        {
-            addSopInstanceUid(ir.getSOPInstanceUID());
-        }
-    }
+	private void buildUidSets()
+	{
+		CollectionImageReference cir = imc.getImageReference();
+		addSeriesUid(cir.getSeriesInstanceUID());
+		addStudyUid(cir.getStudyInstanceUID());
+		List<ImageReference> ic = cir.getImageCollection();
+		for (ImageReference ir : ic)
+		{
+			addSopInstanceUid(ir.getSOPInstanceUID());
+		}
+	}
 }

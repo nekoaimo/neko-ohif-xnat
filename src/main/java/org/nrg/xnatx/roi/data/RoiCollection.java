@@ -78,7 +78,7 @@ public interface RoiCollection
 	public String getLabel();
 
 	/**
-	 *
+	 * Returns the name of the collection, must not return null or empty.
 	 * @return
 	 */
 	public String getName();

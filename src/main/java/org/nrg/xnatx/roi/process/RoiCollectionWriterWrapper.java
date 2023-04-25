@@ -34,6 +34,7 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.process;
 
+import icr.etherj.StringUtils;
 import org.nrg.xnatx.roi.data.RoiCollection;
 import java.io.File;
 import java.io.IOException;
@@ -73,7 +74,16 @@ public class RoiCollectionWriterWrapper implements FileWriterWrapperI
 	@Override
 	public String getName()
 	{
-		return roiCollection.getName();
+		// Must not return null or empty. Used to name file. ROI collection uses SeriesDescription as default but this
+		// is type 3 and may not exist.
+		String name = roiCollection.getName();
+		if (StringUtils.isNullOrEmpty(name))
+		{
+			return "ROI";
+		}
+		// Remove any characters that are not legal for filenames and spaces. Spaces in filenames are bad
+		name = name.replaceAll("[\\\\/:*?\"<>| ]", "");
+		return name.isEmpty() ? "ROI" : name;
 	}
 
 	@Override

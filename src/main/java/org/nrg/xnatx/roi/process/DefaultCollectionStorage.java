@@ -299,10 +299,7 @@ public class DefaultCollectionStorage extends BaseCollectionProcessor
 	{
 		List<Roi> rois = roiCollection.getRoiList();
 		logger.debug("Creating {} ROIs", rois.size());
-		for (Roi roi : rois)
-		{
-			roiService.create(roi);
-		}
+		rois.forEach((roi) -> roiService.create(roi));
 		roisCreated = true;
 	}
 

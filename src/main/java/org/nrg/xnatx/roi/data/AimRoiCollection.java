@@ -34,6 +34,7 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.data;
 
+import icr.etherj.StringUtils;
 import icr.etherj.XmlException;
 import icr.etherj.aim.AimToolkit;
 import icr.etherj.aim.AimUtils;
@@ -47,7 +48,6 @@ import icr.etherj.aim.ImageStudy;
 import icr.etherj.aim.XmlParser;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
-import org.nrg.xnatx.roi.Constants;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -110,7 +110,13 @@ public class AimRoiCollection extends AbstractRoiCollection
 	@Override
 	public String getName()
 	{
-		return iac.getDescription();
+		String name = iac.getDescription();
+		if (StringUtils.isNullOrEmpty(name))
+		{
+			return "AIM";
+		}
+		name = name.trim();
+		return StringUtils.isNullOrEmpty(name) ? "AIM" : name;
 	}
 
 	@Override
