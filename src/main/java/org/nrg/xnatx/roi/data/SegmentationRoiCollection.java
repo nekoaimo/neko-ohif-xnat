@@ -34,6 +34,7 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.data;
 
+import icr.etherj.StringUtils;
 import icr.etherj.dicom.DicomUtils;
 import icr.etherj.dicom.iod.DerivationImage;
 import icr.etherj.dicom.iod.FunctionalGroupsFrame;
@@ -105,7 +106,13 @@ public class SegmentationRoiCollection extends AbstractRoiCollection
 	@Override
 	public String getName()
 	{
-		return seg.getSegmentationSeriesModule().getSeriesDescription();
+		String name = seg.getSegmentationSeriesModule().getSeriesDescription();
+		if (StringUtils.isNullOrEmpty(name))
+		{
+			return "SEG";
+		}
+		name = name.trim();
+		return StringUtils.isNullOrEmpty(name) ? "SEG" : name;
 	}
 
 	@Override

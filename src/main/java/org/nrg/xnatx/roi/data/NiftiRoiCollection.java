@@ -41,7 +41,6 @@ import icr.etherj.nifti.NiftiReader;
 import icr.etherj.nifti.NiftiToolkit;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
-import org.nrg.xnatx.roi.Constants;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -96,7 +95,13 @@ public class NiftiRoiCollection extends AbstractRoiCollection
 	@Override
 	public String getName()
 	{
-		return nifti.getHeader().getDescription();
+		String name = nifti.getHeader().getDescription();
+		if (StringUtils.isNullOrEmpty(name))
+		{
+			return "NIFTI";
+		}
+		name = name.trim();
+		return StringUtils.isNullOrEmpty(name) ? "NIFTI" : name;
 	}
 
 	@Override

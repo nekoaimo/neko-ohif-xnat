@@ -34,6 +34,7 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.data;
 
+import icr.etherj.StringUtils;
 import icr.etherj.dicom.DicomUtils;
 import icr.etherj.dicom.iod.Contour;
 import icr.etherj.dicom.iod.IodUtils;
@@ -123,7 +124,13 @@ public class RtStructRoiCollection extends AbstractRoiCollection
 	@Override
 	public String getName()
 	{
-		return rtStruct.getStructureSetModule().getStructureSetLabel();
+		String name = rtStruct.getStructureSetModule().getStructureSetLabel();
+		if (StringUtils.isNullOrEmpty(name))
+		{
+			return "RTSS";
+		}
+		name = name.trim();
+		return StringUtils.isNullOrEmpty(name) ? "RTSS" : name;
 	}
 
 	@Override

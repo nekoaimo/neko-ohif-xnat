@@ -1,3 +1,7 @@
+**3.5.2**
+
+- Ensure ROICollections return a non-null, non-empty string to use as a filename. Fixes issue 44.
+
 **3.5.1**
 
 - Added Viewer Config API (/viewerConfig). Currently, serves endpoints only to GET and PUT ROI Presets.
