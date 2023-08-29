@@ -27,7 +27,7 @@ buildscript {
 }
 
 group 'org.nrg.xnatx.plugins'
-version '3.6.0-RC-1'
+version '3.7.0-SNAPSHOT'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
@@ -111,7 +111,7 @@ repositories {
     mavenCentral()
     jcenter()
     maven {
-        url 'http://dcm4che.org/maven2'
+        url 'https://www.dcm4che.org/maven2'
         name 'dcm4che Maven Repository'
     }
     maven {
@@ -178,6 +178,14 @@ dependencies {
     implementation("log4j:log4j") { transitive = false }
     implementation("dcm4che:dcm4che-core") { transitive = false }
     implementation("com.google.code.gson:gson") { transitive = false }
+
+    // dcm4che3
+    implementAndInclude("org.dcm4che:dcm4che-core:5.30.0")
+    implementAndInclude("org.dcm4che:dcm4che-json:5.30.0")
+    implementAndInclude("org.dcm4che:dcm4che-image:5.30.0")
+    implementAndInclude("org.dcm4che:dcm4che-imageio:5.30.0")
+//    implementAndInclude("org.dcm4che:dcm4che-imageio-opencv:5.30.0")
+//    implementAndInclude("org.dcm4che:dcm4che-imageio-rle:5.30.0")
 
     // Guava
     implementation("com.google.guava:guava") { transitive = false }

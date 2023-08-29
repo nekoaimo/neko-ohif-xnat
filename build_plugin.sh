@@ -16,21 +16,21 @@ VIEWER_TARGET=${PLUGIN_ROOT}/src/main/resources/META-INF/resources/VIEWER
 echo "OHIF Viewer XNAT plugin build: ${PLUGIN_ROOT}"
 echo "Using build args: ${BUILD_ARGS}"
 
-cd "${PLUGIN_ROOT}"
-echo "Cleaning: ${VIEWER_TARGET}"
-rm -rf "${VIEWER_TARGET}/"*
-mkdir -p "${VIEWER_TARGET}"
-
-cd "${VIEWER_ROOT}"
-echo "Building OHIF Viewer: "`pwd`
-yarn config set workspaces-experimental true
-yarn install --check-files
-yarn run build:xnat
-if [ $? -ne 0 ]; then
-	exit
-fi
-cd "${VIEWER_DIST}"
-cp -rf * "${VIEWER_TARGET}"
+#cd "${PLUGIN_ROOT}"
+#echo "Cleaning: ${VIEWER_TARGET}"
+#rm -rf "${VIEWER_TARGET}/"*
+#mkdir -p "${VIEWER_TARGET}"
+#
+#cd "${VIEWER_ROOT}"
+#echo "Building OHIF Viewer: "`pwd`
+#yarn config set workspaces-experimental true
+#yarn install --check-files
+#yarn run build:xnat
+#if [ $? -ne 0 ]; then
+#	exit
+#fi
+#cd "${VIEWER_DIST}"
+#cp -rf * "${VIEWER_TARGET}"
 
 cd "${PLUGIN_ROOT}"
 echo "Building plugin: "`pwd`

@@ -36,6 +36,7 @@ package org.nrg.xnatx.ohifviewer.xapi;
 
 import icr.etherj.ExceptionCode;
 import org.nrg.xapi.exceptions.NotFoundException;
+import org.nrg.xnatx.dicomweb.xapi.OhifDicomwebApi;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.slf4j.Logger;
@@ -50,7 +51,8 @@ import org.springframework.web.context.request.WebRequest;
  *
  * @author jamesd
  */
-@ControllerAdvice(assignableTypes={OhifViewerApi.class,OhifAiaaApi.class})
+@ControllerAdvice(assignableTypes={
+	OhifViewerApi.class,OhifAiaaApi.class, OhifDicomwebApi.class})
 public class OhifViewerControllerAdvice
 {
 	private final static Logger logger = LoggerFactory.getLogger(
