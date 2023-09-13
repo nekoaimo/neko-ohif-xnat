@@ -66,7 +66,7 @@ import java.util.Objects;
 		@Index(columnList = "sop_cuid")
 	}
 )
-public class DwSeries extends DicomwebEntity
+public class DwSeries extends DwEntity
 {
 	private String seriesInstanceUid;
 	private Integer seriesNumber;

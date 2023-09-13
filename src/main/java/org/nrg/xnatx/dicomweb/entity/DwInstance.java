@@ -64,7 +64,7 @@ import java.util.Objects;
 		@Index(columnList = "inst_no")
 	}
 )
-public class DwInstance extends DicomwebEntity
+public class DwInstance extends DwEntity
 {
 	private String sopInstanceUid;
 	private String sopClassUid;

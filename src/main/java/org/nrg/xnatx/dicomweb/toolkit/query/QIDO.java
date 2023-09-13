@@ -45,7 +45,6 @@ import java.util.Arrays;
 /**
  * @author mo.alsad
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * @since Jul 2017
  */
 public enum QIDO
 {

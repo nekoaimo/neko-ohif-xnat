@@ -199,6 +199,5 @@ public class DicomwebInput
 		study = new DwStudy();
 		study.setData(attrs);
 		study.setSessionId(xnatIds.get(DicomwebConstants.XNAT_SESSION_ID));
-		study.setProjectId(xnatIds.get(DicomwebConstants.XNAT_PROJECT_ID));
 	}
 }

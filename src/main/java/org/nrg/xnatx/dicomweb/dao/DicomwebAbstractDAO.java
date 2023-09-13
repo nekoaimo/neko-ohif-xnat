@@ -2,6 +2,7 @@ package org.nrg.xnatx.dicomweb.dao;
 
 import org.hibernate.Criteria;
 import org.hibernate.criterion.*;
+import org.hibernate.transform.Transformers;
 import org.nrg.framework.generics.GenericUtils;
 import org.nrg.framework.orm.hibernate.AbstractHibernateDAO;
 import org.nrg.framework.orm.hibernate.BaseHibernateEntity;
@@ -14,12 +15,12 @@ public abstract class DicomwebAbstractDAO<E extends BaseHibernateEntity> extends
 	public static ProjectionList getProjectionList(final String... properties)
 	{
 		ProjectionList projectionList = Projections.projectionList();
-		projectionList.add(Projections.property("id"));
-		projectionList.add(Projections.property("revision"));
+		projectionList.add(Projections.property("id"), "id");
+		projectionList.add(Projections.property("revision"), "revision");
 
 		for (String prop : properties)
 		{
-			projectionList.add(Projections.property(prop));
+			projectionList.add(Projections.property(prop), prop);
 		}
 
 		return projectionList;
@@ -64,7 +65,9 @@ public abstract class DicomwebAbstractDAO<E extends BaseHibernateEntity> extends
 		if (projectionList != null)
 		{
 			// ToDo: Projection is inactive; fix criteria returns empty result
-			// criteria.setProjection(projectionList);
+			criteria.setProjection(projectionList);
+			criteria.setResultTransformer(
+				Transformers.aliasToBean(exampleInstance.getClass()));
 		}
 
 		// Add Order by

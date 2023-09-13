@@ -3,15 +3,14 @@ package org.nrg.xnatx.dicomweb.service.qido;
 import org.dcm4che3.data.*;
 import org.nrg.xnatx.dicomweb.toolkit.QueryRetrieveLevel2;
 
-public enum QidoModel
+public enum QidoRsModel
 {
 	PATIENT(QueryRetrieveLevel2.PATIENT,
 		UID.PatientRootQueryRetrieveInformationModelFind)
 		{
 			@Override
 			public void addRetrieveURL(String requestURL, Attributes match)
-			{
-			}
+			{}
 		},
 	STUDY(QueryRetrieveLevel2.STUDY,
 		UID.StudyRootQueryRetrieveInformationModelFind)
@@ -48,14 +47,15 @@ public enum QidoModel
 		};
 
 	final QueryRetrieveLevel2 qrLevel;
-	final String sopClassUID;
+	// For attributes coercion - left to be implemented in the future
+	final String sopClassUid;
 	Attributes returnKeys;
 	boolean includeAll;
 
-	QidoModel(QueryRetrieveLevel2 qrLevel, String sopClassUID)
+	QidoRsModel(QueryRetrieveLevel2 qrLevel, String sopClassUid)
 	{
 		this.qrLevel = qrLevel;
-		this.sopClassUID = sopClassUID;
+		this.sopClassUid = sopClassUid;
 	}
 
 	void addRetrieveURL(String requestURL, Attributes match)
@@ -69,9 +69,9 @@ public enum QidoModel
 		return qrLevel;
 	}
 
-	String getSOPClassUID()
+	String getSOPClassUid()
 	{
-		return sopClassUID;
+		return sopClassUid;
 	}
 
 	StringBuffer retrieveURL(String requestURL, Attributes match)

@@ -45,7 +45,6 @@ import java.util.Map;
 /**
  * @author mo.alsad
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * @since Jun 2017
  */
 public class AttributeSet implements Comparable<AttributeSet> {
 

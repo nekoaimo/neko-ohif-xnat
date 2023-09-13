@@ -4,8 +4,8 @@ import org.nrg.xnatx.dicomweb.entity.DwInstance;
 import org.nrg.xnatx.dicomweb.entity.DwPatient;
 import org.nrg.xnatx.dicomweb.entity.DwSeries;
 import org.nrg.xnatx.dicomweb.entity.DwStudy;
-import org.nrg.xnatx.dicomweb.entity.util.EntityProperties;
 import org.nrg.xnatx.dicomweb.service.hibernate.*;
+import org.nrg.xnatx.dicomweb.service.qido.QidoRsContext;
 import org.nrg.xnatx.dicomweb.toolkit.DicomwebInput;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -174,5 +174,34 @@ public class DicomwebDataServiceImpl implements DicomwebDataService
 	public DwStudy getStudyBySessionId(String sessionId, boolean isEager)
 	{
 		return studyDataService.get("sessionId", sessionId, isEager);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public void runQidoQuery(QidoRsContext ctx)
+	{
+		QidoQuery qidoQuery = getQidoQuery(ctx);
+
+
+	}
+
+	private QidoQuery getQidoQuery(QidoRsContext ctx)
+	{
+		QidoQuery qidoQuery;
+
+		switch (ctx.getQueryRetrieveLevel()) {
+			case PATIENT:
+				qidoQuery = QidoQuery.PATIENT;
+			case STUDY:
+				qidoQuery = QidoQuery.STUDY;
+			case SERIES:
+				qidoQuery = QidoQuery.SERIES;
+			default: // case IMAGE
+				qidoQuery = QidoQuery.INSTANCE;
+		}
+
+		qidoQuery.ctx = ctx;
+
+		return qidoQuery;
 	}
 }

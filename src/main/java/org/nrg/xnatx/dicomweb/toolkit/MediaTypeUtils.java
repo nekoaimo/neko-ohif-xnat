@@ -17,7 +17,7 @@
  *
  * The Initial Developer of the Original Code is
  * J4Care.
- * Portions created by the Initial Developer are Copyright (C) 2015-2018
+ * Portions created by the Initial Developer are Copyright (C) 2015-2019
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -39,36 +39,60 @@
  *
  */
 
-package org.nrg.xnatx.dicomweb.toolkit.query;
+package org.nrg.xnatx.dicomweb.toolkit;
 
-import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+
+import org.springframework.http.MediaType;
+
+import java.util.*;
 
 /**
  * @author mo.alsad
- * @author Gunter Zeilinger <gunterze@gmail.com>
+ * @author Gunter Zeilinger (gunterze@protonmail.com)
  */
-public class OrderByTag
+public class MediaTypeUtils
 {
-    public final int tag;
-    private final boolean asc;
+	public static List<MediaType> acceptableMediaTypesOf(
+		List<String> acceptHeaders, List<String> acceptQueryParam)
+	{
+		if (acceptQueryParam == null || acceptQueryParam.isEmpty())
+		{
+			return getAcceptableMediaTypes(acceptHeaders);
+		}
+		return getAcceptableMediaTypes(acceptQueryParam);
+	}
 
-    private OrderByTag(int tag, boolean asc) {
-        this.tag = tag;
-        this.asc = asc;
-    }
+	public static String selectTransferSyntax(Collection<String> acceptable,
+		String tsuid)
+	{
+		return acceptable.isEmpty() || acceptable.contains(tsuid)
+						 ? tsuid
+						 : acceptable.contains(UID.ExplicitVRLittleEndian)
+								 ? UID.ExplicitVRLittleEndian
+								 : UID.ImplicitVRLittleEndian;
+	}
 
-    public static OrderByTag asc(int tag) {
-        return new OrderByTag(tag, true);
-    }
-
-    public static OrderByTag desc(int tag) {
-        return new OrderByTag(tag, false);
-    }
-
-    public static OrderByTag valueOf(Attributes attrs) {
-        return "DECREASING".equals(attrs.getString(Tag.SortingDirection))
-                ? desc(attrs.getInt(Tag.SelectorAttribute, -1))
-                : asc(attrs.getInt(Tag.SelectorAttribute, -1));
-    }
+	private static List<MediaType> getAcceptableMediaTypes(List<String> accepts)
+	{
+		if (accepts == null || accepts.isEmpty())
+		{
+			return Collections.singletonList(MediaType.ALL);
+		}
+		else
+		{
+			List<MediaType> list = new ArrayList<MediaType>();
+			for (String v : accepts)
+			{
+				StringTokenizer tokenizer = new StringTokenizer(v, ",");
+				while (tokenizer.hasMoreElements())
+				{
+					String item = tokenizer.nextToken().trim();
+					list.add(MediaType.valueOf(item));
+				}
+			}
+			MediaType.sortByQualityValue(list);
+			return Collections.unmodifiableList(list);
+		}
+	}
 }

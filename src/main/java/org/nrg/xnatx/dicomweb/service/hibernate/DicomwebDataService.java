@@ -1,14 +1,13 @@
 package org.nrg.xnatx.dicomweb.service.hibernate;
 
-import org.nrg.xnatx.dicomweb.entity.DwInstance;
 import org.nrg.xnatx.dicomweb.entity.DwPatient;
 import org.nrg.xnatx.dicomweb.entity.DwSeries;
 import org.nrg.xnatx.dicomweb.entity.DwStudy;
+import org.nrg.xnatx.dicomweb.service.qido.QidoRsContext;
 import org.nrg.xnatx.dicomweb.toolkit.DicomwebInput;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 public interface DicomwebDataService
 {
@@ -29,6 +28,8 @@ public interface DicomwebDataService
 	DwPatient getPatientBySubjectId(String subjectId, boolean isEager);
 
 	DwStudy getStudyBySessionId(String sessionId, boolean isEager);
+
+	void runQidoQuery(QidoRsContext ctx);
 
 	/*
 	////////////////////

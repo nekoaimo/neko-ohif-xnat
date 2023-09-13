@@ -47,59 +47,68 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.VR;
 
 /**
+ * @author mo.alsad
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * @since May 2016
  */
 public class AttributesBuilder
 {
 
-    private static final ElementDictionary DICT = ElementDictionary.getStandardElementDictionary();
+	private static final ElementDictionary DICT = ElementDictionary.getStandardElementDictionary();
 
-    private final Attributes attrs;
+	private final Attributes attrs;
 
-    public AttributesBuilder(Attributes attrs) {
-        this.attrs = attrs;
-    }
+	public AttributesBuilder(Attributes attrs)
+	{
+		this.attrs = attrs;
+	}
 
-    public void setString(int[] tagPath, String... ss) {
-        int tag = tagPath[tagPath.length-1];
-        VR vr = DICT.vrOf(tag);
-        nestedKeys(tagPath).setString(tag, vr, ss);
-    }
+	public void setString(int[] tagPath, String... ss)
+	{
+		int tag = tagPath[tagPath.length - 1];
+		VR vr = DICT.vrOf(tag);
+		nestedKeys(tagPath).setString(tag, vr, ss);
+	}
 
-    public void setNullIfAbsent(int... tagPath) {
-        int tag = tagPath[tagPath.length-1];
-        Attributes item = nestedKeys(tagPath);
-        setNullIfAbsent(item, tag);
-    }
+	public void setNullIfAbsent(int... tagPath)
+	{
+		int tag = tagPath[tagPath.length - 1];
+		Attributes item = nestedKeys(tagPath);
+		setNullIfAbsent(item, tag);
+	}
 
-    public static void setNullIfAbsent(Attributes item, int... tags) {
-        for (int tag : tags) {
-            setNullIfAbsent(item, tag);
-        }
-    }
+	public static void setNullIfAbsent(Attributes item, int... tags)
+	{
+		for (int tag : tags)
+		{
+			setNullIfAbsent(item, tag);
+		}
+	}
 
-    public static void setNullIfAbsent(Attributes item, int tag) {
-        if (!item.contains(tag)) {
-            VR vr = DICT.vrOf(tag);
-            if (vr == VR.SQ)
-                item.newSequence(tag, 1).add(new Attributes(0));
-            else
-                item.setNull(tag, vr);
-        }
-    }
+	public static void setNullIfAbsent(Attributes item, int tag)
+	{
+		if (!item.contains(tag))
+		{
+			VR vr = DICT.vrOf(tag);
+			if (vr == VR.SQ)
+				item.newSequence(tag, 1).add(new Attributes(0));
+			else
+				item.setNull(tag, vr);
+		}
+	}
 
-    private Attributes nestedKeys(int[] tags) {
-        Attributes item = attrs;
-        for (int i = 0; i < tags.length-1; i++) {
-            int tag = tags[i];
-            Sequence sq = item.getSequence(tag);
-            if (sq == null)
-                sq = item.newSequence(tag, 1);
-            if (sq.isEmpty())
-                sq.add(new Attributes());
-            item = sq.get(0);
-        }
-        return item;
-    }
+	private Attributes nestedKeys(int[] tags)
+	{
+		Attributes item = attrs;
+		for (int i = 0; i < tags.length - 1; i++)
+		{
+			int tag = tags[i];
+			Sequence sq = item.getSequence(tag);
+			if (sq == null)
+				sq = item.newSequence(tag, 1);
+			if (sq.isEmpty())
+				sq.add(new Attributes());
+			item = sq.get(0);
+		}
+		return item;
+	}
 }

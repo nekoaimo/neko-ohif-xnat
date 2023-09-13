@@ -57,7 +57,6 @@ import java.nio.file.Path;
 /**
  * @author mo.alsad
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * @since Apr 2016
  */
 @Slf4j
 public class CompressedFramesOutput implements StreamingResponseBody, Closeable

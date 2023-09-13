@@ -64,7 +64,6 @@ import java.nio.file.Path;
 /**
  * @author mo.alsad
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * @since Apr 2016
  */
 @Slf4j
 class DecompressSupport implements Closeable {

@@ -9,7 +9,7 @@ import javax.persistence.*;
 import java.io.IOException;
 
 @MappedSuperclass
-public abstract class DicomwebEntity extends AbstractHibernateEntity
+public abstract class DwEntity extends AbstractHibernateEntity
 {
 	private byte[] encodedAttributes;
 	private String revision;
@@ -67,6 +67,8 @@ public abstract class DicomwebEntity extends AbstractHibernateEntity
 	}
 
 	public abstract void setData(Attributes attrs) throws IOException;
+
+//	public abstract Attributes toAttributes() throws IOException;
 
 	@Basic(optional = false)
 	@Column(name = "attrs")

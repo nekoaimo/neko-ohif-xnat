@@ -62,7 +62,7 @@ import java.util.Objects;
 		@Index(columnList = "num_studies")
 	}
 )
-public class DwPatient extends DicomwebEntity
+public class DwPatient extends DwEntity
 {
 	private String subjectId;
 	private String patientId;

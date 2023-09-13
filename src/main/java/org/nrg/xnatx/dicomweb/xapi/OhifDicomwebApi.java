@@ -47,8 +47,9 @@ import org.nrg.xdat.security.services.RoleHolder;
 import org.nrg.xdat.security.services.UserManagementServiceI;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnatx.dicomweb.service.inputcreator.DicomwebInputHandler;
+import org.nrg.xnatx.dicomweb.service.qido.QidoRsModel;
 import org.nrg.xnatx.dicomweb.service.qido.QidoRsService;
-import org.nrg.xnatx.dicomweb.toolkit.MediaTypes;
+import org.nrg.xnatx.dicomweb.toolkit.query.QIDO;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.plugin.PluginUtils;
@@ -57,12 +58,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -77,19 +76,25 @@ import java.util.concurrent.locks.ReentrantLock;
 public class OhifDicomwebApi extends AbstractXapiRestController
 {
 	private final Lock genAllDwDataLock = new ReentrantLock();
-	private final DicomwebInputHandler dwHandler;
+	private final DicomwebInputHandler dwInputHandler;
 	private final QidoRsService qidoRsService;
 
 	@Autowired
-	public OhifDicomwebApi(final DicomwebInputHandler dwHandler,
+	public OhifDicomwebApi(final DicomwebInputHandler dwInputHandler,
 		final UserManagementServiceI userManagementService,
 		final RoleHolder roleHolder, final QidoRsService qidoRsService)
 	{
 		super(userManagementService, roleHolder);
-		this.dwHandler = dwHandler;
+		this.dwInputHandler = dwInputHandler;
 		this.qidoRsService = qidoRsService;
 		log.info("Viewer DICOMweb XAPI initialised");
 	}
+
+	/*
+	############################################################
+		DICOMweb data generation
+	############################################################
+	*/
 
 	@ApiOperation(value = "Generates DICOMweb data for the specified experiment ID.")
 	@ApiResponses(
@@ -113,7 +118,7 @@ public class OhifDicomwebApi extends AbstractXapiRestController
 			experimentId, Security.Edit, Security.Read);
 
 		log.info("Session " + experimentId + " DICOMweb data creation requested");
-		dwHandler.createDicomwebData(sessionData, user);
+		dwInputHandler.createDicomwebData(sessionData, user);
 		log.info("Session " + experimentId + " DICOMweb data creation complete");
 
 		return new ResponseEntity<>(HttpStatus.OK);
@@ -126,21 +131,10 @@ public class OhifDicomwebApi extends AbstractXapiRestController
 	*/
 
 	@ApiOperation(value = "QIDO-RS Search for studies.")
-	@ApiResponses(
-		{
-			@ApiResponse(code = 200, message = "Search completed successfully."),
-			@ApiResponse(code = 204, message = "Search completed successfully, but there were no results."),
-			@ApiResponse(code = 400, message = "There was a problem with the request."),
-			@ApiResponse(code = 403, message = "The user does not have permission to post to the indicated experiment."),
-			@ApiResponse(code = 500, message = "An unexpected error occurred.")
-		})
-	@XapiRequestMapping(
-		value = "projects/{projectId}/experiments/{experimentId}/rs/studies",
-		produces = MediaTypes.APPLICATION_DICOM_JSON,
-		method = RequestMethod.GET,
-		restrictTo = AccessLevel.Read
-	)
+	@QidoApiResponses
+	@QidoRequestMapping(value = "projects/{projectId}/experiments/{experimentId}/rs/studies")
 	public ResponseEntity<StreamingResponseBody> searchForStudies(
+		final HttpServletRequest request,
 		final @ApiParam(value = "Project ID") @PathVariable("projectId") @Project String projectId,
 		final @ApiParam(value = "Experiment ID") @PathVariable("experimentId") @Experiment String experimentId,
 		final @ApiParam(value = "Query Parameters") @RequestParam(value = "queryParams", required = false) MultiValueMap<String,String> queryParams)
@@ -150,11 +144,13 @@ public class OhifDicomwebApi extends AbstractXapiRestController
 		XnatImagesessiondata sessionData = checkPermissions(user, projectId,
 			experimentId, Security.Read);
 
-		return search();
+		return qidoRsService.search(sessionData, request, queryParams,
+			QidoRsModel.STUDY, null,
+			null, QIDO.STUDY);
 	}
 
 	private XnatImagesessiondata checkPermissions(UserI user, String projectId,
-		String experimentId, String ...permissions) throws PluginException
+		String experimentId, String... permissions) throws PluginException
 	{
 		Security.checkProject(user, projectId);
 		Security.checkSession(user, experimentId);
@@ -172,13 +168,6 @@ public class OhifDicomwebApi extends AbstractXapiRestController
 				PluginCode.HttpNotFound);
 		}
 
-		// ToDo: If shared project Id was provided, use the owner projectId
-
 		return sessionData;
-	}
-
-	private ResponseEntity<StreamingResponseBody> search()
-	{
-		return null;
 	}
 }

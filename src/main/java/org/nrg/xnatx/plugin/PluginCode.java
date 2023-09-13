@@ -67,6 +67,8 @@ public final class PluginCode extends AbstractExceptionCode
 		"HTTP 404 not found", "03404");
 	public static final PluginCode HttpMethodNotAllowed = new PluginCode(
 		"HTTP 405 method not allowed", "03405");
+	public static final PluginCode HttpMethodNotAcceptable = new PluginCode(
+		"HTTP 406 method not Acceptable", "03406");
 	public static final PluginCode HttpConflict = new PluginCode(
 		"HTTP 409 conflict", "03409");
 	public static final PluginCode HttpUnprocessableEntity = new PluginCode(

@@ -11,6 +11,7 @@ import org.nrg.xnatx.dicomweb.service.hibernate.DicomwebDataService;
 import org.nrg.xnatx.dicomweb.toolkit.DicomwebEntityValidator;
 import org.nrg.xnatx.dicomweb.toolkit.DicomwebConstants;
 import org.nrg.xnatx.dicomweb.toolkit.DicomwebInput;
+import org.nrg.xnatx.dicomweb.toolkit.DicomwebUtils;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.plugin.PluginUtils;
@@ -77,10 +78,7 @@ public class DicomwebInputHandler
 			return;
 		}
 
-		Map<String,String> xnatIds = new HashMap<>();
-		xnatIds.put(DicomwebConstants.XNAT_PROJECT_ID, sessionData.getProject());
-		xnatIds.put(DicomwebConstants.XNAT_SUBJECT_ID, sessionData.getSubjectId());
-		xnatIds.put(DicomwebConstants.XNAT_SESSION_ID, sessionId);
+		Map<String,String> xnatIds = DicomwebUtils.getXnatIds(sessionData);
 
 		DicomwebInputCreator dwiCreator = new DicomwebInputCreator(sessionData,
 			xnatIds);
@@ -95,15 +93,5 @@ public class DicomwebInputHandler
 			throw new PluginException(
 				"Unable to create DICOMweb data for session " + sessionId, e);
 		}
-	}
-
-	private void postCreateDicomData()
-	{
-		// Process relations
-	}
-
-	private <T> void updateEntityQueryAttributes(T entity)
-	{
-		boolean pa = entity.getClass() == DwPatient.class;
 	}
 }

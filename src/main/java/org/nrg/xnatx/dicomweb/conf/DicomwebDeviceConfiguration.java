@@ -3,6 +3,7 @@ package org.nrg.xnatx.dicomweb.conf;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.io.BasicBulkDataDescriptor;
 import org.dcm4che3.io.BulkDataDescriptor;
+import org.dcm4che3.util.StringUtils;
 
 import java.util.*;
 
@@ -11,7 +12,9 @@ public class DicomwebDeviceConfiguration
 	public static final String BULK_DATA_DESCRIPTOR_ID = "default";
 	public static final String BULK_DATA_LENGTH_THRESHOLD = "DS,FD,FL,IS,LT,OB,OD,OF,OL,OW,UC,UN,UR,UT=1024";
 	public static final String DICOMWEB_DATA_REVISION = "1";
+	// ToDo - Note: QIDO_MAX_NUMBER_OF_RESULTS and QUERY_FETCH_SIZE are not used
 	public static final int QIDO_MAX_NUMBER_OF_RESULTS = 100;
+	public static final int QUERY_FETCH_SIZE = 100;
 
 	private static final EnumMap<Entity,AttributeFilter> attributeFilters = new EnumMap<>(
 		Entity.class);
@@ -44,6 +47,12 @@ public class DicomwebDeviceConfiguration
 		}
 
 		return filter;
+	}
+
+	public static Map<String,AttributeSet> getAttributeSet(AttributeSet.Type type)
+	{
+		return StringUtils.maskNull(attributeSets.get(type),
+			Collections.emptyMap());
 	}
 
 	public static BulkDataDescriptor getBulkDataDescriptor()

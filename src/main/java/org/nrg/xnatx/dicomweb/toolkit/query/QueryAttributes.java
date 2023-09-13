@@ -47,6 +47,7 @@ import org.dcm4che3.util.TagUtils;
 
 import org.nrg.xnatx.dicomweb.conf.AttributesBuilder;
 import org.nrg.xnatx.dicomweb.conf.AttributeSet;
+import org.nrg.xnatx.dicomweb.conf.privateelements.PrivateTag;
 
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -62,143 +63,190 @@ import java.util.Map;
  * @author mo.alsad
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Vrinda Nayak <vrinda.nayak@j4care.com>
- * @since May 2017
  */
-public class QueryAttributes {
-    private static final ElementDictionary DICT = ElementDictionary.getStandardElementDictionary();
+public class QueryAttributes
+{
+	private static final ElementDictionary DICT = ElementDictionary.getStandardElementDictionary();
 
-    private final Attributes keys = new Attributes();
-    private final AttributesBuilder builder = new AttributesBuilder(keys);
-    private boolean includeAll;
+	private final Attributes keys = new Attributes();
+	private final AttributesBuilder builder = new AttributesBuilder(keys);
+	private final ArrayList<OrderByTag> orderByTags = new ArrayList<>();
+	private boolean includeAll;
 
-    private final ArrayList<OrderByTag> orderByTags = new ArrayList<>();
+	public QueryAttributes(MultiValueMap<String,String> queryParameters,
+		Map<String,AttributeSet> attributeSetMap)
+	{
+		parseQueryParameters(splitAndDecode(queryParameters), attributeSetMap);
+	}
 
-    public QueryAttributes(MultiValueMap<String,String> queryParameters, Map<String, AttributeSet> attributeSetMap) {
-        parseQueryParameters(splitAndDecode(queryParameters), attributeSetMap);
-    }
+	private static String decodeURL(String s)
+	{
+		try
+		{
+			return URLDecoder.decode(s, StandardCharsets.UTF_8.name());
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			throw new AssertionError(e);
+		}
+	}
 
-    private static MultiValueMap<String, String> splitAndDecode(MultiValueMap<String, String> queryParameters) {
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        for (Map.Entry<String, List<String>> entry : queryParameters.entrySet())
-            for (String values : entry.getValue())
-                for (String value : StringUtils.split(values, ','))
-                    map.add(entry.getKey(), decodeURL(value));
-        return map;
-    }
+	private static MultiValueMap<String,String> splitAndDecode(
+		MultiValueMap<String,String> queryParameters)
+	{
+		MultiValueMap<String,String> map = new LinkedMultiValueMap<>();
+		for (Map.Entry<String,List<String>> entry : queryParameters.entrySet())
+			for (String values : entry.getValue())
+				for (String value : StringUtils.split(values, ','))
+					map.add(entry.getKey(), decodeURL(value));
+		return map;
+	}
 
-    private static String decodeURL(String s) {
-        try {
-            return URLDecoder.decode(s, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new AssertionError(e);
-        }
-    }
+	public void addReturnTags(int... tags)
+	{
+		for (int tag : tags)
+			builder.setNullIfAbsent(tag);
+	}
 
-    private void parseQueryParameters(MultiValueMap<String, String> map, Map<String, AttributeSet> attributeSetMap) {
-        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
-            String key = entry.getKey();
-            switch (key) {
-                case "includefield":
-                    addIncludeTag(entry.getValue(), attributeSetMap);
-                    break;
-                case "orderby":
-                    addOrderByTag(entry.getValue());
-                    break;
-                case "accept":
-                case "charset":
-                case "count":
-                case "different":
-                case "missing":
-                case "offset":
-                case "limit":
-                case "fuzzymatching":
-                    break;
-                default:
-                    addQueryKey(key, entry.getValue());
-                    break;
-            }
-        }
-    }
+	public ArrayList<OrderByTag> getOrderByTags()
+	{
+		return orderByTags;
+	}
 
-    private void addIncludeTag(List<String> includefields, Map<String, AttributeSet> attributeSetMap) {
-        for (String s : includefields) {
-            if (s.equals("all")) {
-                includeAll = true;
-                break;
-            }
-            for (String field : StringUtils.split(s, ','))
-                if (!includeAttributeSet(s, attributeSetMap))
-                    try {
-                        int[] tagPath = TagUtils.parseTagPath(field);
-                        builder.setNullIfAbsent(tagPath);
-                    } catch (IllegalArgumentException e2) {
-                        throw new IllegalArgumentException("includefield=" + s);
-                    }
-        }
-    }
+	public Attributes getQueryKeys()
+	{
+		return keys;
+	}
 
-    private boolean includeAttributeSet(String includefield, Map<String, AttributeSet> attributeSetMap) {
-        if (attributeSetMap != null) {
-            AttributeSet attributeSet = attributeSetMap.get(includefield);
-            if (attributeSet != null) {
-                for (int tag : attributeSet.getSelection())
-                    builder.setNullIfAbsent(tag);
-                return true;
-            }
-        }
-        return false;
-    }
+	public Attributes getReturnKeys(int[] includetags)
+	{
+		Attributes returnKeys = new Attributes(
+			keys.size() + 4 + includetags.length);
+		returnKeys.addAll(keys);
+		returnKeys.setNull(Tag.SpecificCharacterSet, VR.CS);
+		returnKeys.setNull(Tag.RetrieveAETitle, VR.AE);
+		returnKeys.setNull(Tag.InstanceAvailability, VR.CS);
+		returnKeys.setNull(Tag.TimezoneOffsetFromUTC, VR.SH);
+		for (int tag : includetags)
+			returnKeys.setNull(tag, DICT.vrOf(tag));
+		return returnKeys;
+	}
 
-    public void addReturnTags(int... tags) {
-        for (int tag : tags)
-            builder.setNullIfAbsent(tag);
-    }
+	public boolean isIncludeAll()
+	{
+		return includeAll;
+	}
 
-    private void addOrderByTag(List<String> orderby) {
-        for (String s : orderby) {
-            try {
-                for (String field : StringUtils.split(s, ',')) {
-                    boolean desc = field.charAt(0) == '-';
-                    int tags[] = TagUtils.parseTagPath(desc ? field.substring(1) : field);
-                    int tag = tags[tags.length - 1];
-                    orderByTags.add(desc ? OrderByTag.desc(tag) : OrderByTag.asc(tag));
-                }
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("orderby=" + s);
-            }
-        }
-    }
+	public boolean isIncludePrivate()
+	{
+		return includeAll || keys.containsTagInRange(PrivateTag.XNATProjectID,
+			PrivateTag.XNATExperimentID);
+	}
 
-    public boolean isIncludeAll() {
-        return includeAll;
-    }
+	private void addIncludeTag(List<String> includefields,
+		Map<String,AttributeSet> attributeSetMap)
+	{
+		for (String s : includefields)
+		{
+			if (s.equals("all"))
+			{
+				includeAll = true;
+				break;
+			}
+			for (String field : StringUtils.split(s, ','))
+				if (!includeAttributeSet(s, attributeSetMap))
+				{
+					try
+					{
+						int[] tagPath = TagUtils.parseTagPath(field);
+						builder.setNullIfAbsent(tagPath);
+					}
+					catch (IllegalArgumentException e2)
+					{
+						throw new IllegalArgumentException("includefield=" + s);
+					}
+				}
+		}
+	}
 
-    public Attributes getQueryKeys() {
-        return keys;
-    }
+	private void addOrderByTag(List<String> orderby)
+	{
+		for (String s : orderby)
+		{
+			try
+			{
+				for (String field : StringUtils.split(s, ','))
+				{
+					boolean desc = field.charAt(0) == '-';
+					int tags[] = TagUtils.parseTagPath(desc ? field.substring(1) : field);
+					int tag = tags[tags.length - 1];
+					orderByTags.add(desc ? OrderByTag.desc(tag) : OrderByTag.asc(tag));
+				}
+			}
+			catch (IllegalArgumentException e)
+			{
+				throw new IllegalArgumentException("orderby=" + s);
+			}
+		}
+	}
 
-    public Attributes getReturnKeys(int[] includetags) {
-        Attributes returnKeys = new Attributes(keys.size() + 4 + includetags.length);
-        returnKeys.addAll(keys);
-        returnKeys.setNull(Tag.SpecificCharacterSet, VR.CS);
-        returnKeys.setNull(Tag.RetrieveAETitle, VR.AE);
-        returnKeys.setNull(Tag.InstanceAvailability, VR.CS);
-        returnKeys.setNull(Tag.TimezoneOffsetFromUTC, VR.SH);
-        for (int tag : includetags)
-            returnKeys.setNull(tag, DICT.vrOf(tag));
-        return returnKeys;
-    }
+	private void addQueryKey(String attrPath, List<String> values)
+	{
+		try
+		{
+			builder.setString(TagUtils.parseTagPath(attrPath),
+				values.toArray(new String[values.size()]));
+		}
+		catch (IllegalArgumentException e)
+		{
+			throw new IllegalArgumentException(attrPath + "=" + values.get(0));
+		}
+	}
 
-    public ArrayList<OrderByTag> getOrderByTags() {
-        return orderByTags;
-    }
+	private boolean includeAttributeSet(String includefield,
+		Map<String,AttributeSet> attributeSetMap)
+	{
+		if (attributeSetMap != null)
+		{
+			AttributeSet attributeSet = attributeSetMap.get(includefield);
+			if (attributeSet != null)
+			{
+				for (int tag : attributeSet.getSelection())
+					builder.setNullIfAbsent(tag);
+				return true;
+			}
+		}
+		return false;
+	}
 
-    private void addQueryKey(String attrPath, List<String> values) {
-        try {
-            builder.setString(TagUtils.parseTagPath(attrPath), values.toArray(new String[values.size()]));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(attrPath + "=" + values.get(0));
-        }
-    }
+	private void parseQueryParameters(MultiValueMap<String,String> map,
+		Map<String,AttributeSet> attributeSetMap)
+	{
+		for (Map.Entry<String,List<String>> entry : map.entrySet())
+		{
+			String key = entry.getKey();
+			switch (key)
+			{
+				case "includefield":
+					addIncludeTag(entry.getValue(), attributeSetMap);
+					break;
+				case "orderby":
+					addOrderByTag(entry.getValue());
+					break;
+				case "accept":
+				case "charset":
+				case "count":
+				case "different":
+				case "missing":
+				case "offset":
+				case "limit":
+				case "fuzzymatching":
+					break;
+				default:
+					addQueryKey(key, entry.getValue());
+					break;
+			}
+		}
+	}
 
 }

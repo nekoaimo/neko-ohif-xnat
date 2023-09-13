@@ -55,7 +55,6 @@ import java.util.EnumSet;
 /**
  * @author mo.alsad
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * @since Aug 2015
  */
 @Slf4j
 public enum QueryRetrieveLevel2

@@ -43,7 +43,6 @@ package org.nrg.xnatx.dicomweb.conf;
 /**
  * @author mo.alsad
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * @since Aug 2015
  */
 public enum Availability
 {

@@ -67,7 +67,7 @@ import java.util.Objects;
 		@Index(columnList = "project_id")
 	}
 )
-public class DwStudy extends DicomwebEntity
+public class DwStudy extends DwEntity
 {
 	private String sessionId;
 	private String studyInstanceUid;
@@ -86,8 +86,6 @@ public class DwStudy extends DicomwebEntity
 	private String modalitiesInStudy;
 	@QueryAttribute
 	private String sopClassesInStudy;
-
-	private String projectId;
 
 	@Basic(optional = false)
 	@Column(name = "accession_no")
@@ -146,18 +144,6 @@ public class DwStudy extends DicomwebEntity
 	public void setPatient(DwPatient patient)
 	{
 		this.patient = patient;
-	}
-
-	@Basic(optional = false)
-	@Column(name = "project_id")
-	public String getProjectId()
-	{
-		return projectId;
-	}
-
-	public void setProjectId(String projectID)
-	{
-		this.projectId = projectID;
 	}
 
 	@Override

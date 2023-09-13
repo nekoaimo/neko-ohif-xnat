@@ -7,6 +7,8 @@ import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xnatx.plugin.PluginUtils;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DicomwebUtils
 {
@@ -101,10 +103,30 @@ public class DicomwebUtils
 		return null;
 	}
 
+	public static Map<String,String> getXnatIds(XnatImagesessiondata sessionData)
+	{
+		Map<String,String> xnatIds = new HashMap<>();
+		xnatIds.put(DicomwebConstants.XNAT_PROJECT_ID, sessionData.getProject());
+		xnatIds.put(DicomwebConstants.XNAT_SUBJECT_ID, sessionData.getSubjectId());
+		xnatIds.put(DicomwebConstants.XNAT_SESSION_ID, sessionData.getId());
+
+		return xnatIds;
+	}
+
 	public static boolean isImage(Attributes attrs)
 	{
 		String sopClassUID = attrs.getString(Tag.SOPClassUID);
 		return attrs.contains(Tag.BitsAllocated) &&
 						 !sopClassUID.equals(UID.RTDoseStorage);
+	}
+
+	public static int parseInt(String s, String pattern)
+	{
+		if (s == null || !s.matches(pattern))
+		{
+			return 0;
+		}
+
+		return Integer.parseInt(s);
 	}
 }

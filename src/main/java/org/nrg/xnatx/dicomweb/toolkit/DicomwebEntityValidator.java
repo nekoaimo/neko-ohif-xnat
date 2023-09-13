@@ -3,12 +3,12 @@ package org.nrg.xnatx.dicomweb.toolkit;
 import icr.etherj.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.nrg.xnatx.dicomweb.conf.DicomwebDeviceConfiguration;
-import org.nrg.xnatx.dicomweb.entity.DicomwebEntity;
+import org.nrg.xnatx.dicomweb.entity.DwEntity;
 
 @Slf4j
 public class DicomwebEntityValidator
 {
-	public static boolean isValidEntity(DicomwebEntity entity)
+	public static boolean isValidEntity(DwEntity entity)
 	{
 		if (entity == null)
 		{
