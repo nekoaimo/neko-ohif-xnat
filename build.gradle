@@ -179,7 +179,7 @@ dependencies {
     implementation("dcm4che:dcm4che-core") { transitive = false }
     implementation("com.google.code.gson:gson") { transitive = false }
 
-    // dcm4che3
+    // ICR DICOMweb
     implementAndInclude("org.dcm4che:dcm4che-core:5.30.0")
     implementAndInclude("org.dcm4che:dcm4che-json:5.30.0")
     implementAndInclude("org.dcm4che:dcm4che-image:5.30.0")

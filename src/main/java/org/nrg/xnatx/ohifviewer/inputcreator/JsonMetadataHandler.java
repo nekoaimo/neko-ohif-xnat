@@ -43,6 +43,7 @@ import org.nrg.framework.services.SerializerService;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xft.security.UserI;
 import org.nrg.xnatx.dicomweb.conf.DicomwebDeviceConfiguration;
+import org.nrg.xnatx.dicomweb.toolkit.DicomwebUtils;
 import org.nrg.xnatx.ohifviewer.entity.OhifSessionData;
 import org.nrg.xnatx.ohifviewer.service.OhifSessionDataService;
 import org.nrg.xnatx.plugin.PluginCode;
@@ -148,7 +149,7 @@ public class JsonMetadataHandler
 		// Exclude JSON generation if supported by the DICOMweb service
 		String modality = PluginUtils.getImageSessionModality(sessionData);
 		if (DicomwebDeviceConfiguration.isDicomwebModality(modality)) {
-			createEmptySessionData(sessionId);
+			createEmptySessionJson(sessionData);
 			return;
 		}
 
@@ -192,12 +193,17 @@ public class JsonMetadataHandler
 		return true;
 	}
 
-	private void createEmptySessionData(String sessionId) {
+	private void createEmptySessionJson(XnatImagesessiondata sessionData)
+		throws PluginException
+	{
+		String sessionId = sessionData.getId();
+		String studyUid = sessionData.getUid();
+		String sessionJson =
+			DicomwebUtils.generateEmptySessionJson(sessionId, studyUid);
+
 		OhifSessionData ohifSessionData = new OhifSessionData();
 		ohifSessionData.setSessionId(sessionId);
 		ohifSessionData.setRevision(Integer.toString(JsonRevision));
-
-		String sessionJson = "{\"transactionId\":\"" + sessionId + "\",\"studies\":[]}";
 		ohifSessionData.setSessionJson(ClobProxy.generateProxy(sessionJson));
 		ohifSessionDataService.createOrUpdate(ohifSessionData);
 	}

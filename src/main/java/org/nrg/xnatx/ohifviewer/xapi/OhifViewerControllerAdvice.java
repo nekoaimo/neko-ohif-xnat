@@ -124,6 +124,10 @@ public class OhifViewerControllerAdvice
 		{
 			return new ResponseEntity<>(message, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+		else if (code.equals(PluginCode.DICOMWebNotSupported))
+		{
+			return new ResponseEntity<>(message, HttpStatus.NOT_IMPLEMENTED);
+		}
 		return new ResponseEntity<>(message, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 

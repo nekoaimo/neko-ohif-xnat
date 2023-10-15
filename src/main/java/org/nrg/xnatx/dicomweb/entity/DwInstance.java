@@ -72,10 +72,8 @@ public class DwInstance extends DwEntity
 	private String contentDate;
 	private String contentTime;
 	private Integer numberOfFrames;
-	private String storagePath;
+	private String filename;
 	private String transferSyntaxUid;
-	private String dataOffsets;
-	private String dataLengths;
 	private byte[] encodedMetadata;
 	private DwSeries series;
 
@@ -108,53 +106,6 @@ public class DwInstance extends DwEntity
 		this.contentTime = contentTime;
 	}
 
-	@Transient
-	public long[] getDataOffsetsAndLengths()
-	{
-		if (dataOffsetsAndLengths != null)
-		{
-			return dataOffsetsAndLengths;
-		}
-
-		String[] offsetsSplit = StringUtils.split(dataOffsets, ',');
-		String[] lengthsSplit = StringUtils.split(dataLengths, ',');
-
-		if (offsetsSplit.length < 1 || lengthsSplit.length < 1)
-		{
-			return null;
-		}
-
-		dataOffsetsAndLengths = new long[offsetsSplit.length * 2];
-
-		try
-		{
-			if (lengthsSplit.length == 1)
-			{
-				long sameLength = Long.parseLong(lengthsSplit[0]);
-				for (int i = 0; i < offsetsSplit.length * 2; i += 2)
-				{
-					dataOffsetsAndLengths[i] = Long.parseLong(offsetsSplit[i]);
-					dataOffsetsAndLengths[i + 1] = sameLength;
-				}
-			}
-			else
-			{
-				for (int i = 0; i < offsetsSplit.length * 2; i += 2)
-				{
-					dataOffsetsAndLengths[i] = Long.parseLong(offsetsSplit[i]);
-					dataOffsetsAndLengths[i + 1] = Long.parseLong(
-						lengthsSplit[i]);
-				}
-			}
-		}
-		catch (NumberFormatException ex)
-		{
-			return null;
-		}
-
-		return dataOffsetsAndLengths;
-	}
-
 	@Basic(optional = false)
 	@Column(name = "inst_no")
 	public Integer getInstanceNumber()
@@ -181,20 +132,6 @@ public class DwInstance extends DwEntity
 	@Transient
 	public void setMetadata(Attributes attrs) throws IOException
 	{
-		if (attrs.contains(PrivateTag.PrivateCreator,
-			PrivateTag.DataOffsets))
-		{
-			dataOffsets = StringUtils.concat(
-				attrs.getStrings(PrivateTag.PrivateCreator,
-					PrivateTag.DataOffsets), ',');
-			dataLengths = StringUtils.concat(
-				attrs.getStrings(PrivateTag.PrivateCreator,
-					PrivateTag.DataLengths), ',');
-
-			attrs.remove(PrivateTag.PrivateCreator, PrivateTag.DataOffsets);
-			attrs.remove(PrivateTag.PrivateCreator, PrivateTag.DataLengths);
-		}
-
 		cachedMetadata = new Attributes(attrs);
 		encodedMetadata = DicomwebUtils.encodeMetadata(cachedMetadata);
 	}
@@ -253,15 +190,15 @@ public class DwInstance extends DwEntity
 		this.sopInstanceUid = sopInstanceUID;
 	}
 
-	@Column(name = "storage_path")
-	public String getStoragePath()
+	@Column(name = "filename")
+	public String getFilename()
 	{
-		return storagePath;
+		return filename;
 	}
 
-	public void setStoragePath(String storagePath)
+	public void setFilename(String filename)
 	{
-		this.storagePath = storagePath;
+		this.filename = filename;
 	}
 
 	@Basic(optional = false)
@@ -325,30 +262,8 @@ public class DwInstance extends DwEntity
 											.add("UID=", sopInstanceUid)
 											.add("Class UID=", sopClassUid)
 											.add("No. frames=", numberOfFrames)
-											.add("Storage path=", storagePath)
+											.add("filename=", filename)
 											.toString();
-	}
-
-	@Column(name = "data_lengths", length = 6000)
-	private String getDataLengths()
-	{
-		return dataLengths;
-	}
-
-	private void setDataLengths(String dataLengths)
-	{
-		this.dataLengths = dataLengths;
-	}
-
-	@Column(name = "data_offsets", length = 6000)
-	private String getDataOffsets()
-	{
-		return dataOffsets;
-	}
-
-	private void setDataOffsets(String dataOffsets)
-	{
-		this.dataOffsets = dataOffsets;
 	}
 
 	@Column(name = "metadata")

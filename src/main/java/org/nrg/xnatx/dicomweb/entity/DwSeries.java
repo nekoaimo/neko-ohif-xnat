@@ -68,6 +68,7 @@ import java.util.Objects;
 )
 public class DwSeries extends DwEntity
 {
+	private String scanId;
 	private String seriesInstanceUid;
 	private Integer seriesNumber;
 	private String seriesDescription;
@@ -229,13 +230,25 @@ public class DwSeries extends DwEntity
 			return new Attributes(0);
 		}
 
-		Attributes attrs = new Attributes(1);
+		Attributes attrs = new Attributes(2);
 		attrs.setInt(Tag.NumberOfSeriesRelatedInstances, VR.IS,
 			numberOfSeriesRelatedInstances);
 		attrs.setString(Tag.AvailableTransferSyntaxUID, VR.UI,
 			availableTransferSyntaxUid);
 
 		return attrs;
+	}
+
+	@Basic(optional = false)
+	@Column(name = "scan_id")
+	public String getScanId()
+	{
+		return scanId;
+	}
+
+	public void setScanId(String scanId)
+	{
+		this.scanId = scanId;
 	}
 
 	@Basic(optional = false)

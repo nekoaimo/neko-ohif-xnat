@@ -37,6 +37,7 @@ package org.nrg.xnatx.dicomweb.entity;
 import com.google.common.base.MoreObjects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 import org.nrg.xnatx.dicomweb.conf.AttributeFilter;
 import org.nrg.xnatx.dicomweb.conf.DicomwebDeviceConfiguration;
 import org.nrg.xnatx.dicomweb.entity.util.QueryAttribute;
@@ -142,7 +143,15 @@ public class DwPatient extends DwEntity
 	@Transient
 	public Attributes getQueryAttributes()
 	{
-		return new Attributes(0);
+		if (numberOfStudies == 0)
+		{
+			return new Attributes(0);
+		}
+
+		Attributes attrs = new Attributes(1);
+		attrs.setInt(Tag.NumberOfPatientRelatedStudies, VR.IS, numberOfStudies);
+
+		return attrs;
 	}
 
 	@Basic(optional = false)

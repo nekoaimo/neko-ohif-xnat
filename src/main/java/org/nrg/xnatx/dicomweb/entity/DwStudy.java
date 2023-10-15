@@ -63,8 +63,7 @@ import java.util.Objects;
 		@Index(columnList = "study_date"),
 		@Index(columnList = "study_time"),
 		@Index(columnList = "accession_no"),
-		@Index(columnList = "study_desc"),
-		@Index(columnList = "project_id")
+		@Index(columnList = "study_desc")
 	}
 )
 public class DwStudy extends DwEntity
@@ -77,6 +76,7 @@ public class DwStudy extends DwEntity
 	private String accessionNumber;
 	private String studyDescription;
 	private DwPatient patient;
+	private String storagePath;
 
 	@QueryAttribute
 	private int numberOfStudyRelatedInstances;
@@ -144,6 +144,17 @@ public class DwStudy extends DwEntity
 	public void setPatient(DwPatient patient)
 	{
 		this.patient = patient;
+	}
+
+	@Column(name = "storage_path")
+	public String getStoragePath()
+	{
+		return storagePath;
+	}
+
+	public void setStoragePath(String storagePath)
+	{
+		this.storagePath = storagePath;
 	}
 
 	@Override
@@ -296,6 +307,7 @@ public class DwStudy extends DwEntity
 											.add("Modalities=", modalitiesInStudy)
 											.add("No. series=", numberOfStudyRelatedSeries)
 											.add("No. instances=", numberOfStudyRelatedInstances)
+						 					.add("Storage path=", storagePath)
 											.toString();
 	}
 }

@@ -1,60 +1,55 @@
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+/********************************************************************
+ * Copyright (c) 2023, Institute of Cancer Research
+ * All rights reserved.
  *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
+ * (1) Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
  *
- * The Original Code is part of dcm4che, an implementation of DICOM(TM) in
- * Java(TM), hosted at https://github.com/dcm4che.
+ * (2) Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
  *
- * The Initial Developer of the Original Code is
- * Agfa Healthcare.
- * Portions created by the Initial Developer are Copyright (C) 2011-2014
- * the Initial Developer. All Rights Reserved.
+ * (3) Neither the name of the Institute of Cancer Research nor the
+ *     names of its contributors may be used to endorse or promote
+ *     products derived from this software without specific prior
+ *     written permission.
  *
- * Contributor(s):
- * See @authors listed below
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
-
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *********************************************************************/
 package org.nrg.xnatx.dicomweb.toolkit;
 
 import org.dcm4che3.data.UID;
 
 import org.springframework.http.MediaType;
 
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 	@author mo.alsad
- *  @author Gunter Zeilinger <gunterze@gmail.com>
+ * @author mo.alsad
  *
+ * Some parts of code are refactored from dcm4chee. Refer to DCM4CHEE_LICENSE.
  */
 @SuppressWarnings("unused")
-public class MediaTypes {
-
+public class MediaTypes
+{
 	/**
 	 * "application/dicom"
 	 */
@@ -63,8 +58,8 @@ public class MediaTypes {
 	/**
 	 * "application/dicom"
 	 */
-	public final static MediaType APPLICATION_DICOM =
-		new MediaType("application", "dicom");
+	public final static MediaType APPLICATION_DICOM = MediaType.valueOf(
+		APPLICATION_DICOM_VALUE);
 
 	/**
 	 * "application/dicom+xml"
@@ -74,8 +69,8 @@ public class MediaTypes {
 	/**
 	 * "application/dicom+xml"
 	 */
-	public final static MediaType APPLICATION_DICOM_XML =
-		new MediaType("application", "dicom+xml");
+	public final static MediaType APPLICATION_DICOM_XML = MediaType.valueOf(
+		APPLICATION_DICOM_XML_VALUE);
 
 	/**
 	 * "application/dicom+json"
@@ -85,8 +80,8 @@ public class MediaTypes {
 	/**
 	 * "application/dicom+json"
 	 */
-	public final static MediaType APPLICATION_DICOM_JSON =
-		new MediaType("application", "dicom+json");
+	public final static MediaType APPLICATION_DICOM_JSON = MediaType.valueOf(
+		APPLICATION_DICOM_JSON_VALUE);
 
 	/**
 	 * "image/*"
@@ -96,8 +91,8 @@ public class MediaTypes {
 	/**
 	 * "image/*"
 	 */
-	public final static MediaType IMAGE_WILDCARD =
-		new MediaType("image", "*");
+	public final static MediaType IMAGE_WILDCARD = MediaType.valueOf(
+		IMAGE_WILDCARD_VALUE);
 
 	/**
 	 * "image/gif"
@@ -107,8 +102,7 @@ public class MediaTypes {
 	/**
 	 * "image/gif"
 	 */
-	public final static MediaType IMAGE_GIF =
-		new MediaType("image", "gif");
+	public final static MediaType IMAGE_GIF = MediaType.valueOf(IMAGE_GIF_VALUE);
 
 
 	/**
@@ -119,8 +113,7 @@ public class MediaTypes {
 	/**
 	 * "image/png"
 	 */
-	public final static MediaType IMAGE_PNG =
-		new MediaType("image", "png");
+	public final static MediaType IMAGE_PNG = MediaType.valueOf(IMAGE_PNG_VALUE);
 
 	/**
 	 * "image/jpeg"
@@ -130,8 +123,8 @@ public class MediaTypes {
 	/**
 	 * "image/jpeg"
 	 */
-	public final static MediaType IMAGE_JPEG =
-		new MediaType("image", "jpeg");
+	public final static MediaType IMAGE_JPEG = MediaType.valueOf(
+		IMAGE_JPEG_VALUE);
 
 	/**
 	 * "image/jls"
@@ -141,8 +134,7 @@ public class MediaTypes {
 	/**
 	 * "image/jls"
 	 */
-	public final static MediaType IMAGE_JLS =
-		new MediaType("image", "jls");
+	public final static MediaType IMAGE_JLS = MediaType.valueOf(IMAGE_JLS_VALUE);
 
 	/**
 	 * "image/jp2"
@@ -152,8 +144,7 @@ public class MediaTypes {
 	/**
 	 * "image/jp2"
 	 */
-	public final static MediaType IMAGE_JP2 =
-		new MediaType("image", "jp2");
+	public final static MediaType IMAGE_JP2 = MediaType.valueOf(IMAGE_JP2_VALUE);
 
 	/**
 	 * "image/jpx"
@@ -163,8 +154,7 @@ public class MediaTypes {
 	/**
 	 * "image/dicom+jpeg-jpx"
 	 */
-	public final static MediaType IMAGE_JPX =
-		new MediaType("image", "jpx");
+	public final static MediaType IMAGE_JPX = MediaType.valueOf(IMAGE_JPX_VALUE);
 
 	/**
 	 * "image/dicom-rle"
@@ -174,8 +164,8 @@ public class MediaTypes {
 	/**
 	 * "image/dicom-rle"
 	 */
-	public final static MediaType IMAGE_DICOM_RLE =
-		new MediaType("image", "dicom-rle");
+	public final static MediaType IMAGE_DICOM_RLE = MediaType.valueOf(
+		IMAGE_DICOM_RLE_VALUE);
 
 	/**
 	 * "video/*"
@@ -185,8 +175,8 @@ public class MediaTypes {
 	/**
 	 * "video/*"
 	 */
-	public final static MediaType VIDEO_WILDCARD =
-		new MediaType("video", "*");
+	public final static MediaType VIDEO_WILDCARD = MediaType.valueOf(
+		VIDEO_WILDCARD_VALUE);
 
 	/**
 	 * "video/mpeg"
@@ -196,9 +186,8 @@ public class MediaTypes {
 	/**
 	 * "video/mpeg"
 	 */
-	public final static MediaType VIDEO_MPEG =
-		new MediaType("video", "mpeg");
-
+	public final static MediaType VIDEO_MPEG = MediaType.valueOf(
+		VIDEO_MPEG_VALUE);
 	/**
 	 * "video/mp4"
 	 */
@@ -207,8 +196,7 @@ public class MediaTypes {
 	/**
 	 * "video/mp4"
 	 */
-	public final static MediaType VIDEO_MP4 =
-		new MediaType("video", "mp4");
+	public final static MediaType VIDEO_MP4 = MediaType.valueOf(VIDEO_MP4_VALUE);
 
 	/**
 	 * "video/quicktime"
@@ -218,8 +206,8 @@ public class MediaTypes {
 	/**
 	 * "video/quicktime"
 	 */
-	public final static MediaType VIDEO_QUICKTIME =
-		new MediaType("video", "quicktime");
+	public final static MediaType VIDEO_QUICKTIME = MediaType.valueOf(
+		VIDEO_QUICKTIME_VALUE);
 
 	/**
 	 * "application/pdf"
@@ -229,8 +217,8 @@ public class MediaTypes {
 	/**
 	 * "application/pdf"
 	 */
-	public final static MediaType APPLICATION_PDF =
-		new MediaType("application", "pdf");
+	public final static MediaType APPLICATION_PDF = MediaType.valueOf(
+		APPLICATION_PDF_VALUE);
 
 	/**
 	 * "text/rtf"
@@ -240,8 +228,7 @@ public class MediaTypes {
 	/**
 	 * "text/rtf"
 	 */
-	public final static MediaType TEXT_RTF =
-		new MediaType("text", "rtf");
+	public final static MediaType TEXT_RTF = MediaType.valueOf(TEXT_RTF_VALUE);
 
 	/**
 	 * "text/csv"
@@ -251,8 +238,7 @@ public class MediaTypes {
 	/**
 	 * "text/csv"
 	 */
-	public final static MediaType TEXT_CSV =
-		new MediaType("text", "csv");
+	public final static MediaType TEXT_CSV = MediaType.valueOf(TEXT_CSV_VALUE);
 
 	/**
 	 * "text/csv;charset=utf-8"
@@ -262,8 +248,8 @@ public class MediaTypes {
 	/**
 	 * "text/csv;charset=utf-8"
 	 */
-	public final static MediaType TEXT_CSV_UTF8 =
-		new MediaType("text", "csv", Charset.defaultCharset());
+	public final static MediaType TEXT_CSV_UTF8 = MediaType.valueOf(
+		TEXT_CSV_UTF8_VALUE);
 
 	/**
 	 * "application/zip"
@@ -273,9 +259,8 @@ public class MediaTypes {
 	/**
 	 * "application/zip"
 	 */
-	public final static MediaType APPLICATION_ZIP =
-		new MediaType("application", "zip");
-
+	public final static MediaType APPLICATION_ZIP = MediaType.valueOf(
+		APPLICATION_ZIP_VALUE);
 	/**
 	 * "multipart/related"
 	 */
@@ -284,30 +269,38 @@ public class MediaTypes {
 	/**
 	 * "multipart/related"
 	 */
-	public final static MediaType MULTIPART_RELATED =
-		new MediaType("multipart", "related");
+	public final static MediaType MULTIPART_RELATED = MediaType.valueOf(
+		MULTIPART_RELATED_VALUE);
 
 	/**
 	 * "multipart/related;type=\"application/dicom\""
 	 */
-	public final static String MULTIPART_RELATED_APPLICATION_DICOM_VALUE = "multipart/related;type=\"application/dicom\"";
+	public final static String MULTIPART_RELATED_APPLICATION_DICOM_VALUE =
+		"multipart/related;type=\"application/dicom\"";
 
 	/**
 	 * "multipart/related;type=\"application/dicom\""
 	 */
 	public final static MediaType MULTIPART_RELATED_APPLICATION_DICOM =
-		new MediaType("multipart", "related", Collections.singletonMap("type", APPLICATION_DICOM_VALUE));
+		MediaType.valueOf(MULTIPART_RELATED_APPLICATION_DICOM_VALUE);
 
 	/**
 	 * "multipart/related;type=\"application/dicom+xml\""
 	 */
-	public final static String MULTIPART_RELATED_APPLICATION_DICOM_XML_VALUE = "multipart/related;type=\"application/dicom+xml\"";
+	public final static String MULTIPART_RELATED_APPLICATION_DICOM_XML_VALUE =
+		"multipart/related;type=\"application/dicom+xml\"";
 
 	/**
 	 * "multipart/related;type=\"application/dicom+xml\""
 	 */
 	public final static MediaType MULTIPART_RELATED_APPLICATION_DICOM_XML =
-		new MediaType("multipart", "related", Collections.singletonMap("type", APPLICATION_DICOM_XML_VALUE));
+		MediaType.valueOf(MULTIPART_RELATED_APPLICATION_DICOM_XML_VALUE);
+
+	/**
+	 * "multipart/related;type=\"application/dicom\""
+	 */
+	public final static String MULTIPART_RELATED_APPLICATION_OCTET_STREAM_VALUE =
+		"multipart/related;type=\"octet-stream\"";
 
 	/**
 	 * "model/stl"
@@ -317,9 +310,7 @@ public class MediaTypes {
 	/**
 	 * "model/stl"
 	 */
-	public final static MediaType MODEL_STL =
-		new MediaType("model", "stl");
-
+	public final static MediaType MODEL_STL = MediaType.valueOf(MODEL_STL_VALUE);
 	/**
 	 * "model/x.stl-binary"
 	 */
@@ -328,9 +319,8 @@ public class MediaTypes {
 	/**
 	 * "model/x.stl-binary"
 	 */
-	public final static MediaType MODEL_X_STL_BINARY =
-		new MediaType("model", "x.stl-binary");
-
+	public final static MediaType MODEL_X_STL_BINARY = MediaType.valueOf(
+		MODEL_X_STL_BINARY_VALUE);
 	/**
 	 * "application/sla"
 	 */
@@ -339,8 +329,8 @@ public class MediaTypes {
 	/**
 	 * "application/sla"
 	 */
-	public final static MediaType APPLICATION_SLA =
-		new MediaType("application", "sla");
+	public final static MediaType APPLICATION_SLA = MediaType.valueOf(
+		APPLICATION_SLA_VALUE);
 
 	/**
 	 * "model/obj"
@@ -350,8 +340,7 @@ public class MediaTypes {
 	/**
 	 * "model/obj"
 	 */
-	public final static MediaType MODEL_OBJ =
-		new MediaType("model", "obj");
+	public final static MediaType MODEL_OBJ = MediaType.valueOf(MODEL_OBJ_VALUE);
 
 	/**
 	 * "model/mtl"
@@ -361,8 +350,7 @@ public class MediaTypes {
 	/**
 	 * "model/mtl"
 	 */
-	public final static MediaType MODEL_MTL =
-		new MediaType("model", "mtl");
+	public final static MediaType MODEL_MTL = MediaType.valueOf(MODEL_MTL_VALUE);
 
 	/**
 	 * "application/vnd.genozip"
@@ -372,13 +360,26 @@ public class MediaTypes {
 	/**
 	 * "application/vnd.genozip"
 	 */
-	public final static MediaType APPLICATION_VND_GENOZIP =
-		new MediaType("application", "vnd.genozip");
+	public final static MediaType APPLICATION_VND_GENOZIP = MediaType.valueOf(
+		APPLICATION_VND_GENOZIP_VALUE);
 
+	public static MediaType applicationDicomWithTransferSyntax(String tsuid)
+	{
+		return new MediaType("application", "dicom",
+			Collections.singletonMap("transfer-syntax", tsuid));
+	}
 
-	public static MediaType forTransferSyntax(String ts) {
+	public static boolean equalsIgnoreParameters(MediaType type1, MediaType type2)
+	{
+		return type1.getType().equalsIgnoreCase(type2.getType())
+						 && type1.getSubtype().equalsIgnoreCase(type2.getSubtype());
+	}
+
+	public static MediaType forTransferSyntax(String ts)
+	{
 		MediaType type;
-		switch (ts) {
+		switch (ts)
+		{
 			case UID.ExplicitVRLittleEndian:
 			case UID.ImplicitVRLittleEndian:
 				return MediaType.APPLICATION_OCTET_STREAM;
@@ -417,19 +418,90 @@ public class MediaTypes {
 			default:
 				throw new IllegalArgumentException("ts: " + ts);
 		}
-		return new MediaType(type.getType(), type.getSubtype(), Collections.singletonMap("transfer-syntax", ts));
+		return new MediaType(type.getType(), type.getSubtype(),
+			Collections.singletonMap("transfer-syntax", ts));
 	}
 
-	public static String transferSyntaxOf(MediaType bulkdataMediaType) {
+	public static MediaType getMultiPartRelatedType(MediaType mediaType)
+	{
+		if (!MediaTypes.MULTIPART_RELATED.isCompatibleWith(mediaType))
+		{
+			return null;
+		}
+
+		String type = mediaType.getParameters().get("type");
+		if (type == null)
+		{
+			return MediaType.ALL;
+		}
+
+		// Remove leading and training double quotes from type
+		type = type.replaceAll("^\"|\"$", "");
+		MediaType partType = MediaType.valueOf(type);
+		if (mediaType.getParameters().size() > 1)
+		{
+			Map<String,String> params = new HashMap<>(mediaType.getParameters());
+			params.remove("type");
+			partType = new MediaType(partType.getType(), partType.getSubtype(),
+				params);
+		}
+		return partType;
+	}
+
+	public static String getTransferSyntax(MediaType type)
+	{
+		return type != null && equalsIgnoreParameters(APPLICATION_DICOM, type)
+						 ? type.getParameters().get("transfer-syntax")
+						 : null;
+	}
+
+	public static boolean isSTLType(MediaType mediaType)
+	{
+		return equalsIgnoreParameters(mediaType, MODEL_STL)
+						 || equalsIgnoreParameters(mediaType, MODEL_X_STL_BINARY)
+						 || equalsIgnoreParameters(mediaType, APPLICATION_SLA);
+	}
+
+	public static boolean isSTLType(String type)
+	{
+		return MODEL_STL_VALUE.equalsIgnoreCase(type)
+						 || MODEL_X_STL_BINARY_VALUE.equalsIgnoreCase(type)
+						 || APPLICATION_SLA_VALUE.equalsIgnoreCase(type);
+	}
+
+	public static String sopClassOf(MediaType bulkdataMediaType)
+	{
+		String type = bulkdataMediaType.getType().toLowerCase();
+		return type.equals("image") ? UID.SecondaryCaptureImageStorage
+						 : type.equals("video") ? UID.VideoPhotographicImageStorage
+								 : equalsIgnoreParameters(bulkdataMediaType,
+			APPLICATION_PDF) ? UID.EncapsulatedPDFStorage
+										 : equalsIgnoreParameters(bulkdataMediaType,
+			MediaType.APPLICATION_XML) ? UID.EncapsulatedCDAStorage
+												 : isSTLType(
+			bulkdataMediaType) ? UID.EncapsulatedSTLStorage
+														 : equalsIgnoreParameters(bulkdataMediaType,
+			MODEL_OBJ) ? UID.EncapsulatedOBJStorage
+																 : equalsIgnoreParameters(bulkdataMediaType,
+			MODEL_MTL) ? UID.EncapsulatedMTLStorage
+																		 : null;
+	}
+
+	public static String transferSyntaxOf(MediaType bulkdataMediaType)
+	{
 		String tsuid = bulkdataMediaType.getParameters().get("transfer-syntax");
 		if (tsuid != null)
+		{
 			return tsuid;
+		}
 
 		String type = bulkdataMediaType.getType().toLowerCase();
 		String subtype = bulkdataMediaType.getSubtype().toLowerCase();
-		switch (type) {
+		switch (type)
+		{
 			case "image":
-				switch (subtype) {
+				switch (subtype)
+				{
 					case "jpeg":
 						return UID.JPEGLosslessSV1;
 					case "jls":
@@ -444,7 +516,8 @@ public class MediaTypes {
 						return UID.RLELossless;
 				}
 			case "video":
-				switch (subtype) {
+				switch (subtype)
+				{
 					case "mpeg":
 						return UID.MPEG2MPML;
 					case "mp4":
@@ -453,62 +526,6 @@ public class MediaTypes {
 				}
 		}
 		return UID.ExplicitVRLittleEndian;
-	}
-
-	public static String sopClassOf(MediaType bulkdataMediaType) {
-		String type = bulkdataMediaType.getType().toLowerCase();
-		return type.equals("image") ? UID.SecondaryCaptureImageStorage
-						 : type.equals("video") ? UID.VideoPhotographicImageStorage
-								 : equalsIgnoreParameters(bulkdataMediaType, APPLICATION_PDF) ? UID.EncapsulatedPDFStorage
-										 : equalsIgnoreParameters(bulkdataMediaType, MediaType.APPLICATION_XML) ? UID.EncapsulatedCDAStorage
-												 : isSTLType(bulkdataMediaType) ? UID.EncapsulatedSTLStorage
-														 : equalsIgnoreParameters(bulkdataMediaType, MODEL_OBJ) ? UID.EncapsulatedOBJStorage
-																 : equalsIgnoreParameters(bulkdataMediaType, MODEL_MTL) ? UID.EncapsulatedMTLStorage
-																		 : null;
-	}
-
-	public static boolean isSTLType(MediaType mediaType) {
-		return equalsIgnoreParameters(mediaType, MODEL_STL)
-						 || equalsIgnoreParameters(mediaType, MODEL_X_STL_BINARY)
-						 || equalsIgnoreParameters(mediaType, APPLICATION_SLA);
-	}
-
-	public static boolean isSTLType(String type) {
-		return MODEL_STL_VALUE.equalsIgnoreCase(type)
-						 || MODEL_X_STL_BINARY_VALUE.equalsIgnoreCase(type)
-						 || APPLICATION_SLA_VALUE.equalsIgnoreCase(type);
-	}
-
-	public static boolean equalsIgnoreParameters(MediaType type1, MediaType type2) {
-		return type1.getType().equalsIgnoreCase(type2.getType())
-						 &&  type1.getSubtype().equalsIgnoreCase(type2.getSubtype());
-	}
-
-	public static MediaType getMultiPartRelatedType(MediaType mediaType) {
-		if (!MediaTypes.MULTIPART_RELATED.isCompatibleWith(mediaType))
-			return null;
-
-		String type = mediaType.getParameters().get("type");
-		if (type == null)
-			return MediaType.ALL;
-
-		MediaType partType = MediaType.valueOf(type);
-		if (mediaType.getParameters().size() > 1) {
-			Map<String, String> params = new HashMap<>(mediaType.getParameters());
-			params.remove("type");
-			partType = new MediaType(partType.getType(), partType.getSubtype(), params);
-		}
-		return partType;
-	}
-
-	public static String getTransferSyntax(MediaType type) {
-		return type != null && equalsIgnoreParameters(APPLICATION_DICOM, type)
-						 ? type.getParameters().get("transfer-syntax")
-						 : null;
-	}
-
-	public static MediaType applicationDicomWithTransferSyntax(String tsuid) {
-		return new MediaType("application", "dicom", Collections.singletonMap("transfer-syntax", tsuid));
 	}
 }
 
