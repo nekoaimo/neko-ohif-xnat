@@ -1,3 +1,16 @@
+**3.7.0-ALPHA-1**
+
+- Implemented a customised support for the DICOMweb QIDO and WADO services.
+- Integrated dicom-microscopy-viewer v0.45.1.
+
+**3.6.0**
+
+- Minor improvements and bug fixes.
+
+**3.6.0-RC-2**
+
+- Support organising and displaying of 4-D datasets as multi-stack.
+
 **3.6.0-RC-1**
 
 - Feature: organise and display multi-stack frames into subgroups. Only Enhanced MR storage is currently supported.
