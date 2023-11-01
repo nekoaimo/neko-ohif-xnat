@@ -34,7 +34,7 @@
 *********************************************************************/
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
-import icr.etherj.dicom.SopInstance;
+import icr.etherj2.dicom.SopInstance;
 import java.io.File;
 
 import org.nrg.dcm.SOPModel;

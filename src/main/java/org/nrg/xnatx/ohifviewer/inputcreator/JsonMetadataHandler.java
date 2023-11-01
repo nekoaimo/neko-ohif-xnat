@@ -35,7 +35,6 @@
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
 import icr.etherj.StringUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.hibernate.engine.jdbc.ClobProxy;
 import org.nrg.config.entities.Configuration;
 import org.nrg.config.services.ConfigService;
@@ -99,7 +98,6 @@ public class JsonMetadataHandler
 	 * Create and store JSON metadata for the specified session and user.
 	 * @param sessionId
 	 * @param user
-	 * @return the JSON metadata
 	 * @throws PluginException
 	 */
 	public void createAndStoreJsonConfig(String sessionId, UserI user)
@@ -114,7 +112,6 @@ public class JsonMetadataHandler
 	 * Create and store JSON metadata for the specified session and user.
 	 * @param sessionData
 	 * @param user
-	 * @return the JSON metadata
 	 * @throws PluginException
 	 */
 	public void createAndStoreJsonConfig(XnatImagesessiondata sessionData,
@@ -126,7 +123,6 @@ public class JsonMetadataHandler
 	 * @param sessionData
 	 * @param user
 	 * @param ignoreExisting if true, any previously existing json will be ignored
-	 * @return the JSON metadata
 	 * @throws PluginException
 	 */
 	public void createAndStoreJsonConfig(XnatImagesessiondata sessionData,

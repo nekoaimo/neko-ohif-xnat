@@ -1,16 +1,21 @@
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
-import icr.etherj.PathScanContext;
-import icr.etherj.dicom.*;
-import org.dcm4che2.data.DicomObject;
+import icr.etherj2.PathScanContext;
+import icr.etherj2.dicom.DicomToolkit;
+import icr.etherj2.dicom.SopInstance;
+import org.dcm4che3.data.Attributes;
 import org.nrg.xnatx.ohifviewer.ViewerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.util.*;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-public class CustomDicomReceiver implements PathScanContext<DicomObject> {
+public class CustomDicomReceiver implements PathScanContext<Attributes> {
     private static final Logger logger = LoggerFactory.getLogger(
             CustomDicomReceiver.class);
 
@@ -19,7 +24,7 @@ public class CustomDicomReceiver implements PathScanContext<DicomObject> {
 
     private Map<String, OhifViewerInputStudy> studyMap;
     private Map<String, OhifViewerInputInstance> sopInstMap;
-    private OhifViewerInput ohifViewerInput;
+    private final OhifViewerInput ohifViewerInput;
 
     private final DicomToolkit toolkit;
 
@@ -38,8 +43,9 @@ public class CustomDicomReceiver implements PathScanContext<DicomObject> {
     }
 
     @Override
-    public void notifyItemFound(File file, DicomObject dcm) {
-        processSopInst(toolkit.createSopInstance(file, dcm));
+    public void notifyItemFound(Path path, Attributes dcm)
+    {
+        processSopInst(toolkit.createSopInstance(path.toFile(), dcm));
     }
 
     @Override
@@ -67,8 +73,7 @@ public class CustomDicomReceiver implements PathScanContext<DicomObject> {
         String studyUid = sopInst.getStudyUid();
         OhifViewerInputStudy study = studyMap.get(studyUid);
         if (study == null) {
-            study = new OhifViewerInputStudy(toolkit.createStudy(sopInst),
-                    toolkit.createPatient(sopInst));
+            study = new OhifViewerInputStudy(toolkit.createStudy(sopInst), toolkit.createPatient(sopInst));
             study.allocateStudyTime(sopInst);
             studyMap.put(studyUid, study);
         }

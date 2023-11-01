@@ -129,9 +129,14 @@ public class OhifViewerEventListener
 	{
 		final WrkWorkflowdata workflow = (WrkWorkflowdata) wfsEvent.getWorkflow();
 		String pipelineName = workflow.getPipelineName();
+		// Ignore anything we don't have a trigger for
+		if (!triggerPipelines.containsKey(pipelineName) && !triggerPipelinesSubject.containsKey(pipelineName))
+		{
+			return;
+		}
+
 		String dataType = workflow.getDataType();
 		String id = workflow.getId();
-
 		logger.debug("Handling event in OhifViewerEventListener. PipelineName: {}, DataType: {}, ID: {}",
 				pipelineName, dataType, id);
 

@@ -1,9 +1,8 @@
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
-import icr.etherj.dicom.SopInstance;
-import org.dcm4che2.data.DicomElement;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.Tag;
+import icr.etherj2.dicom.SopInstance;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.nrg.xnatx.ohifviewer.ViewerUtils;
 
 import java.util.Arrays;
@@ -18,24 +17,24 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
     private int AcquisitionNumber;
     private int BitsAllocated;
     private int BitsStored;
-    private int Columns;
-    private String FrameOfReferenceUID;
+    private final int Columns;
+    private final String FrameOfReferenceUID;
     private int HighBit;
-    private double[] ImageOrientationPatient;
-    private double[] ImagePositionPatient;
+    private final double[] ImageOrientationPatient;
+    private final double[] ImagePositionPatient;
     private String[] ImageType;
-    private int InstanceNumber;
-    private int NumberOfFrames;
+    private final int InstanceNumber;
+    private final int NumberOfFrames;
     private String PhotometricInterpretation;
     private int PixelRepresentation;
-    private double[] PixelSpacing;
+    private final double[] PixelSpacing;
     private double RescaleIntercept;
     private double RescaleSlope;
     private String RescaleType;
-    private int Rows;
+    private final int Rows;
     private int SamplesPerPixel;
     private String SOPClassUID;
-    private String SOPInstanceUID;
+    private final String SOPInstanceUID;
     private double[] WindowWidth;
     private double[] WindowCenter;
 
@@ -68,7 +67,7 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
         SOPInstanceUID = sop.getUid();
 
         if (ViewerUtils.isDisplayableSopClass(sop.getSopClassUid())) {
-            DicomObject dcm = sop.getDicomObject();
+            Attributes dcm = sop.getAttributes();
             String[] emptyStrArray = new String[]{};
             AcquisitionNumber = dcm.getInt(Tag.AcquisitionNumber, 0);
             PhotometricInterpretation = dcm.getString(Tag.PhotometricInterpretation, "");
@@ -77,7 +76,8 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
             PixelRepresentation = dcm.getInt(Tag.PixelRepresentation, 1);
             SamplesPerPixel = dcm.getInt(Tag.SamplesPerPixel, 1);
             HighBit = dcm.getInt(Tag.HighBit, 15);
-            ImageType = dcm.getStrings(Tag.ImageType, emptyStrArray);
+            String[] imageType = dcm.getStrings(Tag.ImageType);
+            ImageType = imageType != null ? imageType : emptyStrArray;
             WindowWidth = DataUtils.getDSArray(dcm, Tag.WindowWidth, 0);
             WindowCenter = DataUtils.getDSArray(dcm, Tag.WindowCenter, 0);
             RescaleIntercept = DataUtils.getDSValue(dcm, Tag.RescaleIntercept, 0.0);
@@ -170,7 +170,7 @@ public class OhifViewerInputInstanceMetadata extends OhifViewerInputItem
  */
 class DataUtils
 {
-    public static double[] getDSArray(DicomObject dcm, int tag, double defaultValue)
+    public static double[] getDSArray(Attributes dcm, int tag, double defaultValue)
     {
         double[] dsArray;
 
@@ -195,7 +195,7 @@ class DataUtils
         return dsArray;
     }
 
-    public static double getDSValue(DicomObject dcm, int tag, double defaultValue)
+    public static double getDSValue(Attributes dcm, int tag, double defaultValue)
     {
         double dsValue;
 
@@ -203,7 +203,7 @@ class DataUtils
         {
             String strValue = dcm.getString(tag);
 
-            if (strValue.length() > 0)
+            if (!strValue.isEmpty())
             {
                 dsValue = Double.parseDouble(strValue);
             }

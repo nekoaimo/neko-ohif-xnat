@@ -27,7 +27,7 @@ buildscript {
 }
 
 group 'org.nrg.xnatx.plugins'
-version '3.6.0'
+version '3.7.0-dcmv5-SNAPSHOT'
 
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
@@ -111,8 +111,8 @@ repositories {
     mavenCentral()
     jcenter()
     maven {
-        url 'http://dcm4che.org/maven2'
-        name 'dcm4che Maven Repository'
+        url 'https://www.dcm4che.org/maven2'
+        name 'dcm4che3 Maven Repository'
     }
     maven {
         url 'https://nrgxnat.jfrog.io/nrgxnat/libs-release'
@@ -174,13 +174,14 @@ dependencies {
     implementation("io.projectreactor:reactor-bus") { transitive = false }
 
     implementation("org.slf4j:slf4j-api") { transitive = false }
-    implementation("org.slf4j:slf4j-log4j12") { transitive = false }
-    implementation("log4j:log4j") { transitive = false }
+    // dcm4che2
     implementation("dcm4che:dcm4che-core") { transitive = false }
     implementation("com.google.code.gson:gson") { transitive = false }
-
+    // dcm4che3 -> v5
+    implementation("org.dcm4che:dcm4che-core") { transitive = false }
     // Guava
     implementation("com.google.guava:guava") { transitive = false }
+    // Jackson
     implementation("com.fasterxml.jackson.core:jackson-annotations") { transitive = false }
     implementation("com.fasterxml.jackson.core:jackson-core") { transitive = false }
     implementation("com.fasterxml.jackson.core:jackson-databind") { transitive = false }
@@ -190,8 +191,10 @@ dependencies {
      // EtherJ
     def vEtherJ = '1.1.6'
     implementAndInclude("icr.etherj:etherj-core:${vEtherJ}") { transitive = false }
+    def vEtherJ2 = '0.1'
+    implementAndInclude("icr.etherj2:etherj2-core:${vEtherJ2}") { transitive = false }
 
-    testImplementation "org.slf4j:slf4j-nop:1.7.25"
+    testImplementation "org.slf4j:slf4j-nop:1.7.36"
     testImplementation "junit:junit"
 }
 

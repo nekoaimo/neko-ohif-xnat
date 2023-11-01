@@ -1,24 +1,24 @@
 /********************************************************************
 * Copyright (c) 2017, Institute of Cancer Research
 * All rights reserved.
-* 
+*
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions
 * are met:
-* 
+*
 * (1) Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
-* 
+*
 * (2) Redistributions in binary form must reproduce the above
 *     copyright notice, this list of conditions and the following
 *     disclaimer in the documentation and/or other materials provided
 *     with the distribution.
-* 
+*
 * (3) Neither the name of the Institute of Cancer Research nor the
 *     names of its contributors may be used to endorse or promote
 *     products derived from this software without specific prior
 *     written permission.
-* 
+*
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -37,10 +37,10 @@
 * @author Simon J Doran
 * Java class: OhifViewerInputSeries.java
 * First created on Sep 12, 2017 at 11:10:36 AM
-* 
+*
 * Component of OhifViewerInput, which is serialised to JSON by
 * CreateOhifViewerInputJson.java
-* 
+*
 *********************************************************************/
 
 package org.nrg.xnatx.ohifviewer.inputcreator;
@@ -48,9 +48,8 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 import org.nrg.xnatx.ohifviewer.ViewerUtils;
 
 import com.google.common.collect.ImmutableList;
-import icr.etherj.dicom.Series;
+import icr.etherj2.dicom.Series;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,7 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class OhifViewerInputSeries extends OhifViewerInputItem
-{	
+{
 	private static final Logger logger = LoggerFactory.getLogger(
 		OhifViewerInputSeries.class);
 
@@ -70,7 +69,7 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 	private String SeriesTime;
 
 	private final List<OhifViewerInputInstance> instances = new ArrayList<>();
-  
+
 	public OhifViewerInputSeries(Series ser)
 	{
 		if (ser == null)
@@ -98,12 +97,12 @@ public class OhifViewerInputSeries extends OhifViewerInputItem
 		}
 		Modality = ser.getModality();
 	}
-	
+
 	public void addInstances(OhifViewerInputInstance instance)
 	{
 		instances.add(instance);
 	}
-	
+
 	public List<OhifViewerInputInstance> getInstances()
 	{
 		return ImmutableList.copyOf(instances);

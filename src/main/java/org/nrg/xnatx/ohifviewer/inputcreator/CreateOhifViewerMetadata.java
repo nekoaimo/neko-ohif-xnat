@@ -38,25 +38,14 @@ package org.nrg.xnatx.ohifviewer.inputcreator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
-import icr.etherj.PathScan;
-import icr.etherj.dicom.DicomReceiver;
-import icr.etherj.dicom.DicomToolkit;
-import icr.etherj.dicom.Patient;
-import icr.etherj.dicom.PatientRoot;
-import icr.etherj.dicom.Series;
-import icr.etherj.dicom.SopInstance;
-import icr.etherj.dicom.Study;
-import java.io.ByteArrayOutputStream;
+import icr.etherj2.PathScan;
+import icr.etherj2.dicom.DicomToolkit;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import org.dcm4che2.data.DicomObject;
-import org.nrg.xnatx.ohifviewer.ViewerUtils;
+import org.dcm4che3.data.Attributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,12 +76,13 @@ public class CreateOhifViewerMetadata
 	/**
 	 * Create the serialized JSON file and return its Path object
 	 * @param transactionId
-	 * @returnPath to file that contains the serialized JSON created
+	 * @return Path to file that contains the serialized JSON created
 	 * @throws IOException
 	 */
 	public Path jsonify(final String transactionId) throws IOException
 	{
-		OhifViewerInput ovi = scanPathAndCreateInput(transactionId, xnatScanPath, xnatExperimentScanUrl, seriesUidToScanIdMap);
+		OhifViewerInput ovi = scanPathAndCreateInput(transactionId, xnatScanPath, xnatExperimentScanUrl,
+			seriesUidToScanIdMap);
 
 		// Convert the Java object to a JSON string
 		Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
@@ -104,15 +94,18 @@ public class CreateOhifViewerMetadata
 		return jsonFilePath;
 	}
 
-	private OhifViewerInput scanPathAndCreateInput(String transactionId, String xnatScanPath, String xnatExperimentScanUrl, Map<String,String> seriesUidToScanIdMap) throws IOException {
+	private OhifViewerInput scanPathAndCreateInput(String transactionId, String xnatScanPath,
+		String xnatExperimentScanUrl, Map<String,String> seriesUidToScanIdMap) throws IOException
+	{
 		logger.info("DICOM search: {}", xnatScanPath);
 
-		CustomDicomReceiver dcmRec = new CustomDicomReceiver(transactionId, xnatExperimentScanUrl, seriesUidToScanIdMap);
-		PathScan<DicomObject> pathScan = dcmTk.createPathScan();
+		CustomDicomReceiver dcmRec = new CustomDicomReceiver(transactionId, xnatExperimentScanUrl,
+			seriesUidToScanIdMap);
+		// Only read up to pixeldata
+		PathScan<Attributes> pathScan = dcmTk.createPathScan(0x7fe00010);
 		pathScan.addContext(dcmRec);
 		pathScan.scan(xnatScanPath, true);
-		OhifViewerInput ovi = dcmRec.getOhifViewerInput();
 
-		return ovi;
+		return dcmRec.getOhifViewerInput();
 	}
 }
