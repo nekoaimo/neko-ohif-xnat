@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -40,7 +40,7 @@ import org.nrg.xnatx.roi.service.DicomSpatialDataService;
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
-import org.dcm4che2.data.DicomObject;
+import org.dcm4che3.data.Attributes;
 import org.nrg.xft.security.UserI;
 
 /**
@@ -84,7 +84,7 @@ public interface CollectionConverter
 		 * @return
 		 * @throws PluginException
 		 */
-		public Map<String,DicomObject> getDicomObjectMap() throws PluginException;
+		public Map<String,Attributes> getDicomObjectMap() throws PluginException;
 
 		/**
 		 *

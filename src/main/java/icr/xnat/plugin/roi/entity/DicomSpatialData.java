@@ -34,7 +34,6 @@
  *********************************************************************/
 package icr.xnat.plugin.roi.entity;
 
-import icr.etherj.StringUtils;
 import javax.persistence.Entity;
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntity;
 import org.slf4j.Logger;
@@ -271,7 +270,7 @@ public class DicomSpatialData extends AbstractHibernateEntity
 		{
 			result[i] = String.valueOf(array[i]);
 		}
-		return StringUtils.join("\\", result);
+		return String.join("\\", result);
 	}
 
 	private double[] parse(String input, int nRequired)

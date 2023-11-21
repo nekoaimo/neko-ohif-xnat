@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -34,28 +34,28 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.data;
 
-import icr.etherj.StringUtils;
-import icr.etherj.dicom.DicomUtils;
-import icr.etherj.dicom.iod.DerivationImage;
-import icr.etherj.dicom.iod.FunctionalGroupsFrame;
-import icr.etherj.dicom.iod.IodUtils;
-import icr.etherj.dicom.iod.Iods;
-import icr.etherj.dicom.iod.ReferencedSeries;
-import icr.etherj.dicom.iod.Segment;
-import icr.etherj.dicom.iod.Segmentation;
-import icr.etherj.dicom.iod.SegmentationFunctionalGroupsFrame;
-import icr.etherj.dicom.iod.SegmentationPerFrameFunctionalGroups;
-import icr.etherj.dicom.iod.SourceImage;
-import icr.etherj.dicom.iod.module.CommonInstanceReferenceModule;
-import icr.etherj.dicom.iod.module.MultiframeFunctionalGroupsModule;
-import icr.etherj.dicom.iod.module.SegmentationImageModule;
+import icr.etherj2.StringUtils;
+import icr.etherj2.dicom.DicomUtils;
+import icr.etherj2.dicom.iod.DerivationImage;
+import icr.etherj2.dicom.iod.FunctionalGroupsFrame;
+import icr.etherj2.dicom.iod.IodUtils;
+import icr.etherj2.dicom.iod.Iods;
+import icr.etherj2.dicom.iod.ReferencedSeries;
+import icr.etherj2.dicom.iod.Segment;
+import icr.etherj2.dicom.iod.Segmentation;
+import icr.etherj2.dicom.iod.SegmentationFunctionalGroupsFrame;
+import icr.etherj2.dicom.iod.SegmentationPerFrameFunctionalGroups;
+import icr.etherj2.dicom.iod.SourceImage;
+import icr.etherj2.dicom.iod.module.CommonInstanceReferenceModule;
+import icr.etherj2.dicom.iod.module.MultiframeFunctionalGroupsModule;
+import icr.etherj2.dicom.iod.module.SegmentationImageModule;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.dcm4che2.data.DicomObject;
+import org.dcm4che3.data.Attributes;
 import icr.xnat.plugin.roi.entity.Roi;
 import org.nrg.xnatx.roi.Constants;
 
@@ -63,35 +63,28 @@ import org.nrg.xnatx.roi.Constants;
  *
  * @author jamesd
  */
-public class SegmentationRoiCollection extends AbstractRoiCollection
-	implements RoiCollection
+public class SegmentationRoiCollection extends AbstractRoiCollection implements RoiCollection
 {
 	private final Segmentation seg;
 
 	/**
+	 * Returns a new SegmentationRoiCollection.
 	 *
-	 * @param id
-	 * @param rawBytes
-	 * @throws PluginException
+	 * @param id       the RoiCollection ID
+	 * @param rawBytes the raw bytes of the IAC
+	 * @throws PluginException if any error occurs during parsing
 	 */
-	public SegmentationRoiCollection(String id, byte[] rawBytes) throws PluginException
-	{
+	public SegmentationRoiCollection(String id, byte[] rawBytes) throws PluginException {
 		super(id, rawBytes);
 		setFileExtension("dcm");
 		setFileFormat("DICOM");
 		setTypeDescription("DICOM Segmentation");
-		try
-		{
-			DicomObject dcm = DicomUtils.readDicomObject(
-				new ByteArrayInputStream(rawBytes));
+		try {
+			Attributes dcm = DicomUtils.readAttributes(new ByteArrayInputStream(rawBytes));
 			seg = Iods.segmentation(dcm);
-		}
-		catch (IOException ex)
-		{
+		} catch (IOException ex) {
 			throw new PluginException(ex.getMessage(), PluginCode.IO, ex);
-		}
-		catch (IllegalArgumentException ex)
-		{
+		} catch (IllegalArgumentException ex) {
 			throw new PluginException(ex.getMessage(), PluginCode.IllegalArgument, ex);
 		}
 		buildUidSets();

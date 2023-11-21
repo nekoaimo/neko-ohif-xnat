@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -36,18 +36,10 @@ package org.nrg.xnatx.roi.xapi;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.io.ByteStreams;
-import icr.etherj.IoUtils;
-import icr.etherj.StringUtils;
-import icr.etherj.Uids;
-import icr.etherj.dicom.ConversionException;
-import icr.etherj.dicom.DicomToolkit;
-import icr.etherj.dicom.DicomUtils;
-import icr.etherj.dicom.RoiConverter;
-import icr.etherj.dicom.iod.Iods;
-import icr.etherj.dicom.iod.Segmentation;
-import icr.etherj.nifti.Nifti;
-import icr.etherj.nifti.NiftiToolkit;
-import icr.etherj.nifti.NiftiWriter;
+import icr.etherj2.IoUtils;
+import icr.etherj2.StringUtils;
+import icr.etherj2.Uids;
+import org.dcm4che3.data.Attributes;
 import org.nrg.xnatx.roi.Constants;
 import org.nrg.xnatx.plugin.ElementPermissions;
 import org.nrg.xnatx.plugin.PluginCode;
@@ -69,8 +61,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,14 +69,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.dcm4che2.data.DicomObject;
 import org.nrg.framework.annotations.XapiRestController;
 import org.nrg.xapi.rest.AbstractXapiProjectRestController;
 import org.nrg.xapi.rest.Experiment;
 import org.nrg.xapi.rest.Project;
 import org.nrg.xapi.rest.XapiRequestMapping;
 import org.nrg.xdat.om.IcrRoicollectiondata;
-import org.nrg.xdat.om.IcrRoicollectiondataSeriesuid;
 import org.nrg.xdat.om.XnatImagescandata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import org.nrg.xdat.om.XnatProjectdata;
@@ -346,13 +334,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		String modality = PluginUtils.getImageSessionModality(
 			collectData.getImageSessionData());
 		checkType(requestedType, modality);
-//		if (Constants.Nifti.equals(requestedType) &&
-//			 Constants.Segmentation.equals(collectType))
-//		{
-//			return segToNifti(user, collectData);
-//		}
-		File requestedFile = RoiUtils.getCollectionFile(user, collectData,
-			requestedType);
+		File requestedFile = RoiUtils.getCollectionFile(user, collectData, requestedType);
 		if (!requestedType.equals(collectType) && (requestedFile == null))
 		{
 			if (!isConvertibleTo(collectType, requestedType))
@@ -375,8 +357,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		InputStreamResource isr;
 		try
 		{
-			isr = new InputStreamResource(
-				Files.newInputStream(requestedFile.toPath()));
+			isr = new InputStreamResource(Files.newInputStream(requestedFile.toPath()));
 		}
 		catch (IOException ex)
 		{
@@ -854,12 +835,6 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 					roiCollection = new SegmentationRoiCollection(id,
 						ByteStreams.toByteArray(is));
 					break;
-				case Constants.Nifti:
-					roiCollection = new NiftiRoiCollection(id,
-						ByteStreams.toByteArray(is));
-					populateUids((NiftiRoiCollection) roiCollection, sessionId, user,
-						seriesUid);
-					break;
 				case Constants.Measurement:
 					roiCollection = new JsonMeasurementCollection(id,
 							ByteStreams.toByteArray(is));
@@ -956,36 +931,6 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		}
 	}
 
-	private void populateUids(NiftiRoiCollection roiCollection, String sessionId,
-		UserI user, String seriesUid) throws PluginException
-	{
-		if (StringUtils.isNullOrEmpty(seriesUid))
-		{
-			logger.warn("NIFTI ROI collection: series UID parameter not supplied");
-			return;
-		}
-		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
-			sessionId, user);
-		String studyUid = sessionData.getUid();
-		if (StringUtils.isNullOrEmpty(studyUid))
-		{
-			logger.warn("NIFTI ROI collection missing study UID");
-			return;
-		}
-		XnatImagescandata scanData = PluginUtils.getImageScanDataByUid(sessionData,
-			seriesUid);
-		if (scanData == null)
-		{
-			logger.warn(
-				"NIFTI ROI collection: cannot locate scan for series UID - {}",
-				seriesUid);
-			return;
-		}
-		Set<String> sopInstUids = PluginUtils.getSopInstanceUids(user, sessionId,
-			scanData.getId());
-		roiCollection.setDicomUids(studyUid, seriesUid, sopInstUids);
-	}
-
 	private Result refreshSdCache(String sessionId) throws PluginException
 	{
 		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
@@ -999,8 +944,7 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 				continue;
 			}
 			spatialDataService.deleteForSeries(seriesUid);
-			Map<String,DicomObject> dcmMap = DsdUtils.getDicomObjectMap(
-				spatialDataService, scanData);
+			Map<String, Attributes> dcmMap = DsdUtils.getDicomObjectMap(spatialDataService, scanData);
 			DsdUtils.saveToService(spatialDataService, dcmMap);
 		}
 
@@ -1013,68 +957,23 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		String seriesUid = null;
 		String type = collectData.getCollectiontype();
 		File collectFile = RoiUtils.getCollectionFile(user, collectData, type);
-		InputStream is = null;
-		try
-		{
-			is = Files.newInputStream(collectFile.toPath());
-			RoiCollection roiCollection = createRoiCollection(user,
-				collectData.getProject(), collectData.getImagesessionId(),
-				collectData.getId(), collectData.getLabel(), is, type, seriesUid);
-			storeAlternateTypes(user, roiCollection);
+		if (collectFile == null) {
+			throw new PluginException("Unable to determine file for ROI collection: "+collectData.getLabel(),
+					PluginCode.HttpInternalError);
 		}
-		catch (IOException ex)
-		{
-			throw new PluginException("Error reading file: "+collectFile.toPath(),
-				PluginCode.HttpInternalError, ex);
-		}
-		finally
-		{
-			IoUtils.safeClose(is);
-		}
-		String message = "ROI collection "+collectData.getId()+
-			" derived data regenerated";
-		logger.info(message);
+        try (InputStream is = Files.newInputStream(collectFile.toPath())) {
+            RoiCollection roiCollection = createRoiCollection(user, collectData.getProject(),
+                    collectData.getImagesessionId(), collectData.getId(), collectData.getLabel(), is, type, seriesUid);
+            storeAlternateTypes(user, roiCollection);
+        }
+        catch (IOException ex)
+        {
+            throw new PluginException("Error reading file: "+collectFile.toPath(), PluginCode.HttpInternalError, ex);
+        }
+        String message = "ROI collection "+collectData.getId() + " derived data regenerated";
+        logger.info(message);
 
 		return new Result(message, HttpStatus.OK);
-	}
-
-	private ResponseEntity<InputStreamResource> segToNifti(UserI user,
-		IcrRoicollectiondata collectData) throws PluginException
-	{
-		File segFile = RoiUtils.getCollectionFile(user, collectData,
-			Constants.Segmentation);
-		List<IcrRoicollectiondataSeriesuid> seriesUidList =
-			collectData.getReferences_seriesuid();
-		if (seriesUidList.isEmpty())
-		{
-			throw new PluginException("Unable to locate referenced series UID",
-				PluginCode.HttpUnprocessableEntity);
-		}
-		XnatImagescandata scanData = PluginUtils.getImageScanDataByUid(
-			collectData.getImageSessionData(), seriesUidList.get(0).getSeriesuid());
-		Map<String,DicomObject> dcmMap = DsdUtils.getDicomObjectMap(
-			spatialDataService, scanData);
-
-		Segmentation seg;
-		InputStreamResource isr;
-		try
-		{
-			DicomObject dcm = DicomUtils.readDicomFile(segFile);
-			seg = Iods.segmentation(dcm);
-			RoiConverter converter = DicomToolkit.getToolkit().createRoiConverter();
-			Nifti nifti = converter.toNifti(seg, dcmMap);
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			NiftiWriter writer = NiftiToolkit.getToolkit().createWriter();
-			writer.write(nifti, baos);
-			ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-			isr = new InputStreamResource(bais);
-		}
-		catch (IOException | ConversionException ex)
-		{
-			throw new PluginException(ex.getMessage(),
-				PluginCode.HttpInternalError, ex);
-		}
-		return new ResponseEntity<>(isr, HttpStatus.OK);
 	}
 
 	private void storeAlternateTypes(UserI user, RoiCollection roiCollection)

@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2023, Institute of Cancer Research
  * All rights reserved.
  *
@@ -38,7 +38,7 @@ package org.nrg.xnatx.ohifviewer.xapi;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
-import icr.etherj.StringUtils;
+import icr.etherj2.StringUtils;
 import io.swagger.annotations.*;
 import org.nrg.config.entities.Configuration;
 import org.nrg.config.services.ConfigService;

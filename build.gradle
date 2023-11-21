@@ -174,8 +174,6 @@ dependencies {
     implementation("io.projectreactor:reactor-bus") { transitive = false }
 
     implementation("org.slf4j:slf4j-api") { transitive = false }
-    // dcm4che2
-    implementation("dcm4che:dcm4che-core") { transitive = false }
     implementation("com.google.code.gson:gson") { transitive = false }
     // dcm4che3 -> v5
     implementation("org.dcm4che:dcm4che-core") { transitive = false }
@@ -189,9 +187,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic") { transitive = false }
     implementation("ch.qos.logback:logback-core") { transitive = false }
      // EtherJ
-    def vEtherJ = '1.1.6'
-    implementAndInclude("icr.etherj:etherj-core:${vEtherJ}") { transitive = false }
-    def vEtherJ2 = '0.1'
+    def vEtherJ2 = '0.2-SNAPSHOT'
     implementAndInclude("icr.etherj2:etherj2-core:${vEtherJ2}") { transitive = false }
 
     testImplementation "org.slf4j:slf4j-nop:1.7.36"

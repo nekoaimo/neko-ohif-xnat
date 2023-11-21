@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  *********************************************************************/
 package org.nrg.xnatx.plugin;
 
-import icr.etherj.AbstractExceptionCode;
+import icr.etherj2.AbstractExceptionCode;
 
 /**
  *

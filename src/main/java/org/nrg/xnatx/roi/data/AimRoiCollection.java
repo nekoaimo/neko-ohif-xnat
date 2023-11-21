@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -34,18 +34,18 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.data;
 
-import icr.etherj.StringUtils;
-import icr.etherj.XmlException;
-import icr.etherj.aim.AimToolkit;
-import icr.etherj.aim.AimUtils;
-import icr.etherj.aim.DicomImageReference;
-import icr.etherj.aim.Image;
-import icr.etherj.aim.ImageAnnotation;
-import icr.etherj.aim.ImageAnnotationCollection;
-import icr.etherj.aim.ImageReference;
-import icr.etherj.aim.ImageSeries;
-import icr.etherj.aim.ImageStudy;
-import icr.etherj.aim.XmlParser;
+import icr.etherj2.StringUtils;
+import icr.etherj2.XmlException;
+import icr.etherj2.aim.Aim;
+import icr.etherj2.aim.AimUtils;
+import icr.etherj2.aim.DicomImageReference;
+import icr.etherj2.aim.Image;
+import icr.etherj2.aim.ImageAnnotation;
+import icr.etherj2.aim.ImageAnnotationCollection;
+import icr.etherj2.aim.ImageReference;
+import icr.etherj2.aim.ImageSeries;
+import icr.etherj2.aim.ImageStudy;
+import icr.etherj2.aim.XmlParser;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import java.io.ByteArrayInputStream;
@@ -62,16 +62,15 @@ import org.nrg.xnatx.roi.Constants;
  *
  * @author jamesd
  */
-public class AimRoiCollection extends AbstractRoiCollection
-	implements RoiCollection
+public class AimRoiCollection extends AbstractRoiCollection implements RoiCollection
 {
 	private final ImageAnnotationCollection iac;
 
 	/**
-	 *
-	 * @param id
-	 * @param rawBytes
-	 * @throws PluginException
+	 * Returns a new AimRoiCollection.
+	 * @param id the RoiCollection ID
+	 * @param rawBytes the raw bytes of the IAC
+	 * @throws PluginException if any error occurs during parsing
 	 */
 	public AimRoiCollection(String id, byte[] rawBytes) throws PluginException
 	{
@@ -79,7 +78,7 @@ public class AimRoiCollection extends AbstractRoiCollection
 		setFileExtension("xml");
 		setFileFormat("XML");
 		setTypeDescription("AIM instance file");
-		XmlParser parser = AimToolkit.getToolkit().createXmlParser();
+		XmlParser parser = Aim.xmlParser();
 		try
 		{
 			iac = parser.parse(new ByteArrayInputStream(rawBytes));

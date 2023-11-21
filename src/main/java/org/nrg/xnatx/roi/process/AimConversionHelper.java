@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -35,15 +35,16 @@
 package org.nrg.xnatx.roi.process;
 
 import com.google.common.collect.ImmutableSet;
-import icr.etherj.XmlException;
-import icr.etherj.aim.AimToolkit;
-import icr.etherj.aim.ImageAnnotationCollection;
-import icr.etherj.aim.XmlParser;
-import icr.etherj.dicom.ConversionException;
-import icr.etherj.dicom.DicomToolkit;
-import icr.etherj.dicom.RoiConverter;
-import icr.etherj.dicom.iod.Iods;
-import icr.etherj.dicom.iod.RtStruct;
+import icr.etherj2.XmlException;
+import icr.etherj2.aim.Aim;
+import icr.etherj2.aim.ImageAnnotationCollection;
+import icr.etherj2.aim.XmlParser;
+import icr.etherj2.dicom.ConversionException;
+import icr.etherj2.dicom.DicomToolkit;
+import icr.etherj2.dicom.RoiConverter;
+import icr.etherj2.dicom.iod.Iods;
+import icr.etherj2.dicom.iod.RtStruct;
+import org.dcm4che3.data.UID;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.roi.Constants;
@@ -53,9 +54,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import org.dcm4che2.data.BasicDicomObject;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.io.DicomOutputStream;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,30 +110,24 @@ public class AimConversionHelper extends AbstractConversionHelper
 		byte[] result = null;
 		try
 		{
-			XmlParser parser = AimToolkit.getToolkit().createXmlParser();
+			XmlParser parser = Aim.xmlParser();
 			ImageAnnotationCollection iac = parser.parse(roiCollection.getStream());
 			logger.debug("IAC read: {}", iac.getDescription());
 
 			RoiConverter converter = DicomToolkit.getToolkit().createRoiConverter();
-			switch (targetType)
-			{
-				case Constants.RtStruct:
-					RtStruct rtStruct = converter.toRtStruct(iac, getDicomObjectMap());
-					DicomObject dcm = new BasicDicomObject();
-					Iods.pack(rtStruct, dcm);
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					DicomOutputStream os = new DicomOutputStream(baos);
-					os.writeDicomFile(dcm);
-					result = baos.toByteArray();
-					logger.debug("RTSTRUCT bytes created");
-					break;
-
-				default:
-					// Should never be executed as the targetType is checked in ctor
-					throw new PluginException(
-						"Unknown or unsupported target type: "+targetType,
-						PluginCode.HttpInternalError);
-			}
+            if (targetType.equals(Constants.RtStruct)) {
+                RtStruct rtStruct = converter.toRtStruct(iac, getDicomObjectMap());
+                Attributes dcm = Iods.pack(rtStruct);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                DicomOutputStream os = new DicomOutputStream(baos, UID.ImplicitVRLittleEndian);
+                dcm.writeTo(os);
+                result = baos.toByteArray();
+                logger.debug("RTSTRUCT bytes created");
+            } else {
+				// Should never be executed as the targetType is checked in ctor
+                throw new PluginException("Unknown or unsupported target type: " + targetType,
+                        PluginCode.HttpInternalError);
+            }
 		}
 		catch (IOException ex)
 		{

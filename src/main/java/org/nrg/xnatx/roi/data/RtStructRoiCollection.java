@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -34,26 +34,26 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.data;
 
-import icr.etherj.StringUtils;
-import icr.etherj.dicom.DicomUtils;
-import icr.etherj.dicom.iod.Contour;
-import icr.etherj.dicom.iod.IodUtils;
-import icr.etherj.dicom.iod.Iods;
-import icr.etherj.dicom.iod.ReferencedFrameOfReference;
-import icr.etherj.dicom.iod.RoiContour;
-import icr.etherj.dicom.iod.RtReferencedSeries;
-import icr.etherj.dicom.iod.RtReferencedStudy;
-import icr.etherj.dicom.iod.RtStruct;
-import icr.etherj.dicom.iod.StructureSetRoi;
-import icr.etherj.dicom.iod.module.RoiContourModule;
-import icr.etherj.dicom.iod.module.StructureSetModule;
+import icr.etherj2.StringUtils;
+import icr.etherj2.dicom.DicomUtils;
+import icr.etherj2.dicom.iod.Contour;
+import icr.etherj2.dicom.iod.IodUtils;
+import icr.etherj2.dicom.iod.Iods;
+import icr.etherj2.dicom.iod.ReferencedFrameOfReference;
+import icr.etherj2.dicom.iod.RoiContour;
+import icr.etherj2.dicom.iod.RtReferencedSeries;
+import icr.etherj2.dicom.iod.RtReferencedStudy;
+import icr.etherj2.dicom.iod.RtStruct;
+import icr.etherj2.dicom.iod.StructureSetRoi;
+import icr.etherj2.dicom.iod.module.RoiContourModule;
+import icr.etherj2.dicom.iod.module.StructureSetModule;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.dcm4che2.data.DicomObject;
+import org.dcm4che3.data.Attributes;
 import icr.xnat.plugin.roi.entity.Roi;
 import org.nrg.xnatx.roi.Constants;
 
@@ -67,13 +67,12 @@ public class RtStructRoiCollection extends AbstractRoiCollection
 	private final RtStruct rtStruct;
 
 	/**
-	 *
-	 * @param id
-	 * @param rawBytes
-	 * @throws PluginException
+	 * Returns a new RtStructRoiCollection.
+	 * @param id the RoiCollection ID
+	 * @param rawBytes the raw bytes of the RtStruct
+	 * @throws PluginException if any error occurs during parsing
 	 */
-	public RtStructRoiCollection(String id, byte[] rawBytes)
-		throws PluginException
+	public RtStructRoiCollection(String id, byte[] rawBytes) throws PluginException
 	{
 		super(id, rawBytes);
 		setFileExtension("dcm");
@@ -81,8 +80,7 @@ public class RtStructRoiCollection extends AbstractRoiCollection
 		setTypeDescription("RT Structure Set");
 		try
 		{
-			DicomObject dcm = DicomUtils.readDicomObject(
-				new ByteArrayInputStream(rawBytes));
+			Attributes dcm = DicomUtils.readAttributes(new ByteArrayInputStream(rawBytes));
 			rtStruct = Iods.rtStruct(dcm);
 		}
 		catch (IOException ex)

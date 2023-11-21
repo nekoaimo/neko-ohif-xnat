@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2020, Institute of Cancer Research
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  *********************************************************************/
 package org.nrg.xnatx.ohifviewer.inputcreator;
 
-import icr.etherj.StringUtils;
+import icr.etherj2.StringUtils;
 import org.hibernate.engine.jdbc.ClobProxy;
 import org.nrg.config.entities.Configuration;
 import org.nrg.config.services.ConfigService;

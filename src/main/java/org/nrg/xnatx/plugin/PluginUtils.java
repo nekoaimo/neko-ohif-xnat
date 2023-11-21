@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -34,12 +34,13 @@
  *********************************************************************/
 package org.nrg.xnatx.plugin;
 
-import icr.etherj.StringUtils;
-import icr.etherj.Xml;
+import icr.etherj2.StringUtils;
+import icr.etherj2.Xml;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -113,19 +114,6 @@ public class PluginUtils
 			? sessionDir.getPath()+File.separator
 			: null;
 	}
-
-//	/**
-//	 *
-//	 * @param sessionData
-//	 * @return
-//	 */
-//	public static String getExperimentPath(XnatImagesessiondata sessionData)
-//	{
-//		File sessionDir = sessionData.getSessionDir();
-//		return (sessionDir != null)
-//			? sessionData.getSessionDir().getPath()+File.separator
-//			: null;
-//	}
 
 	/**
 	 *
@@ -320,7 +308,7 @@ public class PluginUtils
 		{
 			String path = getScanCatalog(sessionData, scanData);
 			logger.debug("Catalog for UIDs: "+path);
-			doc = streamToDoc(new FileInputStream(path));
+			doc = streamToDoc(Files.newInputStream(Paths.get(path)));
 		}
 		catch (IOException ex)
 		{

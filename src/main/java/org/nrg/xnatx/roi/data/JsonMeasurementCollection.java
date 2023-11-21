@@ -34,10 +34,10 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.data;
 
-import icr.etherj.JsonException;
-import icr.etherj.StringUtils;
-import icr.etherj.aim.AimUtils;
-import icr.etherj.meas.*;
+import icr.etherj2.JsonException;
+import icr.etherj2.StringUtils;
+import icr.etherj2.aim.AimUtils;
+import icr.etherj2.meas.*;
 import icr.xnat.plugin.roi.entity.Roi;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
@@ -54,8 +54,7 @@ import java.util.List;
 /**
  * @author mo.alsad
  */
-public class JsonMeasurementCollection extends AbstractRoiCollection
-	implements RoiCollection
+public class JsonMeasurementCollection extends AbstractRoiCollection implements RoiCollection
 {
 
 	private final MeasurementCollection imc;

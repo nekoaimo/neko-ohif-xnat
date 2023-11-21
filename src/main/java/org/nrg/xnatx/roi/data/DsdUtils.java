@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -34,27 +34,25 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.data;
 
-import icr.etherj.PathScan;
-import icr.etherj.PathScanContext;
-import icr.etherj.StringUtils;
-import icr.etherj.dicom.DicomToolkit;
-import icr.etherj.dicom.DicomUtils;
+import icr.etherj2.PathScan;
+import icr.etherj2.PathScanContext;
+import icr.etherj2.StringUtils;
+import icr.etherj2.dicom.DicomToolkit;
+import icr.etherj2.dicom.DicomUtils;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.plugin.PluginUtils;
 import org.nrg.xnatx.roi.service.DicomSpatialDataService;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.dcm4che2.data.BasicDicomObject;
-import org.dcm4che2.data.DicomObject;
-import org.dcm4che2.data.SequenceDicomElement;
-import org.dcm4che2.data.Tag;
-import org.dcm4che2.data.VR;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 import org.nrg.xdat.om.XnatImagescandata;
 import org.nrg.xdat.om.XnatImagesessiondata;
 import icr.xnat.plugin.roi.entity.DicomSpatialData;
@@ -67,19 +65,47 @@ import org.slf4j.LoggerFactory;
  */
 public class DsdUtils
 {
-	private final static Logger logger = LoggerFactory.getLogger(
-		DsdUtils.class);
+	private final static Logger logger = LoggerFactory.getLogger(DsdUtils.class);
 
-	public static Map<String,DicomObject> getDicomObjectMap(
-		DicomSpatialDataService service, XnatImagescandata scanData)
+	public static void createSpatialDicom(Map<String, Attributes> dcmMap, DicomSpatialData dsd) {
+		String sopClassUid = dsd.getSopClassUid();
+		if (!DicomUtils.isImageSopClass(sopClassUid)) {
+			return;
+		}
+		String sopInstUid = dsd.getSopInstanceUid();
+		if (DicomUtils.isMultiframeImageSopClass(sopClassUid)) {
+			Attributes dcm = dcmMap.get(sopInstUid);
+			if (dcm == null) {
+				dcm = createMultiframeSpatialDicom(dcmMap, dsd);
+				dcmMap.put(dcm.getString(Tag.SOPInstanceUID), dcm);
+			}
+			populateMultiframeSpatialDicom(dcm, dsd);
+			return;
+		}
+
+		Attributes dcm = new Attributes();
+		dcm.setString(Tag.SOPClassUID, VR.UI, dsd.getSopClassUid());
+		dcm.setString(Tag.SOPInstanceUID, VR.UI, dsd.getSopInstanceUid());
+		dcm.setString(Tag.FrameOfReferenceUID, VR.UI, dsd.getFrameOfReferenceUid());
+		dcm.setString(Tag.StudyInstanceUID, VR.UI, dsd.getStudyUid());
+		dcm.setString(Tag.SeriesInstanceUID, VR.UI, dsd.getSeriesUid());
+		dcm.setDouble(Tag.ImagePositionPatient, VR.DS, dsd.fetchImagePositionPatientAsDoubles());
+		dcm.setDouble(Tag.ImageOrientationPatient, VR.DS, dsd.fetchImageOrientationPatientAsDoubles());
+		dcm.setDouble(Tag.PixelSpacing, VR.DS, dsd.fetchPixelSpacingAsDoubles());
+
+		dcmMap.put(dcm.getString(Tag.SOPInstanceUID), dcm);
+	}
+
+	public static Map<String,Attributes> getDicomObjectMap(DicomSpatialDataService service, XnatImagescandata scanData)
 		throws PluginException
 	{
-		Map<String,DicomObject> dcmMap = new HashMap<>();
+		logger.debug("Fetching from DicomSpatialDataService");
+		Map<String,Attributes> dcmMap = new HashMap<>();
 		String seriesUid = scanData.getUid();
 		if (StringUtils.isNullOrEmpty(seriesUid))
 		{
-			logger.warn("Series UID not present for session "+
-				scanData.getImageSessionId()+", scan "+scanData.getId());
+			logger.warn("Series UID not present for session " + scanData.getImageSessionId() +
+					", scan " + scanData.getId());
 			return dcmMap;
 		}
 		if (buildFromService(service, seriesUid, dcmMap))
@@ -89,7 +115,7 @@ public class DsdUtils
 		XnatImagesessiondata sessionData = scanData.getImageSessionData();
 		String scanPath = PluginUtils.getScanPath(sessionData, scanData);
 		DicomReceiver dcmRx = new DicomReceiver(seriesUid, dcmMap);
-		PathScan<DicomObject> scanner = DicomToolkit.getToolkit().createPathScan();
+		PathScan<Attributes> scanner = DicomToolkit.getToolkit().createPathScan(Tag.PixelData);
 		scanner.addContext(dcmRx);
 		try
 		{
@@ -99,22 +125,21 @@ public class DsdUtils
 		{
 			throw new PluginException(ex.getMessage(), PluginCode.IO, ex);
 		}
-		logger.debug(String.format("%d items found for series UID %s",
-			dcmMap.size(), seriesUid));
+		logger.debug(String.format("%d items found for series UID %s", dcmMap.size(), seriesUid));
 
 		return dcmMap;
 	}
 
-	public static void saveToService(DicomSpatialDataService service,
-		Map<String,DicomObject> dcmMap)
+	public static void saveToService(DicomSpatialDataService service, Map<String,Attributes> dcmMap)
 	{
+		logger.debug("Saving to DicomSpatialDataService");
 		if (dcmMap.isEmpty())
 		{
 			logger.warn("No DICOM spatial data to store");
 			return;
 		}
 		List<DicomSpatialData> dsdList = new ArrayList<>();
-		for (DicomObject dcm : dcmMap.values())
+		for (Attributes dcm : dcmMap.values())
 		{
 			if (DicomUtils.isMultiframeImageSopClass(dcm.getString(Tag.SOPClassUID)))
 			{
@@ -129,9 +154,8 @@ public class DsdUtils
 		logger.info("DICOM spatial data saved to service");
 	}
 
-	private static boolean buildFromService(
-		DicomSpatialDataService service, String seriesUid,
-		Map<String, DicomObject> dcmMap)
+	private static boolean buildFromService(DicomSpatialDataService service, String seriesUid,
+		Map<String, Attributes> dcmMap)
 	{
 		List<DicomSpatialData> dsdList = new ArrayList<>();
 		List<DicomSpatialData> found = service.findForSeries(seriesUid);
@@ -154,28 +178,26 @@ public class DsdUtils
 		return true;
 	}
 
-	private static DicomSpatialData createDicomSpatialData(DicomObject dcm)
+	private static DicomSpatialData createDicomSpatialData(Attributes dcm)
 	{
 		DicomSpatialData dsd = new DicomSpatialData();
-	
+
 		dsd.setSopClassUid(dcm.getString(Tag.SOPClassUID, ""));
 		dsd.setSopInstanceUid(dcm.getString(Tag.SOPInstanceUID, ""));
 		dsd.setFrameOfReferenceUid(dcm.getString(Tag.FrameOfReferenceUID, ""));
 		dsd.setStudyUid(dcm.getString(Tag.StudyInstanceUID, ""));
 		dsd.setSeriesUid(dcm.getString(Tag.SeriesInstanceUID, ""));
-		String[] empty = new String[] {};
-		String[] array = dcm.getStrings(Tag.ImagePositionPatient, empty);
-		dsd.setImagePositionPatient(StringUtils.join("\\", array));
-		array = dcm.getStrings(Tag.ImageOrientationPatient, empty);
-		dsd.setImageOrientationPatient(StringUtils.join("\\", array));
-		array = dcm.getStrings(Tag.PixelSpacing, empty);
-		dsd.setPixelSpacing(StringUtils.join("\\", array));
-	
+		String[] array = dcm.getStrings(Tag.ImagePositionPatient);
+		dsd.setImagePositionPatient(array != null ? String.join("\\", array) : null);
+		array = dcm.getStrings(Tag.ImageOrientationPatient);
+		dsd.setImageOrientationPatient(array != null ? String.join("\\", array) : null);
+		array = dcm.getStrings(Tag.PixelSpacing);
+		dsd.setPixelSpacing(array != null ? String.join("\\", array) : null);
+
 		return dsd;
 	}
 
-	private static List<DicomSpatialData> createMultiframeDicomSpatialData(
-		DicomObject dcm)
+	private static List<DicomSpatialData> createMultiframeDicomSpatialData(Attributes dcm)
 	{
 		List<DicomSpatialData> dsdList = new ArrayList<>();
 		String sopClassUid = dcm.getString(Tag.SOPClassUID, "");
@@ -183,7 +205,11 @@ public class DsdUtils
 		String forUid = dcm.getString(Tag.FrameOfReferenceUID, "");
 		String studyUid = dcm.getString(Tag.StudyInstanceUID, "");
 		String seriesUid = dcm.getString(Tag.SeriesInstanceUID, "");
-		int nFrames = dcm.getInt(Tag.NumberOfFrames);
+		int nFrames = dcm.getInt(Tag.NumberOfFrames, -1);
+		if (nFrames < 0) {
+			logger.warn("NumberOfFrames not found, cannot create multiframe DicomSpatialData");
+			return dsdList;
+		}
 		for (int i=0; i<nFrames; i++)
 		{
 			DicomSpatialData dsd = new DicomSpatialData();
@@ -204,92 +230,42 @@ public class DsdUtils
 		return dsdList;
 	}
 
-	private static DicomObject createMultiframeSpatialDicom(DicomSpatialData dsd)
+	private static Attributes createMultiframeSpatialDicom(Map<String,Attributes> dcmMap, DicomSpatialData dsd)
 	{
-		DicomObject dcm = new BasicDicomObject();
-		dcm.putString(Tag.SOPClassUID, VR.UI, dsd.getSopClassUid());
-		dcm.putString(Tag.SOPInstanceUID, VR.UI, dsd.getSopInstanceUid());
-		dcm.putString(Tag.FrameOfReferenceUID, VR.UI,
-			dsd.getFrameOfReferenceUid());
-		dcm.putString(Tag.StudyInstanceUID, VR.UI, dsd.getStudyUid());
-		dcm.putString(Tag.SeriesInstanceUID, VR.UI, dsd.getSeriesUid());
-		// Create the per-frame sequence, filled in later:
-		// populateMultiframeSpatialDicom()
-		dcm.add(new SequenceDicomElement(
-			Tag.PerFrameFunctionalGroupsSequence, VR.SQ, false, new ArrayList<>(),
-			dcm));
+		Attributes dcm = new Attributes();
+		dcm.setString(Tag.SOPClassUID, VR.UI, dsd.getSopClassUid());
+		dcm.setString(Tag.SOPInstanceUID, VR.UI, dsd.getSopInstanceUid());
+		dcm.setString(Tag.FrameOfReferenceUID, VR.UI, dsd.getFrameOfReferenceUid());
+		dcm.setString(Tag.StudyInstanceUID, VR.UI, dsd.getStudyUid());
+		dcm.setString(Tag.SeriesInstanceUID, VR.UI, dsd.getSeriesUid());
+		// Create the per-frame sequence, filled in later: populateMultiframeSpatialDicom()
+		dcm.newSequence(Tag.PerFrameFunctionalGroupsSequence, 1);
+
+		dcmMap.put(dcm.getString(Tag.SOPInstanceUID), dcm);
 
 		return dcm;
 	}
 
-	private static void createSpatialDicom(Map<String,DicomObject> dcmMap,
-		DicomSpatialData dsd)
+	private static double[] getImageOrientationPatient(Attributes dcm, int frame)
 	{
-		String sopClassUid = dsd.getSopClassUid();
-		if (!DicomUtils.isImageSopClass(sopClassUid))
-		{
-			return;
-		}
-		String sopInstUid = dsd.getSopInstanceUid();
-		if (DicomUtils.isMultiframeImageSopClass(sopClassUid))
-		{
-			DicomObject dcm = dcmMap.get(sopInstUid);
-			if (dcm == null)
-			{
-				dcm = createMultiframeSpatialDicom(dsd);
-				dcmMap.put(dcm.getString(Tag.SOPInstanceUID), dcm);
-			}
-			populateMultiframeSpatialDicom(dcm, dsd);
-			return;
-		}
-
-		DicomObject dcm =  new BasicDicomObject();
-		dcm.putString(Tag.SOPClassUID, VR.UI, dsd.getSopClassUid());
-		dcm.putString(Tag.SOPInstanceUID, VR.UI, dsd.getSopInstanceUid());
-		dcm.putString(Tag.FrameOfReferenceUID, VR.UI,
-			dsd.getFrameOfReferenceUid());
-		dcm.putString(Tag.StudyInstanceUID, VR.UI, dsd.getStudyUid());
-		dcm.putString(Tag.SeriesInstanceUID, VR.UI, dsd.getSeriesUid());
-		dcm.putDoubles(Tag.ImagePositionPatient, VR.DS,
-			dsd.fetchImagePositionPatientAsDoubles());
-		dcm.putDoubles(Tag.ImageOrientationPatient, VR.DS,
-			dsd.fetchImageOrientationPatientAsDoubles());
-		dcm.putDoubles(Tag.PixelSpacing, VR.DS, dsd.fetchPixelSpacingAsDoubles());
-
-		dcmMap.put(dcm.getString(Tag.SOPInstanceUID), dcm);
-	}
-
-	private static double[] getImageOrientationPatient(DicomObject dcm, int frame)
-	{
-		double[] ori = dcm.getDoubles(new int[] {
-			Tag.PerFrameFunctionalGroupsSequence, frame-1,
-			Tag.PlaneOrientationSequence, 0,
-			Tag.ImageOrientationPatient});
-		if ((ori == null) || (ori.length != 6))
-		{
-			ori = dcm.getDoubles(new int[] {
-				Tag.SharedFunctionalGroupsSequence, 0,
-				Tag.PlaneOrientationSequence, 0,
-				Tag.ImageOrientationPatient});
-		}
+		Attributes poDcm = DicomUtils.getFunctionGroup(dcm, Tag.PlaneOrientationSequence, frame - 1);
+		double[] ori = poDcm.getDoubles(Tag.ImageOrientationPatient);
 		if ((ori == null) || (ori.length != 6))
 		{
 			String serUid = dcm.getString(Tag.SeriesInstanceUID);
 			String extra = (serUid != null)
-				? " - Series "+serUid+", Frame "+frame
-				: "";
+					? " - Series "+serUid+", Frame "+frame
+					: "";
 			logger.warn("ImageOrientationPatient missing or invalid"+extra);
 			ori = new double[] {};
 		}
 		return ori;
 	}
 
-	private static double[] getImagePositionPatient(DicomObject dcm, int frame)
+	private static double[] getImagePositionPatient(Attributes dcm, int frame)
 	{
-		double[] pos = dcm.getDoubles(new int[] {
-			Tag.PerFrameFunctionalGroupsSequence, frame-1,
-			Tag.PlanePositionSequence, 0,
-			Tag.ImagePositionPatient});
+		Attributes ppDcm = DicomUtils.getFunctionGroup(dcm, Tag.PlanePositionSequence, frame - 1);
+		double[] pos = ppDcm.getDoubles(Tag.ImagePositionPatient);
 		if ((pos == null) || (pos.length != 3))
 		{
 			String serUid = dcm.getString(Tag.SeriesInstanceUID);
@@ -300,19 +276,10 @@ public class DsdUtils
 		return pos;
 	}
 
-	private static double[] getPixelSpacing(DicomObject dcm, int frame)
+	private static double[] getPixelSpacing(Attributes dcm, int frame)
 	{
-		double[] spacing = dcm.getDoubles(new int[] {
-			Tag.PerFrameFunctionalGroupsSequence, frame-1,
-			Tag.PixelMeasuresSequence, 0,
-			Tag.PixelSpacing});
-		if ((spacing == null) || (spacing.length != 2))
-		{
-			spacing = dcm.getDoubles(new int[] {
-				Tag.SharedFunctionalGroupsSequence, 0,
-				Tag.PixelMeasuresSequence, 0,
-				Tag.PixelSpacing});
-		}
+		Attributes psDcm = DicomUtils.getFunctionGroup(dcm, Tag.PixelMeasuresSequence, frame - 1);
+		double[] spacing = psDcm.getDoubles(Tag.PixelSpacing);
 		if ((spacing == null) || (spacing.length != 2))
 		{
 			String serUid = dcm.getString(Tag.SeriesInstanceUID);
@@ -323,25 +290,21 @@ public class DsdUtils
 		return spacing;
 	}
 
-	private static void populateMultiframeSpatialDicom(DicomObject dcm,
-		DicomSpatialData dsd)
+	private static void populateMultiframeSpatialDicom(Attributes dcm, DicomSpatialData dsd)
 	{
 		int frame = dsd.getFrameNumber()-1;
-		dcm.putDoubles(new int[] {Tag.PerFrameFunctionalGroupsSequence, frame,
-			Tag.PlanePositionSequence, 0, Tag.ImagePositionPatient}, VR.DS,
-			dsd.fetchImagePositionPatientAsDoubles());
-		dcm.putDoubles(new int[] {Tag.PerFrameFunctionalGroupsSequence, frame,
-			Tag.PlaneOrientationSequence, 0, Tag.ImageOrientationPatient}, VR.DS,
-			dsd.fetchImageOrientationPatientAsDoubles());
-		dcm.putDoubles(new int[] {Tag.PerFrameFunctionalGroupsSequence, frame,
-			Tag.PixelMeasuresSequence, 0, Tag.PixelSpacing}, VR.DS,
-			dsd.fetchPixelSpacingAsDoubles());
+		Attributes ppDcm = DicomUtils.getFunctionGroup(dcm, Tag.PlanePositionSequence, frame);
+		ppDcm.setDouble(Tag.ImagePositionPatient, VR.DS, dsd.fetchImagePositionPatientAsDoubles());
+		Attributes poDcm = DicomUtils.getFunctionGroup(dcm, Tag.PlaneOrientationSequence, frame);
+		poDcm.setDouble(Tag.ImageOrientationPatient, VR.DS, dsd.fetchImageOrientationPatientAsDoubles());
+		Attributes psDcm = DicomUtils.getFunctionGroup(dcm, Tag.PixelMeasuresSequence, frame);
+		psDcm.setDouble(Tag.PixelSpacing, VR.DS, dsd.fetchPixelSpacingAsDoubles());
 	}
 
 	private DsdUtils()
 	{}
 
-	private static class DsdComparator implements Comparator<DicomSpatialData>
+	public static class DsdComparator implements Comparator<DicomSpatialData>
 	{
 		@Override
 		public int compare(DicomSpatialData a, DicomSpatialData b)
@@ -367,26 +330,25 @@ public class DsdUtils
 		}
 	}
 
-	private static class DicomReceiver implements PathScanContext<DicomObject>
+	private static class DicomReceiver implements PathScanContext<Attributes>
 	{
-		private final Map<String,DicomObject> dcmMap;
+		private final Map<String,Attributes> dcmMap;
 		private final String seriesUid;
 
-		public DicomReceiver(String seriesUid, Map<String,DicomObject> dcmMap)
+		public DicomReceiver(String seriesUid, Map<String,Attributes> dcmMap)
 		{
 			this.seriesUid = seriesUid;
 			this.dcmMap = dcmMap;
 		}
 
 		@Override
-		public void notifyItemFound(File file, DicomObject dcm)
+		public void notifyItemFound(Path path, Attributes dcm)
 		{
 			String uid = dcm.getString(Tag.SeriesInstanceUID);
 			if (seriesUid.equals(uid))
 			{
 				// Exclude pixel data to save RAM
-				dcmMap.put(dcm.getString(Tag.SOPInstanceUID),
-					dcm.exclude(new int[] {Tag.PixelData}));
+				dcmMap.put(dcm.getString(Tag.SOPInstanceUID), dcm);
 			}
 		}
 

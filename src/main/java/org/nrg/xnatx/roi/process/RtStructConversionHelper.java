@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -35,15 +35,15 @@
 package org.nrg.xnatx.roi.process;
 
 import com.google.common.collect.ImmutableSet;
-import icr.etherj.aim.AimToolkit;
-import icr.etherj.aim.ImageAnnotationCollection;
-import icr.etherj.aim.XmlWriter;
-import icr.etherj.dicom.ConversionException;
-import icr.etherj.dicom.DicomToolkit;
-import icr.etherj.dicom.DicomUtils;
-import icr.etherj.dicom.RoiConverter;
-import icr.etherj.dicom.iod.Iods;
-import icr.etherj.dicom.iod.RtStruct;
+import icr.etherj2.aim.Aim;
+import icr.etherj2.aim.ImageAnnotationCollection;
+import icr.etherj2.aim.XmlWriter;
+import icr.etherj2.dicom.ConversionException;
+import icr.etherj2.dicom.DicomToolkit;
+import icr.etherj2.dicom.DicomUtils;
+import icr.etherj2.dicom.RoiConverter;
+import icr.etherj2.dicom.iod.Iods;
+import icr.etherj2.dicom.iod.RtStruct;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.roi.Constants;
@@ -53,7 +53,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import org.dcm4che2.data.DicomObject;
+import org.dcm4che3.data.Attributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,30 +110,24 @@ public class RtStructConversionHelper extends AbstractConversionHelper
 		byte[] result = null;
 		try
 		{
-			DicomObject dcm = DicomUtils.readDicomObject(roiCollection.getStream());
+			Attributes dcm = DicomUtils.readAttributes(roiCollection.getStream());
 			RtStruct rtStruct = Iods.rtStruct(dcm);
 			logger.debug("RTSTRUCT read: {}",
 				rtStruct.getStructureSetModule().getStructureSetLabel());
 
 			RoiConverter converter = DicomToolkit.getToolkit().createRoiConverter();
-			switch (targetType)
-			{
-				case Constants.AIM:
-					ImageAnnotationCollection iac = converter.toIac(rtStruct,
-						getDicomObjectMap());
-					XmlWriter writer = AimToolkit.getToolkit().createXmlWriter();
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					writer.write(iac, baos);
-					result = baos.toByteArray();
-					logger.debug("IAC bytes created");
-					break;
-
-				default:
-					// Should never be executed as the targetType is checked in ctor
-					throw new PluginException(
-						"Unknown or unsupported target type: "+targetType,
-						PluginCode.HttpInternalError);
-			}
+            if (targetType.equals(Constants.AIM)) {
+                ImageAnnotationCollection iac = converter.toIac(rtStruct, getDicomObjectMap());
+                XmlWriter writer = Aim.xmlWriter();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                writer.write(iac, baos);
+                result = baos.toByteArray();
+                logger.debug("IAC bytes created");
+            } else {
+				// Should never be executed as the targetType is checked in ctor
+                throw new PluginException("Unknown or unsupported target type: " + targetType,
+                        PluginCode.HttpInternalError);
+            }
 		}
 		catch (IOException ex)
 		{

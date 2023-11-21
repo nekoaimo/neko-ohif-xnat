@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.xapi;
 
-import icr.etherj.ExceptionCode;
+import icr.etherj2.ExceptionCode;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xapi.exceptions.NotFoundException;

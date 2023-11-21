@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.process;
 
-import icr.etherj.StringUtils;
+import icr.etherj2.StringUtils;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.roi.Constants;
