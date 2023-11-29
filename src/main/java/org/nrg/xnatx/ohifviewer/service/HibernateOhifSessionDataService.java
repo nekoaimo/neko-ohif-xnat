@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2017, Institute of Cancer Research
  * All rights reserved.
  *
@@ -49,10 +49,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.nio.charset.Charset;
 import java.sql.SQLException;
 
 @Service

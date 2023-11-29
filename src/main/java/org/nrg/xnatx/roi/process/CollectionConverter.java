@@ -34,81 +34,77 @@
  *********************************************************************/
 package org.nrg.xnatx.roi.process;
 
+import org.nrg.xnatx.ohifviewer.service.OhifSessionDataService;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.roi.data.RoiCollection;
 import org.nrg.xnatx.roi.service.DicomSpatialDataService;
+
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
+
 import org.dcm4che3.data.Attributes;
 import org.nrg.xft.security.UserI;
 
 /**
- *
  * @author jamesd
  */
-public interface CollectionConverter
-{
-	/**
-	 *
-	 * @param user
-	 * @param roiCollection
-	 * @param targetType
-	 * @return
-	 * @throws PluginException
-	 */
-	public Result convert(UserI user, RoiCollection roiCollection,
-		String targetType, DicomSpatialDataService spatialDataService)
-		throws PluginException;
+public interface CollectionConverter {
+    /**
+     * Convert an ROI collection to another type
+     *
+     * @param user          the user
+     * @param roiCollection the ROI collection
+     * @param targetType    the target type
+     * @return a message and HTTP return code
+     * @throws PluginException if any failure occurs
+     */
+    Result convert(UserI user, RoiCollection roiCollection, String targetType,
+                   DicomSpatialDataService spatialDataService, OhifSessionDataService ohifJsonService)
+            throws PluginException;
 
-	/**
-	 *
-	 */
-	public interface Helper
-	{
-		/**
-		 *
-		 * @return
-		 * @throws PluginException
-		 */
-		public byte[] convert() throws PluginException;
+    /**
+     *
+     */
+    interface Helper {
+        /**
+         * Returns the <code>byte[]</code> containing the conversion of the RoiCollection's original format data.
+         *
+         * @return the converted data
+         * @throws PluginException if conversion fails
+         */
+        byte[] convert() throws PluginException;
 
-		/**
-		 *
-		 * @return
-		 */
-		public File getCollectionFile();
+        /**
+         * @return
+         */
+        public File getCollectionFile();
 
-		/**
-		 *
-		 * @return
-		 * @throws PluginException
-		 */
-		public Map<String,Attributes> getDicomObjectMap() throws PluginException;
+        /**
+         * @return
+         * @throws PluginException
+         */
+        Map<String, Attributes> getDicomObjectMap() throws PluginException;
 
-		/**
-		 *
-		 * @return
-		 */
-		public String getTargetFileFormat();
+        /**
+         * @return
+         */
+        String getTargetFileFormat();
 
-		/**
-		 *
-		 * @return
-		 */
-		public String getTargetType();
+        /**
+         * @return
+         */
+        String getTargetType();
 
-		/**
-		 *
-		 * @return
-		 */
-		public String getTargetTypeDescription();
+        /**
+         * @return
+         */
+        public String getTargetTypeDescription();
 
-		/**
-		 *
-		 * @return
-		 */
-		public Set<String> outputTypes();
-	}
+        /**
+         * @return
+         */
+        Set<String> outputTypes();
+    }
 
 }

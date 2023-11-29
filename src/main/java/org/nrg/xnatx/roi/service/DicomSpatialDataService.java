@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -35,34 +35,36 @@
 package org.nrg.xnatx.roi.service;
 
 import icr.xnat.plugin.roi.entity.DicomSpatialData;
+
 import java.util.List;
+
 import org.nrg.framework.orm.hibernate.BaseHibernateService;
 
 /**
- *
  * @author jamesd
  */
-public interface DicomSpatialDataService
-	extends BaseHibernateService<DicomSpatialData>
-{
+public interface DicomSpatialDataService extends BaseHibernateService<DicomSpatialData> {
 
-	/**
-	 *
-	 * @param list
-	 */
-	void create(List<DicomSpatialData> list);
+    /**
+     * Deprecated - no-op
+     *
+     * @param list ignored
+     */
+    @Deprecated
+    void create(List<DicomSpatialData> list);
 
-	/**
-	 *
-	 * @param seriesUid
-	 */
-	void deleteForSeries(String seriesUid);
+    /**
+     * Deletes stored DicomSpatialData matching the series UID.
+     *
+     * @param seriesUid the series UID
+     */
+    void deleteForSeries(String seriesUid);
 
-	/**
-	 *
-	 * @param seriesUid
-	 * @return
-	 */
-	List<DicomSpatialData> findForSeries(String seriesUid);
+    /**
+     * Returns stored DicomSpatialData matching the series UID.
+     * @param seriesUid the series UID
+     * @return list of stored DicomSpatialData
+     */
+    List<DicomSpatialData> findForSeries(String seriesUid);
 
 }

@@ -45,76 +45,69 @@ import icr.etherj2.dicom.RoiConverter;
 import icr.etherj2.dicom.iod.Iods;
 import icr.etherj2.dicom.iod.RtStruct;
 import org.dcm4che3.data.UID;
+import org.nrg.xnatx.ohifviewer.service.OhifSessionDataService;
 import org.nrg.xnatx.plugin.PluginCode;
 import org.nrg.xnatx.plugin.PluginException;
 import org.nrg.xnatx.roi.Constants;
 import org.nrg.xnatx.roi.data.RoiCollection;
 import org.nrg.xnatx.roi.service.DicomSpatialDataService;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author jamesd
  */
-public class AimConversionHelper extends AbstractConversionHelper
-{
-	private final static Logger logger = LoggerFactory.getLogger(
-		AimConversionHelper.class);
-	private final static Set<String> outputTypes = new HashSet<>();
+public class AimConversionHelper extends AbstractConversionHelper {
+    private final static Logger logger = LoggerFactory.getLogger(AimConversionHelper.class);
+    private final static Set<String> outputTypes = new HashSet<>();
 
-	static
-	{
-		outputTypes.add(Constants.RtStruct);
-		outputTypes.add(Constants.AIM);
-	}
+    static {
+        outputTypes.add(Constants.RtStruct);
+        outputTypes.add(Constants.AIM);
+    }
 
-	/**
-	 *
-	 * @param roiCollection
-	 * @param targetType
-	 * @throws PluginException
-	 */
-	public AimConversionHelper(RoiCollection roiCollection, String targetType,
-		DicomSpatialDataService spatialDataService) throws PluginException
-	{
-		super(roiCollection, targetType, spatialDataService);
-		if (!Constants.AIM.equals(roiCollection.getType()))
-		{
-			throw new PluginException(
-				"ROI collection type must be: "+Constants.AIM,
-				PluginCode.HttpUnprocessableEntity);
-		}
-		if(Constants.AIM.equals(targetType))
-		{
-			throw new PluginException(
-				"Target type equals native type: "+targetType,
-				PluginCode.HttpUnprocessableEntity);
-		}
-		if (!outputTypes.contains(targetType))
-		{
-			throw new PluginException("Unsupported target type: "+targetType,
-				PluginCode.HttpUnprocessableEntity);
-		}
-	}
+    /**
+     * Returns a new <code>AimConversionHelper</code>.
+     *
+     * @param roiCollection   the {@link RoiCollection} to convert
+     * @param targetType      the type to convert to
+     * @param ohifJsonService the {@link OhifSessionDataService}
+     * @throws PluginException if collection type is <b><i>not</i></b> AIM or if target type is AIM or not supported
+     */
+    public AimConversionHelper(RoiCollection roiCollection, String targetType,
+                               DicomSpatialDataService spatialDataService, OhifSessionDataService ohifJsonService)
+            throws PluginException {
+        super(roiCollection, targetType, spatialDataService, ohifJsonService);
+        if (!Constants.AIM.equals(roiCollection.getType())) {
+            throw new PluginException("ROI collection type must be: " + Constants.AIM,
+                    PluginCode.HttpUnprocessableEntity);
+        }
+        if (Constants.AIM.equals(targetType)) {
+            throw new PluginException("Target type equals native type: " + targetType,
+                    PluginCode.HttpUnprocessableEntity);
+        }
+        if (!outputTypes.contains(targetType)) {
+            throw new PluginException("Unsupported target type: " + targetType, PluginCode.HttpUnprocessableEntity);
+        }
+    }
 
-	@Override
-	public byte[] convert() throws PluginException
-	{
-		byte[] result = null;
-		try
-		{
-			XmlParser parser = Aim.xmlParser();
-			ImageAnnotationCollection iac = parser.parse(roiCollection.getStream());
-			logger.debug("IAC read: {}", iac.getDescription());
+    @Override
+    public byte[] convert() throws PluginException {
+        byte[] result = null;
+        try {
+            XmlParser parser = Aim.xmlParser();
+            ImageAnnotationCollection iac = parser.parse(roiCollection.getStream());
+            logger.debug("IAC read: {}", iac.getDescription());
 
-			RoiConverter converter = DicomToolkit.getToolkit().createRoiConverter();
+            RoiConverter converter = DicomToolkit.getToolkit().createRoiConverter();
             if (targetType.equals(Constants.RtStruct)) {
                 RtStruct rtStruct = converter.toRtStruct(iac, getDicomObjectMap());
                 Attributes dcm = Iods.pack(rtStruct);
@@ -124,38 +117,29 @@ public class AimConversionHelper extends AbstractConversionHelper
                 result = baos.toByteArray();
                 logger.debug("RTSTRUCT bytes created");
             } else {
-				// Should never be executed as the targetType is checked in ctor
+                // Should never be executed as the targetType is checked in ctor
                 throw new PluginException("Unknown or unsupported target type: " + targetType,
                         PluginCode.HttpInternalError);
             }
-		}
-		catch (IOException ex)
-		{
-			throw new PluginException("Error converting ROI collection",
-				PluginCode.IO, ex);
-		}
-		catch (IllegalArgumentException ex)
-		{
-			throw new PluginException("Error converting ROI collection",
-				PluginCode.IllegalArgument, ex);
-		}
-		catch (XmlException ex)
-		{
-			throw new PluginException("Error converting ROI collection",
-				PluginCode.XML, ex);
-		}
-		catch (ConversionException ex)
-		{
-			throw new PluginException("Error converting ROI collection",
-				PluginCode.HttpInternalError, ex);
-		}
-		return result;
-	}
+        } catch (IOException ex) {
+            throw new PluginException("Error converting ROI collection",
+                    PluginCode.IO, ex);
+        } catch (IllegalArgumentException ex) {
+            throw new PluginException("Error converting ROI collection",
+                    PluginCode.IllegalArgument, ex);
+        } catch (XmlException ex) {
+            throw new PluginException("Error converting ROI collection",
+                    PluginCode.XML, ex);
+        } catch (ConversionException ex) {
+            throw new PluginException("Error converting ROI collection",
+                    PluginCode.HttpInternalError, ex);
+        }
+        return result;
+    }
 
-	@Override
-	public Set<String> outputTypes()
-	{
-		return ImmutableSet.copyOf(outputTypes);
-	}
+    @Override
+    public Set<String> outputTypes() {
+        return ImmutableSet.copyOf(outputTypes);
+    }
 
 }

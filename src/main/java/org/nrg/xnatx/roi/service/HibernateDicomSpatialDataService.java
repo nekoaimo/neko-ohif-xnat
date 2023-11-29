@@ -1,4 +1,4 @@
-/*********************************************************************
+/* ********************************************************************
  * Copyright (c) 2018, Institute of Cancer Research
  * All rights reserved.
  *
@@ -37,7 +37,9 @@ package org.nrg.xnatx.roi.service;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import icr.xnat.plugin.roi.entity.DicomSpatialData;
 import org.nrg.xnatx.roi.data.DicomSpatialDataRepository;
+
 import java.util.List;
+
 import org.nrg.framework.orm.hibernate.AbstractHibernateEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,54 +47,38 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- *
  * @author jamesd
  */
 @Service
-@JsonIgnoreProperties(value = { "created" })
+@JsonIgnoreProperties(value = {"created"})
 public class HibernateDicomSpatialDataService
-	extends AbstractHibernateEntityService<DicomSpatialData,DicomSpatialDataRepository>
-	implements DicomSpatialDataService
-{
-	private final static Logger logger =
-		LoggerFactory.getLogger(HibernateDicomSpatialDataService.class);
+        extends AbstractHibernateEntityService<DicomSpatialData, DicomSpatialDataRepository>
+        implements DicomSpatialDataService {
+    private final static Logger logger = LoggerFactory.getLogger(HibernateDicomSpatialDataService.class);
 
-	@Transactional
-	@Override
-	public void create(List<DicomSpatialData> list)
-	{
-		logger.debug("Creating {} entries", list.size());
-		for (DicomSpatialData item : list)
-		{
-			create(item);
-		}
-	}
+    @Transactional
+    @Override
+    public void create(List<DicomSpatialData> list) {
+        logger.debug("DicomSpatialData deprecated - NO-OP");
+    }
 
-	@Transactional
-	@Override
-	public void deleteForSeries(String seriesUid)
-	{
-		logger.debug("Deleting ROIs for seriesUid="+seriesUid);
-		List<DicomSpatialData> list = getDao().findByProperty("seriesUid", seriesUid);
-		if (list == null)
-		{
-			logger.warn("No spatial data found for series UID: "+seriesUid);
-			return;
-		}
-		for (DicomSpatialData dsd : list)
-		{
-			delete(dsd);
-		}
-	}
-	
-	@Transactional
-	@Override
-	public List<DicomSpatialData> findForSeries(String seriesUid)
-	{
-		logger.debug("Fetching ROIs for seriesUid="+seriesUid);
-		List<DicomSpatialData> list = getDao().findByProperty("seriesUid", seriesUid);
-		
-		return list;
-	}
+    @Transactional
+    @Override
+    public void deleteForSeries(String seriesUid) {
+        logger.debug("Deleting DicomSpatialData for seriesUid=" + seriesUid);
+        List<DicomSpatialData> list = getDao().findByProperty("seriesUid", seriesUid);
+        if (list == null) {
+            logger.warn("No spatial data found for series UID: " + seriesUid);
+            return;
+        }
+        list.forEach(this::delete);
+    }
+
+    @Transactional
+    @Override
+    public List<DicomSpatialData> findForSeries(String seriesUid) {
+        logger.debug("Fetching DicomSpatialData for seriesUid=" + seriesUid);
+        return getDao().findByProperty("seriesUid", seriesUid);
+    }
 
 }

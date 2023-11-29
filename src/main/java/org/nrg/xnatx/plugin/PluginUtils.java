@@ -37,7 +37,6 @@ package org.nrg.xnatx.plugin;
 import icr.etherj2.StringUtils;
 import icr.etherj2.Xml;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -76,8 +75,7 @@ import org.xml.sax.SAXException;
  */
 public class PluginUtils
 {
-	private final static Logger logger = LoggerFactory.getLogger(
-		PluginUtils.class);
+	private final static Logger logger = LoggerFactory.getLogger(PluginUtils.class);
 
 	/**
 	 *
@@ -345,8 +343,7 @@ public class PluginUtils
 	 * @param scanData		the scan object
 	 * @return the path to catalog.xml
 	 */
-	public static String getScanCatalog(XnatImagesessiondata sessionData,
-		XnatImagescandata scanData)
+	public static String getScanCatalog(XnatImagesessiondata sessionData, XnatImagescandataI scanData)
 	{
 		String path = null;
 		for (XnatAbstractresourceI res : scanData.getFile()) {
@@ -393,8 +390,7 @@ public class PluginUtils
 	 * @param scanData		the scan object
 	 * @return the path to the scan data
 	 */
-	public static String getScanPath(XnatImagesessiondata sessionData,
-		XnatImagescandata scanData)
+	public static String getScanPath(XnatImagesessiondata sessionData, XnatImagescandataI scanData)
 	{
 		return Paths.get(getScanCatalog(sessionData, scanData)).getParent().toString();
 	}

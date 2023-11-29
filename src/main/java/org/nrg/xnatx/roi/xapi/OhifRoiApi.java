@@ -36,10 +36,9 @@ package org.nrg.xnatx.roi.xapi;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.io.ByteStreams;
-import icr.etherj2.IoUtils;
 import icr.etherj2.StringUtils;
 import icr.etherj2.Uids;
-import org.dcm4che3.data.Attributes;
+import org.nrg.xnatx.ohifviewer.service.OhifSessionDataService;
 import org.nrg.xnatx.roi.Constants;
 import org.nrg.xnatx.plugin.ElementPermissions;
 import org.nrg.xnatx.plugin.PluginCode;
@@ -114,18 +113,21 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 
 	private final static String RoiCollElement = "icr:roiCollectionData/project";
 
+	private final OhifSessionDataService ohifJsonService;
+
 	private final RoiService roiService;
 	private final DicomSpatialDataService spatialDataService;
 
 	@Autowired
 	public OhifRoiApi(final RoiService roiService,
-		final DicomSpatialDataService spatialDataService,
-		final UserManagementServiceI userManagementService,
-		final RoleHolder roleHolder)
-	{
+					  final OhifSessionDataService ohifJsonService,
+					  final DicomSpatialDataService spatialDataService,
+					  final UserManagementServiceI userManagementService,
+					  final RoleHolder roleHolder) {
 		super(userManagementService, roleHolder);
 		this.roiService = roiService;
 		this.spatialDataService = spatialDataService;
+		this.ohifJsonService = ohifJsonService;
 		logger.info("OHIF ROI XAPI initialised");
 	}
 
@@ -188,51 +190,40 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		return new ResponseEntity<>((collectData != null), HttpStatus.OK);
 	}
 
-	@ApiOperation(value="Spatial data cache control")
+	@ApiOperation(value = "Spatial data cache control. REFRESH deprecated, only CLEAR")
 	@ApiResponses({
-		@ApiResponse(code=200, message="Command completed"),
-		@ApiResponse(code=422, message="Unprocessable request")
+			@ApiResponse(code = 200, message = "Command completed"),
+			@ApiResponse(code = 422, message = "Unprocessable request")
 	})
 	@XapiRequestMapping(
-		value="/projects/{projectId}/sdcache/{sessionId}",
-		method=RequestMethod.POST,
-		restrictTo=AccessLevel.Admin)
+			value = "/projects/{projectId}/sdcache/{sessionId}",
+			method = RequestMethod.POST,
+			restrictTo = AccessLevel.Admin)
 	@ResponseBody
 	public ResponseEntity<String> controlSdCache(
-		@ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
-		@ApiParam(value="Session ID") @PathVariable("sessionId") @Experiment String sessionId,
-		@ApiParam(value="Command", allowableValues="CLEAR,REFRESH") @RequestParam(value="cmd", required=true) String command)
-		throws PluginException
-	{
-		logger.info("RoiApi::controlSdCache(projectId="+projectId+
-			", sessionId="+sessionId+", cmd="+command+")");
+			@ApiParam(value = "Project ID") @PathVariable("projectId") @Project String projectId,
+			@ApiParam(value = "Session ID") @PathVariable("sessionId") @Experiment String sessionId,
+			@ApiParam(value = "Command", allowableValues = "CLEAR") @RequestParam(value = "cmd", required = true) String command)
+			throws PluginException {
+		logger.info("RoiApi::controlSdCache(projectId=" + projectId + ", sessionId=" + sessionId +
+				", cmd=" + command + ")");
 		UserI user = getSessionUser();
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("POST /projects/"+projectId+"/sdcache/"+sessionId+
-				" by user "+user.getUsername());
+		if (logger.isDebugEnabled()) {
+			logger.debug("POST /projects/" + projectId + "/sdcache/" + sessionId + " by user " + user.getUsername());
 		}
 		Security.checkProject(user, projectId);
 		Security.checkSession(user, sessionId);
-		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
-			sessionId, user);
-		Security.checkPermissions(user, sessionData.getXSIType()+"/project", projectId,
-			Security.Create, Security.Edit, Security.Read);
+		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(sessionId, user);
+		Security.checkPermissions(user, sessionData.getXSIType() + "/project", projectId,
+				Security.Create, Security.Edit, Security.Read);
 		Security.checkPermissions(user, RoiCollElement, projectId,
-			Security.Create, Security.Edit, Security.Read);
+				Security.Create, Security.Edit, Security.Read);
 
 		Result result;
-		switch (command)
-		{
-			case "CLEAR":
-				result = clearSdCache(sessionId);
-				break;
-			case "REFRESH":
-				result = refreshSdCache(sessionId);
-				break;
-			default:
-				result = new Result("Invalid cache command: "+command,
-					HttpStatus.UNPROCESSABLE_ENTITY);
+		if (command.equals("CLEAR")) {
+			result = clearSdCache(sessionId);
+		} else {
+			result = new Result("Invalid cache command: " + command, HttpStatus.UNPROCESSABLE_ENTITY);
 		}
 
 		return new ResponseEntity<>(result.getMessage(), result.getStatus());
@@ -494,52 +485,43 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		return new ResponseEntity<>(set, HttpStatus.OK);
 	}
 
-	@ApiOperation(value="Stores an ROI collection")
+	@ApiOperation(value = "Stores an ROI collection")
 	@ApiResponses({
-		@ApiResponse(code=200, message="Collection stored"),
-		@ApiResponse(code=422, message="Unprocessable request")
+			@ApiResponse(code = 200, message = "Collection stored"),
+			@ApiResponse(code = 422, message = "Unprocessable request")
 	})
 	@XapiRequestMapping(
-		value="/projects/{projectId}/sessions/{sessionId}/collections/{label}",
-		method=RequestMethod.PUT,
-		consumes=MediaType.APPLICATION_OCTET_STREAM_VALUE)
+			value = "/projects/{projectId}/sessions/{sessionId}/collections/{label}",
+			method = RequestMethod.PUT,
+			consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	@ResponseBody
 	public ResponseEntity<String> putCollection(
-		@ApiParam(value="Project ID") @PathVariable("projectId") @Project String projectId,
-		@ApiParam(value="Session ID") @PathVariable("sessionId") @Experiment String sessionId,
-		@ApiParam(value="Collection Label") @PathVariable("label") String label,
-		@ApiParam(value="Type", allowableValues="AIM,RTSTRUCT,SEG,MEAS") @RequestParam(value="type", required=true) String type,
-		@ApiParam(value="Overwrite") @RequestParam(value="overwrite", required=false, defaultValue="false") boolean overwrite,
-//		@ApiParam(value="Series UID") @RequestParam(value="seriesuid", required=false, defaultValue="") String seriesUid,
-		InputStream is)
-		throws PluginException
-	{
-		logger.info("RoiApi::putCollection(projectId="+projectId+
-			", sessionId="+sessionId+", label="+label+", type="+type+
-			", overwrite="+overwrite+")");
-//			", overwrite="+overwrite+", seriesUid="+seriesUid+")");
+			@ApiParam(value = "Project ID") @PathVariable("projectId") @Project String projectId,
+			@ApiParam(value = "Session ID") @PathVariable("sessionId") @Experiment String sessionId,
+			@ApiParam(value = "Collection Label") @PathVariable("label") String label,
+			@ApiParam(value = "Type", allowableValues = "AIM,RTSTRUCT,SEG,MEAS") @RequestParam(value = "type", required = true) String type,
+			@ApiParam(value = "Overwrite") @RequestParam(value = "overwrite", required = false, defaultValue = "false") boolean overwrite,
+			InputStream is)
+			throws PluginException {
+		logger.info("RoiApi::putCollection(projectId=" + projectId + ", sessionId=" + sessionId +
+				", label=" + label + ", type=" + type + ", overwrite=" + overwrite + ")");
 		UserI user = getSessionUser();
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("PUT /projects/"+projectId+"/sessions/"+sessionId+
-				"/collections/"+label+" by user "+user.getUsername());
+		if (logger.isDebugEnabled()) {
+			logger.debug("PUT /projects/" + projectId + "/sessions/" + sessionId + "/collections/" + label +
+					" by user " + user.getUsername());
 		}
 		Security.checkProject(user, projectId);
 		Security.checkSession(user, sessionId);
-		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
-			sessionId, user);
-		Security.checkPermissions(user, sessionData.getXSIType()+"/project", projectId,
-			Security.Create, Security.Edit, Security.Read);
+		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(sessionId, user);
+		Security.checkPermissions(user, sessionData.getXSIType() + "/project", projectId,
+				Security.Create, Security.Edit, Security.Read);
 		Security.checkPermissions(user, RoiCollElement, projectId,
-			Security.Create, Security.Edit, Security.Read);
+				Security.Create, Security.Edit, Security.Read);
 
 		String modality = PluginUtils.getImageSessionModality(sessionData);
 		checkType(type, modality);
-		// Null seriesUid until NIfTI re-enabled
-		String seriesUid = null;
 		String collectId = checkExisting(projectId, sessionId, label, overwrite);
-		RoiCollection roiCollection = createRoiCollection(user, projectId,
-			sessionId, collectId, label, is, type, seriesUid);
+		RoiCollection roiCollection = createRoiCollection(user, projectId, sessionId, collectId, label, is, type);
 		CollectionStorage storage = new DefaultCollectionStorage();
 		Result result = storage.store(user, roiCollection, roiService);
 		storeAlternateTypes(user, roiCollection, modality);
@@ -753,65 +735,44 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		return new Result("Cache cleared for session "+sessionId, HttpStatus.OK);
 	}
 
-	private void convertCollection(UserI user, RoiCollection roiCollection,
-		String requestedType) throws PluginException
-	{
+	private void convertCollection(UserI user, RoiCollection roiCollection, String requestedType)
+			throws PluginException {
 		// Should have been already checked but cover it in case
-		switch (requestedType)
-		{
+		switch (requestedType) {
 			case Constants.AIM:
 			case Constants.RtStruct:
 				break;
 			default:
-				throw new PluginException(
-					"Unknown collection type requested: "+requestedType,
-					PluginCode.HttpUnprocessableEntity);
+				throw new PluginException("Unknown collection type requested: " + requestedType,
+						PluginCode.HttpUnprocessableEntity);
 		}
 		CollectionConverter converter = new DefaultCollectionConverter();
-		Result result = converter.convert(user, roiCollection, requestedType,
-			spatialDataService);
+		Result result = converter.convert(user, roiCollection, requestedType, spatialDataService, ohifJsonService);
 		HttpStatus status = result.getStatus();
-		if (!(status.equals(HttpStatus.CREATED) || status.equals(HttpStatus.OK)))
-		{
-			throw new PluginException("Conversion error - "+result.getMessage(),
-				PluginCode.HttpInternalError);
+		if (!(status.equals(HttpStatus.CREATED) || status.equals(HttpStatus.OK))) {
+			throw new PluginException("Conversion error - " + result.getMessage(), PluginCode.HttpInternalError);
 		}
 	}
 
 	private File createMissingType(UserI user, IcrRoicollectiondata collectData,
-		String requestedType) throws PluginException
-	{
-		logger.info("Recreating missing type "+requestedType+" for ROI collection "+
-			collectData.getLabel());
-		File collectFile = RoiUtils.getCollectionFile(user, collectData,
-			collectData.getCollectiontype());
-		InputStream is = null;
-		try
-		{
-			is = Files.newInputStream(collectFile.toPath());
-			RoiCollection roiCollection = createRoiCollection(user,
-				collectData.getProject(), collectData.getImagesessionId(),
-				collectData.getId(), collectData.getLabel(), is,
-				collectData.getCollectiontype(), null);
+								   String requestedType) throws PluginException {
+		logger.info("Recreating missing type " + requestedType + " for ROI collection " + collectData.getLabel());
+		File collectFile = RoiUtils.getCollectionFile(user, collectData, collectData.getCollectiontype());
+		try (InputStream is = Files.newInputStream(collectFile.toPath())) {
+			RoiCollection roiCollection = createRoiCollection(user, collectData.getProject(),
+					collectData.getImagesessionId(), collectData.getId(), collectData.getLabel(), is,
+					collectData.getCollectiontype());
 			storeAlternateTypes(user, roiCollection);
 			// Refresh the collection info
 			collectData = RoiUtils.getCollectionDataById(collectData.getId());
-		}
-		catch (IOException ex)
-		{
-			throw new PluginException("Error creating missing type",
-				PluginCode.HttpInternalError, ex);
-		}
-		finally
-		{
-			IoUtils.safeClose(is);
+		} catch (IOException ex) {
+			throw new PluginException("Error creating missing type", PluginCode.HttpInternalError, ex);
 		}
 		return RoiUtils.getCollectionFile(user, collectData, requestedType);
 	}
 
 	private RoiCollection createRoiCollection(UserI user, String projectId,
-		String sessionId, String id, String label, InputStream is, String type,
-		String seriesUid)
+		String sessionId, String id, String label, InputStream is, String type)
 		throws PluginException
 	{
 		RoiCollection roiCollection;
@@ -931,47 +892,22 @@ public class OhifRoiApi extends AbstractXapiProjectRestController
 		}
 	}
 
-	private Result refreshSdCache(String sessionId) throws PluginException
-	{
-		XnatImagesessiondata sessionData = PluginUtils.getImageSessionData(
-			sessionId, null);
-		List<XnatImagescandata> scans = sessionData.getScans_scan();
-			for (XnatImagescandata scanData : scans)
-		{
-			String seriesUid = scanData.getUid();
-			if (StringUtils.isNullOrEmpty(seriesUid))
-			{
-				continue;
-			}
-			spatialDataService.deleteForSeries(seriesUid);
-			Map<String, Attributes> dcmMap = DsdUtils.getDicomObjectMap(spatialDataService, scanData);
-			DsdUtils.saveToService(spatialDataService, dcmMap);
-		}
-
-		return new Result("Cache refreshed for session "+sessionId, HttpStatus.OK);
-	}
-
-	private Result regen(IcrRoicollectiondata collectData, UserI user)
-		throws PluginException
-	{
-		String seriesUid = null;
+	private Result regen(IcrRoicollectiondata collectData, UserI user) throws PluginException {
 		String type = collectData.getCollectiontype();
 		File collectFile = RoiUtils.getCollectionFile(user, collectData, type);
 		if (collectFile == null) {
-			throw new PluginException("Unable to determine file for ROI collection: "+collectData.getLabel(),
+			throw new PluginException("Unable to determine file for ROI collection: " + collectData.getLabel(),
 					PluginCode.HttpInternalError);
 		}
-        try (InputStream is = Files.newInputStream(collectFile.toPath())) {
-            RoiCollection roiCollection = createRoiCollection(user, collectData.getProject(),
-                    collectData.getImagesessionId(), collectData.getId(), collectData.getLabel(), is, type, seriesUid);
-            storeAlternateTypes(user, roiCollection);
-        }
-        catch (IOException ex)
-        {
-            throw new PluginException("Error reading file: "+collectFile.toPath(), PluginCode.HttpInternalError, ex);
-        }
-        String message = "ROI collection "+collectData.getId() + " derived data regenerated";
-        logger.info(message);
+		try (InputStream is = Files.newInputStream(collectFile.toPath())) {
+			RoiCollection roiCollection = createRoiCollection(user, collectData.getProject(),
+					collectData.getImagesessionId(), collectData.getId(), collectData.getLabel(), is, type);
+			storeAlternateTypes(user, roiCollection);
+		} catch (IOException ex) {
+			throw new PluginException("Error reading file: " + collectFile.toPath(), PluginCode.HttpInternalError, ex);
+		}
+		String message = "ROI collection " + collectData.getId() + " derived data regenerated";
+		logger.info(message);
 
 		return new Result(message, HttpStatus.OK);
 	}
